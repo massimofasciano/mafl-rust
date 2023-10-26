@@ -1,0 +1,11 @@
+if true {
+    print("bye bye\n");
+    10.5
+} else {
+    log(11.1)
+};
+
+while true {
+    let x = "hello world!";
+    print();
+}

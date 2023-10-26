@@ -1,0 +1,28 @@
+let test = fn (x,y) {
+    print(x);
+    debug("allo");
+    y - 3.4
+};
+
+do {
+    print();
+    print();
+} while (true);
+
+unless x {
+    return $x + 1
+};
+
+loop {
+    unless not test(3,5) {
+        break;
+    };
+    if x > 2 {
+        continue;
+    };
+    if test3() {
+        return;
+    };
+    let x = -process(x);
+};
+

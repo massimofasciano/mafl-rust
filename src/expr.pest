@@ -1,0 +1,172 @@
+WHITESPACE = _{ " " | "\t" | NEWLINE }
+
+// python-style line comments starting with #
+COMMENT = _{ "#" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
+
+reserved = _{
+    "if" | "else" | "while" | "unless" | "do" |
+    "return" | "break" | "continue" |
+    "let" | "fn" | 
+    "true" | "false" |
+    "and" | "or" | "not"
+}
+
+identifier = @{ 
+    !reserved ~
+    (ASCII_ALPHA | "_") ~ 
+    (ASCII_ALPHANUMERIC | "_")* 
+}
+infix_identifier = ${
+    "@" ~ identifier
+}
+integer = @{ 
+    "-"? ~ ASCII_DIGIT+ 
+}
+float = @{
+    "-"? ~
+    ASCII_DIGIT+ ~ &("."|"e") ~
+    ("." ~ ASCII_DIGIT+)? ~
+    (^"e" ~ ("+" | "-")? ~ ASCII_DIGIT+)?
+}
+unit_literal = @{ "()" }
+boolean = { true | false }
+true = { "true" }
+false = { "false" }
+
+postfix_op = { question | exclam  }
+question = { "?" }
+exclam = { "!" }
+
+prefix_op = { neg | not | dollar }
+neg = { "-" }
+not = { "not" }
+dollar = { "$" }
+
+infix_op = { 
+    and | or |
+    le | ge | 
+    lt | gt |
+    eq |
+    add | sub | 
+    mult | div 
+}
+add = { "+" }
+sub = { "-" }
+mult = { "*" }
+div = { "/" }
+ge = { ">=" }
+le = { "<=" }
+gt = { ">" }
+lt = { "<" }
+eq = { "=" }
+and = { "and" }
+or = { "or" }
+
+string_literal = ${ "\"" ~ string ~ "\"" }
+string = @{ 
+    (
+    !("\"" | "\\") ~ ANY
+    | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+    | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+    )* 
+}
+
+function_args = { (identifier ~ ("," ~ identifier)*)? }
+function = {
+    "fn" ~ "(" ~ function_args ~ ")" ~ block
+}
+
+infix_call = {
+    expr_noleft ~ infix_identifier ~ expr
+}
+
+infix_operation = {
+    expr_noleft ~ infix_op ~ expr
+}
+
+prefix_operation = {
+    prefix_op ~ expr
+}
+
+postfix_operation = {
+    expr_noleft ~ postfix_op
+}
+
+funcall = {
+    expr_noleft ~ "(" ~ (expr ~ ("," ~ expr)*)? ~ ")"
+}
+
+dotcall = {
+    expr_noleft ~ "." ~ identifier ~ "(" ~ (expr ~ ("," ~ expr)*)? ~ ")"
+}
+
+if = {
+    "if" ~ expr ~ block ~ ("else" ~ block)?
+}
+
+unless = {
+    "unless" ~ expr ~ block
+}
+
+while = {
+    "while" ~ expr ~ block
+}
+
+do_while = {
+    "do" ~ block ~ "while" ~ "(" ~ expr ~ ")"
+}
+
+loop = {
+    "loop" ~ block
+}
+
+let = {
+    "let" ~ identifier ~ "=" ~ expr
+}
+
+return = {
+    "return" ~ expr?
+}
+continue = { "continue" }
+break = { "break" }
+
+block = {
+    "{" ~ sequence ~ "}"
+}
+
+expr = {
+    infix_call | infix_operation | postfix_operation |
+    funcall | dotcall |
+    expr_noleft
+}
+
+// to avoid left recursion
+expr_noleft = _{
+    "(" ~ expr ~ ")" | 
+    prefix_operation |
+    block | if | 
+    while | unless | do_while | loop |
+    let | function | 
+    return | continue | break |
+    boolean | float | integer | string_literal | identifier | unit_literal
+}
+
+// expression that behave like blocks
+expr_block = _{ block | if | while | unless | loop }
+
+semicolons = _{ ";" ~ semicolons | ";" }
+unit_implicit = { "" }
+// sequence = expressions separated by semicolon(s)
+// expressions that behave like blocks don't need the semicolon
+// if trailing semicolon, implicit unit value is added
+sequence = _{ sequence_nonempty | sequence_empty }
+sequence_nonempty = _{
+    expr_block ~ sequence_nonempty | expr ~ semicolons ~ sequence | expr
+}
+sequence_empty = _{ unit_implicit }
+
+// a program file is a sequence of expressions
+file = {
+    SOI ~ sequence ~ EOI
+}
+
