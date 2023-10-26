@@ -1,7 +1,7 @@
 WHITESPACE = _{ " " | "\t" | NEWLINE }
 
 // python-style line comments starting with #
-COMMENT = _{ "#" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
+COMMENT = _{ "#" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
 
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" |
@@ -33,35 +33,6 @@ boolean = { true | false }
 true = { "true" }
 false = { "false" }
 
-postfix_op = { question | exclam  }
-question = { "?" }
-exclam = { "!" }
-
-prefix_op = { neg | not | dollar }
-neg = { "-" }
-not = { "not" }
-dollar = { "$" }
-
-infix_op = { 
-    and | or |
-    le | ge | 
-    lt | gt |
-    eq |
-    add | sub | 
-    mult | div 
-}
-add = { "+" }
-sub = { "-" }
-mult = { "*" }
-div = { "/" }
-ge = { ">=" }
-le = { "<=" }
-gt = { ">" }
-lt = { "<" }
-eq = { "=" }
-and = { "and" }
-or = { "or" }
-
 string_literal = ${ "\"" ~ string ~ "\"" }
 string = @{ 
     (
@@ -74,30 +45,6 @@ string = @{
 function_args = { (identifier ~ ("," ~ identifier)*)? }
 function = {
     "fn" ~ "(" ~ function_args ~ ")" ~ block
-}
-
-infix_call = {
-    expr_noleft ~ infix_identifier ~ expr
-}
-
-infix_operation = {
-    expr_noleft ~ infix_op ~ expr
-}
-
-prefix_operation = {
-    prefix_op ~ expr
-}
-
-postfix_operation = {
-    expr_noleft ~ postfix_op 
-}
-
-funcall = {
-    expr_noleft ~ "(" ~ (expr ~ ("," ~ expr)*)? ~ ")"
-}
-
-dotcall = {
-    expr_noleft ~ "." ~ identifier ~ "(" ~ (expr ~ ("," ~ expr)*)? ~ ")"
 }
 
 if = {
@@ -134,16 +81,46 @@ block = {
     "{" ~ sequence ~ "}"
 }
 
-expr = {
-    infix_call | infix_operation | postfix_operation |
-    funcall | dotcall |
-    expr_noleft
+apply_args = {
+    "(" ~ (expr ~ ("," ~ expr)*)? ~ ")"
 }
 
-// to avoid left recursion
-expr_noleft = _{
+dotcall = {
+    "." ~ identifier ~ apply_args
+}
+
+question = { "?" }
+exclam = { "!" }
+neg = { "-" }
+not = { "not" }
+dollar = { "$" }
+add = { "+" }
+sub = { "-" }
+mult = { "*" }
+div = { "/" }
+ge = { ">=" }
+le = { "<=" }
+gt = { ">" }
+lt = { "<" }
+eq = { "=" }
+ne = { "!=" }
+and = { "and" }
+or = { "or" }
+
+expr = { expr_post }
+expr_post = { expr_infix_id ~ ((question|exclam))* }
+expr_infix_id = { expr_and ~ (infix_identifier ~ expr_and)* }
+expr_or = { expr_and ~ (or ~ expr_and)* }
+expr_and = { expr_eq ~ (and ~ expr_eq)* }
+expr_eq = { expr_rel ~ ((eq|ne) ~ expr_rel)* }
+expr_rel = { expr_add ~ ((ge|le|gt|lt) ~ expr_add)* }
+expr_add = { expr_mul ~ ((add|sub) ~ expr_mul)* }
+expr_mul = { expr_dotcall ~ ((mult|div) ~ expr_dotcall)* }
+expr_dotcall = { expr_apply ~ dotcall* }
+expr_apply = { expr_prefix ~ apply_args* }
+expr_prefix = { prefix_op* ~ expr_base }
+expr_base = _{
     "(" ~ expr ~ ")" | 
-    prefix_operation |
     block | if | 
     while | unless | do_while | loop |
     let | function | 
@@ -151,7 +128,7 @@ expr_noleft = _{
     boolean | float | integer | string_literal | identifier | unit_literal
 }
 
-// expression that behave like blocks
+// expressions that behave like blocks
 expr_block = _{ block | if | while | unless | loop }
 
 semicolons = _{ ";" ~ semicolons | ";" }
