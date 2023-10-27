@@ -6,6 +6,6 @@ if true {
 };
 
 while true {
-    let x = "hello world!";
+    let x := "hello world!";
     print();
 }

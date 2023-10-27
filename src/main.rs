@@ -83,23 +83,44 @@ fn parse_vec(rule: Rule, _string: String, inner: Vec<Pair<Rule>>) -> Ast {
             })
         }
         Rule::expr_apply => {
-            assert!(inner.len() == 2);
-            let func = parse(inner[0].clone());
-            assert!(inner[1].as_rule() == Rule::apply_args);
-            let args : Vec<_> = inner[1].clone().into_inner().map(|e| (parse(e.clone()))).collect();
-            Ast::FunctionCall(Box::new(func), args)
-        } 
-        Rule::expr_dotcall => {
             assert!(inner.len() > 2);
-            assert!(inner.len() % 2 == 1);
             let target = parse(inner[0].clone());
-            inner[1..].chunks_exact(2).fold(target, |ast, pair| {
-                let method = parse(pair[0].clone());
-                assert!(pair[1].as_rule() == Rule::apply_args);
-                let args : Vec<_> = pair[1].clone().into_inner().map(|e| (parse(e.clone()))).collect();
-                Ast::MethodCall(Box::new(ast), Box::new(method), args)
+            inner[1..].iter().fold(target, |ast, pair| {
+                match pair.as_rule() {
+                    Rule::apply_args => {
+                        let args : Vec<_> = pair.clone().into_inner().map(|e| (parse(e.clone()))).collect();
+                        Ast::FunctionCall(Box::new(ast), args)
+                    }
+                    Rule::dot_apply => {
+                        let inner : Vec<Pair<Rule>> = pair.clone().into_inner().collect();
+                        assert!(inner.len() == 2);
+                        let method = parse(inner[0].clone());
+                        assert!(inner[1].as_rule() == Rule::apply_args);
+                        let args : Vec<_> = inner[1].clone().into_inner().map(|e| (parse(e.clone()))).collect();
+                        Ast::MethodCall(Box::new(ast), Box::new(method), args)
+                    }
+                    _ => unreachable!()
+                }
             })
         } 
+        // Rule::expr_apply => {
+        //     assert!(inner.len() == 2);
+        //     let func = parse(inner[0].clone());
+        //     assert!(inner[1].as_rule() == Rule::apply_args);
+        //     let args : Vec<_> = inner[1].clone().into_inner().map(|e| (parse(e.clone()))).collect();
+        //     Ast::FunctionCall(Box::new(func), args)
+        // } 
+        // Rule::expr_dotcall => {
+        //     assert!(inner.len() > 2);
+        //     assert!(inner.len() % 2 == 1);
+        //     let target = parse(inner[0].clone());
+        //     inner[1..].chunks_exact(2).fold(target, |ast, pair| {
+        //         let method = parse(pair[0].clone());
+        //         assert!(pair[1].as_rule() == Rule::apply_args);
+        //         let args : Vec<_> = pair[1].clone().into_inner().map(|e| (parse(e.clone()))).collect();
+        //         Ast::MethodCall(Box::new(ast), Box::new(method), args)
+        //     })
+        // } 
         Rule::function => {
             assert!(inner.len() == 2);
             assert!(inner[0].as_rule() == Rule::function_args);
@@ -208,8 +229,8 @@ fn parse(parsed: Pair<Rule>) -> Ast {
         Rule::r#continue => { Ast::Continue },
         Rule::r#break => { Ast::Break },
         Rule::block | Rule::file  => { parse_block(parsed) },
-        Rule::string_literal | Rule::boolean => {
-            // these rules could be made silent in the grammar
+        Rule::string_literal => {
+            // these rules can't be made silent in the grammar (as of current version)
             parsed.into_inner().next().map(parse).unwrap()
         }
         _ => {

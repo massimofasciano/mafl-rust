@@ -1,4 +1,4 @@
-let test = fn (x,y) {
+let test := fn (x,y) {
     print(x);
     debug("allo");
     y - 3.4
@@ -23,6 +23,6 @@ loop {
     if test3() {
         return;
     };
-    let x = -process(x);
+    let x := -process(x);
 };
 
