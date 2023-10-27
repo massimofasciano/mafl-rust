@@ -1,13 +1,16 @@
-use std::{collections::HashMap, ops::{Add, Mul, Neg}};
+use std::{collections::HashMap, ops::{Add, Mul, Neg, Sub}};
 use crate::{ast::Ast, parse_string_to_ast, unescape_string};
 
 pub type Context = HashMap<String,Value>;
 
-#[derive(Debug,Clone)]
+// change design to partially evaluate the Ast directly instead of using Value ?
+
+#[derive(Debug,Clone,PartialEq,PartialOrd)]
 pub enum Value {
     Integer(i64),
     Float(f64),
     String(String),
+    Boolean(bool),
     Unit,
 }
 
@@ -36,14 +39,57 @@ pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
             let val = ctx.get(*s).unwrap_or(&Value::Unit).to_owned();
             (ctx, val)
         }
+        Ast::True => {
+            (ctx, Value::Boolean(true))
+        }
+        Ast::False => {
+            (ctx, Value::Boolean(false))
+        }
+        Ast::If(cond, then, r#else) => {
+            let (_, cond) = eval(ctx.clone(),cond.as_ref());
+            match cond {
+                Value::Boolean(b) =>
+                    if b {
+                        let (_, then) = eval(ctx.clone(),then.as_ref());
+                        (ctx, then)
+                    } else {
+                        let (_, r#else) = eval(ctx.clone(),r#else.as_ref());
+                        (ctx, r#else)
+                    }
+                _ => (ctx, Value::Unit),
+            }
+        }
+        Ast::While(cond, body) => {
+            // we have no side-effects for now so we put a println in there
+            // we should use a stack of contexts and decl vs assign
+            let (_, cond) = eval(ctx.clone(),cond.as_ref());
+            match cond {
+                Value::Boolean(b) =>
+                    if b {
+                        let (ctx, _body) = eval(ctx.clone(),body.as_ref());
+                        println!("WHILE {ctx:?} {_body:?}");
+                        eval(ctx, ast)
+                    } else {
+                        (ctx, Value::Unit)
+                    }
+                _ => (ctx, Value::Unit),
+            }
+        }
         Ast::BinOpCall(op, left, right) => {
             let op = op.as_ref();
             let (_, left) = eval(ctx.clone(),left.as_ref());
             let (_, right) = eval(ctx.clone(),right.as_ref());
             (ctx, match op {
                 Ast::AddOp => left+right,
+                Ast::SubOp => left-right,
                 Ast::MultOp => left*right,
                 Ast::ExpOp => left.exp(right),
+                Ast::GtOp => Value::Boolean(left>right),
+                Ast::GeOp => Value::Boolean(left>=right),
+                Ast::LtOp => Value::Boolean(left<right),
+                Ast::LeOp => Value::Boolean(left<=right),
+                Ast::EqOp => Value::Boolean(left==right),
+                Ast::NeOp => Value::Boolean(left!=right),
                 _ => Value::Unit,
             })
         }
@@ -92,6 +138,19 @@ impl Add for Value {
             (Value::Integer(a), Value::String(b)) => Value::String(format!("{a}{b}")),
             (Value::String(a), Value::Float(b)) => Value::String(format!("{a}{b}")),
             (Value::Float(a), Value::String(b)) => Value::String(format!("{a}{b}")),
+            _ => Self::Unit,
+        }
+    }
+}
+
+impl Sub for Value {
+    type Output = Value;
+    fn sub(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Value::Float(a), Value::Float(b)) => Value::Float(a-b),
+            (Value::Float(a), Value::Integer(b)) => Value::Float(a-b as f64),
+            (Value::Integer(a), Value::Float(b)) => Value::Float(a as f64-b),
+            (Value::Integer(a), Value::Integer(b)) => Value::Integer(a-b),
             _ => Self::Unit,
         }
     }

@@ -48,12 +48,23 @@
 #let y := 3;
 #1+x*y+10^2**2
 
-let sh := "hello";
-$("let "+sh+" := \"world\"");
-hello + " " + sh + "!"
+#let sh := "hello";
+#$("let "+sh+" := \"world\"");
+#hello + " " + sh + "!"
 
 #$("let x "+":= 10; x+1")
 #"hello\n\"x\""
 
+let x := 2;
+let y := 3;
 
+#if x <> y {
+#    1
+#} else {
+#    2
+#}
+
+while y < 10 {
+    let y := y + 1;
+}
 
