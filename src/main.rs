@@ -15,7 +15,7 @@ enum Ast<'a> {
     Block(Vec<Ast<'a>>),
     Identifier(&'a str),
     FunctionCall(Box<Ast<'a>>,Vec<Ast<'a>>),
-    MethodCall(Box<Ast<'a>>,Box<Ast<'a>>,Vec<Ast<'a>>),
+    Field(Box<Ast<'a>>,Box<Ast<'a>>),
     BinOpCall(Box<Ast<'a>>,Box<Ast<'a>>,Box<Ast<'a>>),
     UnaryOpCall(Box<Ast<'a>>,Box<Ast<'a>>),
     AddOp, MultOp, SubOp, DivOp,
@@ -82,8 +82,8 @@ fn parse_vec(rule: Rule, _string: String, inner: Vec<Pair<Rule>>) -> Ast {
                 Ast::UnaryOpCall(Box::new(op), Box::new(ast))
             })
         }
-        Rule::expr_apply => {
-            assert!(inner.len() > 2);
+        Rule::expr_apply_or_field => {
+            assert!(inner.len() > 1);
             let target = parse(inner[0].clone());
             inner[1..].iter().fold(target, |ast, pair| {
                 match pair.as_rule() {
@@ -91,36 +91,16 @@ fn parse_vec(rule: Rule, _string: String, inner: Vec<Pair<Rule>>) -> Ast {
                         let args : Vec<_> = pair.clone().into_inner().map(|e| (parse(e.clone()))).collect();
                         Ast::FunctionCall(Box::new(ast), args)
                     }
-                    Rule::dot_apply => {
+                    Rule::field_access => {
                         let inner : Vec<Pair<Rule>> = pair.clone().into_inner().collect();
-                        assert!(inner.len() == 2);
-                        let method = parse(inner[0].clone());
-                        assert!(inner[1].as_rule() == Rule::apply_args);
-                        let args : Vec<_> = inner[1].clone().into_inner().map(|e| (parse(e.clone()))).collect();
-                        Ast::MethodCall(Box::new(ast), Box::new(method), args)
+                        assert!(inner.len() == 1);
+                        let field = parse(inner[0].clone());
+                        Ast::Field(Box::new(ast), Box::new(field))
                     }
                     _ => unreachable!()
                 }
             })
         } 
-        // Rule::expr_apply => {
-        //     assert!(inner.len() == 2);
-        //     let func = parse(inner[0].clone());
-        //     assert!(inner[1].as_rule() == Rule::apply_args);
-        //     let args : Vec<_> = inner[1].clone().into_inner().map(|e| (parse(e.clone()))).collect();
-        //     Ast::FunctionCall(Box::new(func), args)
-        // } 
-        // Rule::expr_dotcall => {
-        //     assert!(inner.len() > 2);
-        //     assert!(inner.len() % 2 == 1);
-        //     let target = parse(inner[0].clone());
-        //     inner[1..].chunks_exact(2).fold(target, |ast, pair| {
-        //         let method = parse(pair[0].clone());
-        //         assert!(pair[1].as_rule() == Rule::apply_args);
-        //         let args : Vec<_> = pair[1].clone().into_inner().map(|e| (parse(e.clone()))).collect();
-        //         Ast::MethodCall(Box::new(ast), Box::new(method), args)
-        //     })
-        // } 
         Rule::function => {
             assert!(inner.len() == 2);
             assert!(inner[0].as_rule() == Rule::function_args);
@@ -148,7 +128,6 @@ fn parse_vec(rule: Rule, _string: String, inner: Vec<Pair<Rule>>) -> Ast {
         } 
         Rule::r#let => {
             assert!(inner.len() == 2);
-            assert!(inner[0].as_rule() == Rule::identifier);
             let var = parse(inner[0].clone());
             let val = parse(inner[1].clone());
             Ast::Let(Box::new(var), Box::new(val))
@@ -208,8 +187,8 @@ fn parse(parsed: Pair<Rule>) -> Ast {
         Rule::gt => { Ast::GtOp },
         Rule::expr_infix_id | Rule::expr_or | Rule::expr_and | 
         Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
-        Rule::expr_mul | Rule::expr_apply | Rule::expr_post | 
-        Rule::expr_dotcall | Rule::expr_prefix => { 
+        Rule::expr_mul | Rule::expr_apply_or_field | Rule::expr_post | 
+        Rule::expr_prefix => { 
             let rule = parsed.as_rule();
             let str = parsed.as_str().to_owned();
             let inner : Vec<Pair<Rule>> = parsed.into_inner().collect();

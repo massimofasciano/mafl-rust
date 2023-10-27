@@ -36,4 +36,10 @@
 
 #f(1).g(1,2).h()
 
-a.get(1)(1,2)().run()
+#a.get(1)(1,2)().run()
+
+#let a.x := 3;
+#let a := 10;
+let $"x" := 20;
+
+#if a.x > 2 { return }

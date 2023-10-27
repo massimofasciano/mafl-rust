@@ -68,7 +68,7 @@ loop = {
 }
 
 let = {
-    "let" ~ identifier ~ ":=" ~ expr
+    "let" ~ expr ~ ":=" ~ expr
 }
 
 return = {
@@ -103,7 +103,7 @@ ne = { "!=" | "<>" }
 and = { "and" }
 or = { "or" }
 
-dot_apply = { "." ~ identifier ~ apply_args }
+field_access = { "." ~ identifier }
 
 expr = _{ expr_infix_id }
 expr_infix_id = { expr_or ~ (infix_identifier ~ expr_or)* }
@@ -113,11 +113,8 @@ expr_eq = { expr_rel ~ ((eq|ne) ~ expr_rel)* }
 expr_rel = { expr_add ~ ((ge|le|gt|lt) ~ expr_add)* }
 expr_add = { expr_mul ~ ((add|sub) ~ expr_mul)* }
 expr_mul = { expr_post ~ ((mult|div) ~ expr_post)* }
-expr_post = { expr_dotcall ~ (question|exclam)* }
-// expr_dotcall = { expr_apply ~ ("." ~ identifier ~ apply_args)* }
-// expr_apply = { expr_prefix ~ apply_args? }
-expr_dotcall = _{ expr_apply }
-expr_apply = { expr_prefix ~ (apply_args | dot_apply)* }
+expr_post = { expr_apply_or_field ~ (question|exclam)* }
+expr_apply_or_field = { expr_prefix ~ (apply_args | field_access)* }
 expr_prefix = { (not|neg|dollar)* ~ expr_base }
 expr_base = _{
     "(" ~ expr ~ ")" | 
