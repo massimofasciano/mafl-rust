@@ -32,7 +32,7 @@
 
 #$-x?!
 
-#let x := let y := 1;
+#let x := let y = 1;
 
 #f(1).g(1,2).h()
 
@@ -44,8 +44,8 @@
 
 #if a.x > 2 { return }
 
-#let x := 2;
-#let y := 3;
+#let x = 2;
+#let y = 3;
 #1+x*y+10^2**2
 
 #let sh := "hello";
@@ -55,8 +55,8 @@
 #$("let x "+":= 10; x+1")
 #"hello\n\"x\""
 
-let x := 2;
-let y := 3;
+let x = 2;
+let y = 3;
 
 #if x <> y {
 #    1
@@ -65,6 +65,6 @@ let y := 3;
 #}
 
 while y < 10 {
-    let y := y + 1;
+    y := y + 1;
 }
 

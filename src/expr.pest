@@ -68,7 +68,11 @@ loop = {
 }
 
 let = {
-    "let" ~ identifier ~ ":=" ~ expr
+    "let" ~ identifier ~ "=" ~ expr
+}
+
+assign = {
+    identifier ~ ":=" ~ expr
 }
 
 return = {
@@ -84,6 +88,8 @@ block = {
 apply_args = {
     "(" ~ (expr ~ ("," ~ expr)*)? ~ ")"
 }
+
+variable = { identifier }
 
 question = @{ "?" }
 exclam = @{ "!" ~ !"=" }
@@ -122,9 +128,9 @@ expr_base = _{
     "(" ~ expr ~ ")" | 
     block | if | 
     while | unless | do_while | loop |
-    let | function | 
+    let | function | assign |
     return | continue | break |
-    boolean | float | integer | string_literal | identifier | unit_literal
+    boolean | float | integer | string_literal | variable | unit_literal
 }
 
 // expressions that behave like blocks

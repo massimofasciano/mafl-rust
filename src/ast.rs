@@ -6,30 +6,32 @@ use pest_derive::Parser;
 pub struct ExprParser;
 
 #[derive(Debug,Clone)]
-pub enum Ast<'a> {
+pub enum Ast {
     // Todo(String),
     Integer(i64),
     Float(f64),
     Unit,
-    Block(Vec<Ast<'a>>),
-    Identifier(&'a str),
-    FunctionCall(Box<Ast<'a>>,Vec<Ast<'a>>),
-    Field(Box<Ast<'a>>,Box<Ast<'a>>),
-    BinOpCall(Box<Ast<'a>>,Box<Ast<'a>>,Box<Ast<'a>>),
-    UnaryOpCall(Box<Ast<'a>>,Box<Ast<'a>>),
+    Block(Vec<Ast>),
+    Identifier(String),
+    FunctionCall(Box<Ast>,Vec<Ast>),
+    Field(Box<Ast>,Box<Ast>),
+    BinOpCall(Box<Ast>,Box<Ast>,Box<Ast>),
+    UnaryOpCall(Box<Ast>,Box<Ast>),
     AddOp, MultOp, SubOp, DivOp, ExpOp,
     NotOp, AndOp, OrOp, 
     GtOp, GeOp, LtOp, LeOp, NeOp, EqOp,
     NegOp, DollarOp, QuestionOp, ExclamOp,
-    If(Box<Ast<'a>>,Box<Ast<'a>>,Box<Ast<'a>>),
-    While(Box<Ast<'a>>,Box<Ast<'a>>),
-    DoWhile(Box<Ast<'a>>,Box<Ast<'a>>),
-    Let(Box<Ast<'a>>,Box<Ast<'a>>),
-    Loop(Box<Ast<'a>>),
+    If(Box<Ast>,Box<Ast>,Box<Ast>),
+    While(Box<Ast>,Box<Ast>),
+    DoWhile(Box<Ast>,Box<Ast>),
+    Let(Box<Ast>,Box<Ast>),
+    Assign(Box<Ast>,Box<Ast>),
+    Loop(Box<Ast>),
     True, False,
-    Function(Vec<Ast<'a>>,Box<Ast<'a>>),
-    String(&'a str),
-    Return(Box<Ast<'a>>),
+    Function(Vec<Ast>,Box<Ast>),
+    String(String),
+    Return(Box<Ast>),
+    Variable(String),
     Continue, Break,
 }
 
@@ -52,6 +54,10 @@ fn parse_block(parsed: Pair<Rule>) -> Ast {
 
 fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Ast {
     match rule {
+        Rule::variable => {
+            assert!(inner.len() == 1);
+            Ast::Variable(string)
+        }
         Rule::expr_infix_id | Rule::expr_or | Rule::expr_and | Rule::expr_eq | 
         Rule::expr_rel | Rule::expr_add | Rule::expr_mul | Rule::expr_exp => {
             if inner.len() == 1 { return parse_to_ast(inner[0].clone()) }
@@ -135,6 +141,12 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Ast {
             let val = parse_to_ast(inner[1].clone());
             Ast::Let(Box::new(var), Box::new(val))
         } 
+        Rule::assign => {
+            assert!(inner.len() == 2);
+            let var = parse_to_ast(inner[0].clone());
+            let val = parse_to_ast(inner[1].clone());
+            Ast::Assign(Box::new(var), Box::new(val))
+        } 
         Rule::r#while => {
             assert!(inner.len() == 2);
             let cond = parse_to_ast(inner[0].clone());
@@ -174,8 +186,8 @@ pub fn parse_to_ast(parsed: Pair<Rule>) -> Ast {
     match parsed.as_rule() {
         Rule::integer => { Ast::Integer(parsed.as_str().parse().unwrap()) },
         Rule::float => { Ast::Float(parsed.as_str().parse().unwrap()) },
-        Rule::identifier => { Ast::Identifier(parsed.as_str()) },
-        Rule::string => { Ast::String(parsed.as_str()) },
+        Rule::identifier => { Ast::Identifier(parsed.as_str().to_owned()) },
+        Rule::string => { Ast::String(parsed.as_str().to_owned()) },
         Rule::unit_literal => { Ast::Unit },
         Rule::unit_implicit => { Ast::Unit },
         Rule::r#true => { Ast::True },
@@ -208,9 +220,9 @@ pub fn parse_to_ast(parsed: Pair<Rule>) -> Ast {
         Rule::expr_infix_id | Rule::expr_or | Rule::expr_and | 
         Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
         Rule::expr_mul | Rule::expr_apply_or_field | Rule::expr_post | 
-        Rule::expr_prefix | Rule::expr_exp |
+        Rule::expr_prefix | Rule::expr_exp | Rule::variable |
         Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | 
-        Rule::r#let | Rule::r#loop | Rule::function | Rule::r#return => {
+        Rule::assign | Rule::r#let | Rule::r#loop | Rule::function | Rule::r#return => {
             let rule = parsed.as_rule();
             let str = parsed.as_str().to_owned();
             let inner : Vec<Pair<Rule>> = parsed.into_inner().collect();

@@ -28,15 +28,26 @@ pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
             let (_, val) = eval(ctx.clone(),val);
             let var = var.as_ref();
             match var {
-                &Ast::Identifier(id) => {
+                Ast::Identifier(id) => {
                     ctx.insert(id.to_owned(), val.clone());
                     (ctx, val)
                 }
                 _ => (ctx, Value::Unit)
             }
         }
-        Ast::Identifier(s) => {
-            let val = ctx.get(*s).unwrap_or(&Value::Unit).to_owned();
+        Ast::Assign(var, val) => {
+            let (_, val) = eval(ctx.clone(),val);
+            let var = var.as_ref();
+            match var {
+                Ast::Identifier(id) => {
+                    ctx.insert(id.to_owned(), val.clone());
+                    (ctx, val)
+                }
+                _ => (ctx, Value::Unit)
+            }
+        }
+        Ast::Variable(s) => {
+            let val = ctx.get(s).unwrap_or(&Value::Unit).to_owned();
             (ctx, val)
         }
         Ast::True => {
