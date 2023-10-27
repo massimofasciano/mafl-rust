@@ -17,7 +17,7 @@ pub enum Ast<'a> {
     Field(Box<Ast<'a>>,Box<Ast<'a>>),
     BinOpCall(Box<Ast<'a>>,Box<Ast<'a>>,Box<Ast<'a>>),
     UnaryOpCall(Box<Ast<'a>>,Box<Ast<'a>>),
-    AddOp, MultOp, SubOp, DivOp,
+    AddOp, MultOp, SubOp, DivOp, ExpOp,
     NotOp, AndOp, OrOp, 
     GtOp, GeOp, LtOp, LeOp, NeOp, EqOp,
     NegOp, DollarOp, QuestionOp, ExclamOp,
@@ -53,7 +53,7 @@ fn parse_block(parsed: Pair<Rule>) -> Ast {
 fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Ast {
     match rule {
         Rule::expr_infix_id | Rule::expr_or | Rule::expr_and | Rule::expr_eq | 
-        Rule::expr_rel | Rule::expr_add | Rule::expr_mul  => {
+        Rule::expr_rel | Rule::expr_add | Rule::expr_mul | Rule::expr_exp => {
             if inner.len() == 1 { return parse_to_ast(inner[0].clone()) }
             assert!(inner.len() > 2);
             assert!(inner.len() % 2 == 1);
@@ -188,6 +188,7 @@ pub fn parse_to_ast(parsed: Pair<Rule>) -> Ast {
         Rule::mult => { Ast::MultOp },
         Rule::sub => { Ast::SubOp },
         Rule::div => { Ast::DivOp },
+        Rule::exp => { Ast::ExpOp },
         Rule::or => { Ast::OrOp },
         Rule::and => { Ast::AndOp },
         Rule::not => { Ast::NotOp },
@@ -207,7 +208,7 @@ pub fn parse_to_ast(parsed: Pair<Rule>) -> Ast {
         Rule::expr_infix_id | Rule::expr_or | Rule::expr_and | 
         Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
         Rule::expr_mul | Rule::expr_apply_or_field | Rule::expr_post | 
-        Rule::expr_prefix |
+        Rule::expr_prefix | Rule::expr_exp |
         Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | 
         Rule::r#let | Rule::r#loop | Rule::function | Rule::r#return => {
             let rule = parsed.as_rule();

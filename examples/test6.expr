@@ -40,6 +40,20 @@
 
 #let a.x := 3;
 #let a := 10;
-let $"x" := 20! <> 2 != false = 2;
+#let $"x" := 20! <> 2 != false = 2;
 
 #if a.x > 2 { return }
+
+#let x := 2;
+#let y := 3;
+#1+x*y+10^2**2
+
+let sh := "hello";
+$("let "+sh+" := \"world\"");
+hello + " " + sh + "!"
+
+#$("let x "+":= 10; x+1")
+#"hello\n\"x\""
+
+
+

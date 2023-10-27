@@ -68,7 +68,7 @@ loop = {
 }
 
 let = {
-    "let" ~ expr ~ ":=" ~ expr
+    "let" ~ identifier ~ ":=" ~ expr
 }
 
 return = {
@@ -92,7 +92,7 @@ not = @{ "not" }
 dollar = @{ "$" }
 add = @{ "+" }
 sub = @{ "-" }
-mult = @{ "*" }
+mult = @{ "*" ~ !"*" }
 div = @{ "/" }
 ge = @{ ">=" }
 le = @{ "<=" }
@@ -102,6 +102,7 @@ eq = @{ "=" }
 ne = @{ "!=" | "<>" }
 and = @{ "and" }
 or = @{ "or" }
+exp = @{ "**" | "^" }
 
 field_access = { "." ~ identifier }
 
@@ -112,7 +113,8 @@ expr_and = { expr_eq ~ (and ~ expr_eq)* }
 expr_eq = { expr_rel ~ ((eq|ne) ~ expr_rel)* }
 expr_rel = { expr_add ~ ((ge|le|gt|lt) ~ expr_add)* }
 expr_add = { expr_mul ~ ((add|sub) ~ expr_mul)* }
-expr_mul = { expr_post ~ ((mult|div) ~ expr_post)* }
+expr_mul = { expr_exp ~ ((mult|div) ~ expr_exp)* }
+expr_exp = { expr_post ~ (exp ~ expr_post)* }
 expr_post = { expr_apply_or_field ~ (question|exclam)* }
 expr_apply_or_field = { expr_prefix ~ (apply_args | field_access)* }
 expr_prefix = { (not|neg|dollar)* ~ expr_base }
