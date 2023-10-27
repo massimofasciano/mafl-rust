@@ -85,10 +85,6 @@ apply_args = {
     "(" ~ (expr ~ ("," ~ expr)*)? ~ ")"
 }
 
-dotcall = {
-    "." ~ identifier ~ apply_args
-}
-
 question = { "?" }
 exclam = { "!" }
 neg = { "-" }
@@ -107,17 +103,17 @@ ne = { "!=" }
 and = { "and" }
 or = { "or" }
 
-expr = { expr_post }
-expr_post = { expr_infix_id ~ (question|exclam)* }
-expr_infix_id = { expr_and ~ (infix_identifier ~ expr_and)* }
+expr = _{ expr_infix_id }
+expr_infix_id = { expr_or ~ (infix_identifier ~ expr_or)* }
 expr_or = { expr_and ~ (or ~ expr_and)* }
 expr_and = { expr_eq ~ (and ~ expr_eq)* }
 expr_eq = { expr_rel ~ ((eq|ne) ~ expr_rel)* }
 expr_rel = { expr_add ~ ((ge|le|gt|lt) ~ expr_add)* }
 expr_add = { expr_mul ~ ((add|sub) ~ expr_mul)* }
-expr_mul = { expr_dotcall ~ ((mult|div) ~ expr_dotcall)* }
-expr_dotcall = { expr_apply ~ dotcall* }
-expr_apply = { expr_prefix ~ apply_args* }
+expr_mul = { expr_post ~ ((mult|div) ~ expr_post)* }
+expr_post = { expr_dotcall ~ (question|exclam)* }
+expr_dotcall = { expr_apply ~ ("." ~ identifier ~ apply_args)* }
+expr_apply = { expr_prefix ~ apply_args? }
 expr_prefix = { (not|neg|dollar)* ~ expr_base }
 expr_base = _{
     "(" ~ expr ~ ")" | 

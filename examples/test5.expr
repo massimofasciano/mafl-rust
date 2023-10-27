@@ -14,7 +14,7 @@ unless x {
 };
 
 loop {
-    unless not test(3,5) {
+    unless test(3,5) {
         break;
     };
     if x > 2 {
