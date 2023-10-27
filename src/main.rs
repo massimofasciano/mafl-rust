@@ -20,8 +20,8 @@ enum Ast<'a> {
     UnaryOpCall(Box<Ast<'a>>,Box<Ast<'a>>),
     AddOp, MultOp, SubOp, DivOp,
     NotOp, AndOp, OrOp, 
-    GtOp, NegOp,
-    DollarOp, QuestionOp,
+    GtOp, GeOp, LtOp, LeOp, NeOp, EqOp,
+    NegOp, DollarOp, QuestionOp, ExclamOp,
     If(Box<Ast<'a>>,Box<Ast<'a>>,Box<Ast<'a>>),
     While(Box<Ast<'a>>,Box<Ast<'a>>),
     DoWhile(Box<Ast<'a>>,Box<Ast<'a>>),
@@ -51,10 +51,11 @@ fn parse_block(parsed: Pair<Rule>) -> Ast {
     }
 }
 
-fn parse_vec(rule: Rule, _string: String, inner: Vec<Pair<Rule>>) -> Ast {
+fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Ast {
     match rule {
         Rule::expr_infix_id | Rule::expr_or | Rule::expr_and | Rule::expr_eq | 
         Rule::expr_rel | Rule::expr_add | Rule::expr_mul  => {
+            if inner.len() == 1 { return parse(inner[0].clone()) }
             assert!(inner.len() > 2);
             assert!(inner.len() % 2 == 1);
             let left = parse(inner[0].clone());
@@ -65,6 +66,7 @@ fn parse_vec(rule: Rule, _string: String, inner: Vec<Pair<Rule>>) -> Ast {
             })
         }
         Rule::expr_post => {
+            if inner.len() == 1 { return parse(inner[0].clone()) }
             assert!(!inner.is_empty());
             let expr = parse(inner[0].clone());
             inner[1..].iter().fold(expr, |ast, pair| {
@@ -73,6 +75,7 @@ fn parse_vec(rule: Rule, _string: String, inner: Vec<Pair<Rule>>) -> Ast {
             })
         }
         Rule::expr_prefix => {
+            if inner.len() == 1 { return parse(inner[0].clone()) }
             assert!(!inner.is_empty());
             let mut rinner = inner;
             rinner.reverse();
@@ -83,6 +86,7 @@ fn parse_vec(rule: Rule, _string: String, inner: Vec<Pair<Rule>>) -> Ast {
             })
         }
         Rule::expr_apply_or_field => {
+            if inner.len() == 1 { return parse(inner[0].clone()) }
             assert!(inner.len() > 1);
             let target = parse(inner[0].clone());
             inner[1..].iter().fold(target, |ast, pair| {
@@ -160,7 +164,10 @@ fn parse_vec(rule: Rule, _string: String, inner: Vec<Pair<Rule>>) -> Ast {
             };
             Ast::Return(Box::new(body)) 
         },
-        _ => unreachable!(),
+        _ => {
+            println!("TODO: [{:?}] {}",rule,string);
+            unreachable!()
+        }
     }
 }
 
@@ -176,6 +183,7 @@ fn parse(parsed: Pair<Rule>) -> Ast {
         Rule::r#false => { Ast::False },
         Rule::dollar => { Ast::DollarOp },
         Rule::question => { Ast::QuestionOp },
+        Rule::exclam => { Ast::ExclamOp },
         Rule::neg => { Ast::NegOp },
         Rule::add => { Ast::AddOp },
         Rule::mult => { Ast::MultOp },
@@ -185,32 +193,28 @@ fn parse(parsed: Pair<Rule>) -> Ast {
         Rule::and => { Ast::AndOp },
         Rule::not => { Ast::NotOp },
         Rule::gt => { Ast::GtOp },
-        Rule::expr_infix_id | Rule::expr_or | Rule::expr_and | 
-        Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
-        Rule::expr_mul | Rule::expr_apply_or_field | Rule::expr_post | 
-        Rule::expr_prefix => { 
-            let rule = parsed.as_rule();
-            let str = parsed.as_str().to_owned();
-            let inner : Vec<Pair<Rule>> = parsed.into_inner().collect();
-            if inner.len() < 2 {
-                parse(inner[0].clone())
-            } else {
-                parse_vec(rule,str,inner)
-            }
-        },
-        Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | 
-        Rule::r#let | Rule::r#loop | Rule::function | Rule::r#return => {
-            let rule = parsed.as_rule();
-            let str = parsed.as_str().to_owned();
-            let inner : Vec<Pair<Rule>> = parsed.into_inner().collect();
-            parse_vec(rule,str,inner)
-        }
+        Rule::ge => { Ast::GeOp },
+        Rule::lt => { Ast::LtOp },
+        Rule::le => { Ast::LeOp },
+        Rule::ne => { Ast::NeOp },
+        Rule::eq => { Ast::EqOp },
         Rule::r#continue => { Ast::Continue },
         Rule::r#break => { Ast::Break },
         Rule::block | Rule::file  => { parse_block(parsed) },
         Rule::string_literal => {
             // these rules can't be made silent in the grammar (as of current version)
             parsed.into_inner().next().map(parse).unwrap()
+        }
+        Rule::expr_infix_id | Rule::expr_or | Rule::expr_and | 
+        Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
+        Rule::expr_mul | Rule::expr_apply_or_field | Rule::expr_post | 
+        Rule::expr_prefix |
+        Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | 
+        Rule::r#let | Rule::r#loop | Rule::function | Rule::r#return => {
+            let rule = parsed.as_rule();
+            let str = parsed.as_str().to_owned();
+            let inner : Vec<Pair<Rule>> = parsed.into_inner().collect();
+            parse_vec(rule,str,inner)
         }
         _ => {
             println!("TODO: [{:?}] {}",parsed.as_rule(), parsed.as_str());

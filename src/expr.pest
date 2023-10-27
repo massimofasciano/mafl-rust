@@ -85,23 +85,23 @@ apply_args = {
     "(" ~ (expr ~ ("," ~ expr)*)? ~ ")"
 }
 
-question = { "?" }
-exclam = { "!" }
-neg = { "-" }
-not = { "not" }
-dollar = { "$" }
-add = { "+" }
-sub = { "-" }
-mult = { "*" }
-div = { "/" }
-ge = { ">=" }
-le = { "<=" }
-gt = { ">" }
-lt = { "<" }
-eq = { "=" }
-ne = { "!=" | "<>" }
-and = { "and" }
-or = { "or" }
+question = @{ "?" }
+exclam = @{ "!" ~ !"=" }
+neg = @{ "-" }
+not = @{ "not" }
+dollar = @{ "$" }
+add = @{ "+" }
+sub = @{ "-" }
+mult = @{ "*" }
+div = @{ "/" }
+ge = @{ ">=" }
+le = @{ "<=" }
+gt = @{ ">" ~ !"=" }
+lt = @{ "<" ~ !"=" }
+eq = @{ "=" }
+ne = @{ "!=" | "<>" }
+and = @{ "and" }
+or = @{ "or" }
 
 field_access = { "." ~ identifier }
 

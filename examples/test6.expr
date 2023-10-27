@@ -40,6 +40,6 @@
 
 #let a.x := 3;
 #let a := 10;
-let $"x" := 20;
+let $"x" := 20! <> 2 != false = 2;
 
 #if a.x > 2 { return }
