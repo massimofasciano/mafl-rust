@@ -1,12 +1,12 @@
 use pest::Parser;
 use crate::ast::parse_to_ast;
-use crate::types::{ExprParser, Rule, Ast};
+use crate::types::{MfelParser, Rule, Ast};
 pub mod ast;
 pub mod eval;
 pub mod types;
 
 pub fn parse_string_to_ast(source: &str) -> Ast {
-    let parsed = ExprParser::parse(Rule::file, source)
+    let parsed = MfelParser::parse(Rule::file, source)
         .expect("unsuccessful parse") 
         .next().unwrap(); 
     // println!("{:#?}",parsed);

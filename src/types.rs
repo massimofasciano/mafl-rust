@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use pest_derive::Parser;
 
 #[derive(Parser)]
-#[grammar = "expr.pest"]
-pub struct ExprParser;
+#[grammar = "mfel.pest"]
+pub struct MfelParser;
 
 #[derive(Debug,Clone,PartialEq,PartialOrd)]
 pub enum Ast {
