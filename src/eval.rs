@@ -1,5 +1,4 @@
-use std::ops::{Add, Mul, Neg, Sub};
-use crate::{parse_string_to_ast, unescape_string, types::{Value, Context, Ast}};
+use crate::{parse_string_to_ast, unescape_string, types::{Value, Context, Ast, AstAtom}};
 
 pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
     match ast {
@@ -73,17 +72,19 @@ pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
             let op = op.as_ref();
             let (_, left) = eval(ctx.clone(),left.as_ref());
             let (_, right) = eval(ctx.clone(),right.as_ref());
+            let aleft = AstAtom::from(left.to_owned());
+            let aright = AstAtom::from(right.to_owned());
             (ctx, match op {
                 Ast::AddOp => left+right,
                 Ast::SubOp => left-right,
                 Ast::MultOp => left*right,
-                Ast::ExpOp => left.exp(right),
-                Ast::GtOp => Value::Boolean(left>right),
-                Ast::GeOp => Value::Boolean(left>=right),
-                Ast::LtOp => Value::Boolean(left<right),
-                Ast::LeOp => Value::Boolean(left<=right),
-                Ast::EqOp => Value::Boolean(left==right),
-                Ast::NeOp => Value::Boolean(left!=right),
+                Ast::ExpOp => left.pow(right),
+                Ast::GtOp => Value::Boolean(aleft>aright),
+                Ast::GeOp => Value::Boolean(aleft>=aright),
+                Ast::LtOp => Value::Boolean(aleft<aright),
+                Ast::LeOp => Value::Boolean(aleft<=aright),
+                Ast::EqOp => Value::Boolean(aleft==aright),
+                Ast::NeOp => Value::Boolean(aleft!=aright),
                 _ => Value::from(ast),
             })
         }
@@ -107,72 +108,3 @@ pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
     }
 }
 
-impl Value {
-    fn exp(self, rhs: Self) -> Self {
-        match (self, rhs) {
-            (Value::Float(a), Value::Float(b)) => Value::Float(a.powf(b)),
-            (Value::Float(a), Value::Integer(b)) => Value::Float(a.powf(b as f64)),
-            (Value::Integer(a), Value::Float(b)) => Value::Float((a as f64).powf(b)),
-            (Value::Integer(a), Value::Integer(b)) => Value::Integer(a.pow(b as u32)),
-            _ => Self::Unit,
-        }
-    }
-}
-
-impl Add for Value {
-    type Output = Value;
-    fn add(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (Value::Float(a), Value::Float(b)) => Value::Float(a+b),
-            (Value::Float(a), Value::Integer(b)) => Value::Float(a+b as f64),
-            (Value::Integer(a), Value::Float(b)) => Value::Float(a as f64+b),
-            (Value::Integer(a), Value::Integer(b)) => Value::Integer(a+b),
-            (Value::String(a), Value::String(b)) => Value::String(format!("{a}{b}")),
-            (Value::String(a), Value::Integer(b)) => Value::String(format!("{a}{b}")),
-            (Value::Integer(a), Value::String(b)) => Value::String(format!("{a}{b}")),
-            (Value::String(a), Value::Float(b)) => Value::String(format!("{a}{b}")),
-            (Value::Float(a), Value::String(b)) => Value::String(format!("{a}{b}")),
-            _ => Self::Unit,
-        }
-    }
-}
-
-impl Sub for Value {
-    type Output = Value;
-    fn sub(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (Value::Float(a), Value::Float(b)) => Value::Float(a-b),
-            (Value::Float(a), Value::Integer(b)) => Value::Float(a-b as f64),
-            (Value::Integer(a), Value::Float(b)) => Value::Float(a as f64-b),
-            (Value::Integer(a), Value::Integer(b)) => Value::Integer(a-b),
-            _ => Self::Unit,
-        }
-    }
-}
-
-impl Mul for Value {
-    type Output = Value;
-    fn mul(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (Value::Float(a), Value::Float(b)) => Value::Float(a*b),
-            (Value::Float(a), Value::Integer(b)) => Value::Float(a*b as f64),
-            (Value::Integer(a), Value::Float(b)) => Value::Float(a as f64*b),
-            (Value::Integer(a), Value::Integer(b)) => Value::Integer(a*b),
-            (Value::String(a), Value::Integer(b)) => Value::String(a.repeat(b as usize)),
-            (Value::Integer(a), Value::String(b)) => Value::String(b.repeat(a as usize)),
-            _ => Self::Unit,
-        }
-    }
-}
-
-impl Neg for Value {
-    type Output = Value;
-    fn neg(self) -> Self::Output {
-        match self {
-            Value::Float(a) => Value::Float(-a),
-            Value::Integer(a) => Value::Integer(-a),
-            Value::String(a) => Value::String(a.chars().rev().collect::<String>()),
-            _ => Self::Unit,
-        }
-    }
-}
