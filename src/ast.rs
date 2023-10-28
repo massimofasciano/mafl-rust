@@ -5,11 +5,12 @@ use pest_derive::Parser;
 #[grammar = "expr.pest"]
 pub struct ExprParser;
 
-#[derive(Debug,Clone)]
+#[derive(Debug,Clone,PartialEq,PartialOrd)]
 pub enum Ast {
     // Todo(String),
     Integer(i64),
     Float(f64),
+    Boolean(bool),
     Unit,
     Block(Vec<Ast>),
     Identifier(String),
@@ -24,11 +25,10 @@ pub enum Ast {
     If(Box<Ast>,Box<Ast>,Box<Ast>),
     While(Box<Ast>,Box<Ast>),
     DoWhile(Box<Ast>,Box<Ast>),
-    Let(Box<Ast>,Box<Ast>),
-    Assign(Box<Ast>,Box<Ast>),
+    Let(String,Box<Ast>),
+    Assign(String,Box<Ast>),
     Loop(Box<Ast>),
-    True, False,
-    Function(Vec<Ast>,Box<Ast>),
+    Function(Vec<String>,Box<Ast>),
     String(String),
     Return(Box<Ast>),
     Variable(String),
@@ -114,7 +114,7 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Ast {
             assert!(inner.len() == 2);
             assert!(inner[0].as_rule() == Rule::function_args);
             assert!(inner[1].as_rule() == Rule::block);
-            let args : Vec<_> = inner[0].clone().into_inner().map(|e| (parse_to_ast(e.clone()))).collect();
+            let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
             let body = parse_to_ast(inner[1].clone());
             Ast::Function(args, Box::new(body))
         } 
@@ -137,15 +137,15 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Ast {
         } 
         Rule::r#let => {
             assert!(inner.len() == 2);
-            let var = parse_to_ast(inner[0].clone());
+            let var = inner[0].as_str().to_owned();
             let val = parse_to_ast(inner[1].clone());
-            Ast::Let(Box::new(var), Box::new(val))
+            Ast::Let(var, Box::new(val))
         } 
         Rule::assign => {
             assert!(inner.len() == 2);
-            let var = parse_to_ast(inner[0].clone());
+            let var = inner[0].as_str().to_owned();
             let val = parse_to_ast(inner[1].clone());
-            Ast::Assign(Box::new(var), Box::new(val))
+            Ast::Assign(var, Box::new(val))
         } 
         Rule::r#while => {
             assert!(inner.len() == 2);
@@ -190,8 +190,8 @@ pub fn parse_to_ast(parsed: Pair<Rule>) -> Ast {
         Rule::string => { Ast::String(parsed.as_str().to_owned()) },
         Rule::unit_literal => { Ast::Unit },
         Rule::unit_implicit => { Ast::Unit },
-        Rule::r#true => { Ast::True },
-        Rule::r#false => { Ast::False },
+        Rule::r#true => { Ast::Boolean(true) },
+        Rule::r#false => { Ast::Boolean(false) },
         Rule::dollar => { Ast::DollarOp },
         Rule::question => { Ast::QuestionOp },
         Rule::exclam => { Ast::ExclamOp },

@@ -38,8 +38,8 @@
 
 #a.get(1)(1,2)().run()
 
-#let a.x := 3;
-#let a := 10;
+#let a.x = 3;
+#let a = 10;
 #let $"x" := 20! <> 2 != false = 2;
 
 #if a.x > 2 { return }
@@ -55,8 +55,8 @@
 #$("let x "+":= 10; x+1")
 #"hello\n\"x\""
 
-let x = 2;
-let y = 3;
+#let x = 2;
+#let y = 3;
 
 #if x <> y {
 #    1
@@ -64,7 +64,19 @@ let y = 3;
 #    2
 #}
 
-while y < 10 {
-    y := y + 1;
-}
+#while y < 10 {
+#    y := y + 1;
+#}
 
+#fn(x){x+1}(1)
+
+let x = 10;
+let y = 20;
+let z = 30;
+
+let f = fn (x,y,z) { 
+    fn (a) {
+        x + y * z + a
+    }
+};
+f(2,3,4)(10)

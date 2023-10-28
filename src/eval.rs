@@ -12,49 +12,33 @@ pub enum Value {
     String(String),
     Boolean(bool),
     Unit,
+    Ast(Ast),
 }
 
 pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
     match ast {
         Ast::Integer(i) => (ctx, Value::Integer(*i)),
         Ast::Float(f) => (ctx, Value::Float(*f)),
+        Ast::Boolean(b) => { (ctx, Value::Boolean(*b)) }
         Ast::String(s) => (ctx, Value::String(unescape_string(s.to_string()))),
         Ast::Block(exprs) => {
             exprs.iter().fold((ctx, Value::Unit), |(ctx, _),expr| {
                 eval(ctx,expr)
             })
         }
-        Ast::Let(var, val) => {
+        Ast::Let(id, val) => {
             let (_, val) = eval(ctx.clone(),val);
-            let var = var.as_ref();
-            match var {
-                Ast::Identifier(id) => {
-                    ctx.insert(id.to_owned(), val.clone());
-                    (ctx, val)
-                }
-                _ => (ctx, Value::Unit)
-            }
-        }
-        Ast::Assign(var, val) => {
-            let (_, val) = eval(ctx.clone(),val);
-            let var = var.as_ref();
-            match var {
-                Ast::Identifier(id) => {
-                    ctx.insert(id.to_owned(), val.clone());
-                    (ctx, val)
-                }
-                _ => (ctx, Value::Unit)
-            }
-        }
-        Ast::Variable(s) => {
-            let val = ctx.get(s).unwrap_or(&Value::Unit).to_owned();
+            ctx.insert(id.to_owned(), val.to_owned());
             (ctx, val)
         }
-        Ast::True => {
-            (ctx, Value::Boolean(true))
+        Ast::Assign(id, val) => {
+            let (_, val) = eval(ctx.clone(),val);
+            ctx.insert(id.to_owned(), val.to_owned());
+            (ctx, val)
         }
-        Ast::False => {
-            (ctx, Value::Boolean(false))
+        Ast::Variable(s) => {
+            let val = ctx.get(s).unwrap_or(&Value::Ast(ast.to_owned())).to_owned();
+            (ctx, val)
         }
         Ast::If(cond, then, r#else) => {
             let (_, cond) = eval(ctx.clone(),cond.as_ref());
@@ -67,7 +51,7 @@ pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
                         let (_, r#else) = eval(ctx.clone(),r#else.as_ref());
                         (ctx, r#else)
                     }
-                _ => (ctx, Value::Unit),
+                _ => (ctx, Value::Ast(ast.to_owned())),
             }
         }
         Ast::While(cond, body) => {
@@ -83,7 +67,20 @@ pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
                     } else {
                         (ctx, Value::Unit)
                     }
-                _ => (ctx, Value::Unit),
+                _ => (ctx, Value::Ast(ast.to_owned())),
+            }
+        }
+        Ast::FunctionCall(lambda, arg_values) => {
+            let lambda = eval(ctx.clone(), lambda).1;
+            match lambda {
+                Value::Ast(Ast::Function(arg_names, body)) => {
+                    let fctx = arg_names.iter().zip(arg_values).fold(ctx.clone(), |mut nctx,(name,value)| {
+                        nctx.insert(name.to_owned(), eval(ctx.clone(),value).1);
+                        nctx
+                    });
+                    (ctx,eval(fctx,&body).1)
+                },
+                _ => unreachable!()
             }
         }
         Ast::BinOpCall(op, left, right) => {
@@ -101,7 +98,7 @@ pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
                 Ast::LeOp => Value::Boolean(left<=right),
                 Ast::EqOp => Value::Boolean(left==right),
                 Ast::NeOp => Value::Boolean(left!=right),
-                _ => Value::Unit,
+                _ => Value::Ast(ast.to_owned()),
             })
         }
         Ast::UnaryOpCall(op, expr) => {
@@ -117,10 +114,10 @@ pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
                         _ => (ctx, expr)
                     }
                 }
-                _ => (ctx, Value::Unit),
+                _ => (ctx, Value::Ast(ast.to_owned())),
             }
         }
-        _ => (ctx, Value::Unit),
+        _ => (ctx, Value::Ast(ast.to_owned())),
     }
 }
 

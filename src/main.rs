@@ -5,6 +5,7 @@ fn main() {
     let source = read_to_string(stdin()).unwrap();
     let ast = parse_string_to_ast(&source);
     println!("{ast:#?}");
-    let val = eval(Context::new(),&ast);
-    println!("{val:?}");
+    let (ctx, result) = eval(Context::new(),&ast);
+    println!("{ctx:#?}");
+    println!("{result:#?}");
 }
