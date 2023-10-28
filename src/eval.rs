@@ -1,19 +1,5 @@
-use std::{collections::HashMap, ops::{Add, Mul, Neg, Sub}};
-use crate::{ast::Ast, parse_string_to_ast, unescape_string};
-
-pub type Context = HashMap<String,Value>;
-
-// change design to partially evaluate the Ast directly instead of using Value ?
-
-#[derive(Debug,Clone,PartialEq,PartialOrd)]
-pub enum Value {
-    Integer(i64),
-    Float(f64),
-    String(String),
-    Boolean(bool),
-    Unit,
-    Ast(Ast),
-}
+use std::ops::{Add, Mul, Neg, Sub};
+use crate::{parse_string_to_ast, unescape_string, types::{Value, Context, Ast}};
 
 pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
     match ast {

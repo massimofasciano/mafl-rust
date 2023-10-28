@@ -1,5 +1,5 @@
 use std::io::{read_to_string, stdin};
-use test_pest_expr::{parse_string_to_ast, eval::{eval, Context}};
+use test_pest_expr::{parse_string_to_ast, eval::eval, types::Context};
 
 fn main() {
     let source = read_to_string(stdin()).unwrap();

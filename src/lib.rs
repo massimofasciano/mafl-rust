@@ -1,7 +1,9 @@
 use pest::Parser;
-use crate::ast::{ExprParser, parse_to_ast, Rule, Ast};
+use crate::ast::parse_to_ast;
+use crate::types::{ExprParser, Rule, Ast};
 pub mod ast;
 pub mod eval;
+pub mod types;
 
 pub fn parse_string_to_ast(source: &str) -> Ast {
     let parsed = ExprParser::parse(Rule::file, source)
