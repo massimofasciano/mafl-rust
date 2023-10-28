@@ -70,9 +70,9 @@
 
 #fn(x){x+1}(1)
 
-let x = 10;
-let y = 20;
-let z = 30;
+#let x = 10;
+#let y = 20;
+#let z = 30;
 
 let f = fn (x,y,z) { 
     fn (a) {

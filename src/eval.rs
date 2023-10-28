@@ -55,11 +55,23 @@ pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
                 _ => (ctx, Value::from(ast)),
             }
         }
+        Ast::Function(arg_names, body) => {
+            (ctx.clone(), Value::Closure(ctx, arg_names.to_owned(), body.to_owned()))
+        }
         Ast::FunctionCall(lambda, arg_values) => {
             let lambda = eval(ctx.clone(), lambda).1;
             match lambda {
                 Value::Function(arg_names, body) => {
                     let fctx = arg_names.iter().zip(arg_values).fold(ctx.clone(), |mut nctx,(name,value)| {
+                        nctx.insert(name.to_owned(), eval(ctx.clone(),value).1);
+                        nctx
+                    });
+                    (ctx,eval(fctx,&body).1)
+                },
+                Value::Closure(cctx, arg_names, body) => {
+                    let mut clctx = ctx.clone();
+                    clctx.extend(cctx);
+                    let fctx = arg_names.iter().zip(arg_values).fold(clctx, |mut nctx,(name,value)| {
                         nctx.insert(name.to_owned(), eval(ctx.clone(),value).1);
                         nctx
                     });
