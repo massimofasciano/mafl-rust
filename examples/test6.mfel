@@ -84,9 +84,25 @@
 # currying!
 #fn(x,y,z){x+y*z}(1)(2)(2)
 
-let f = fn (x,y,z) { 
-    fn (a) {
-        x + y * z + a
-    }
-};
-f(2,3)(4,10)
+#let f = fn (x,y,z) { 
+#    fn (a) {
+#        x + y * z + a
+#    }
+#};
+#f(2,3)(4,10)
+
+#let x = let y = 10;
+#let z = 20;
+#x*y+z
+
+let f1 = fn (x) { x + y };
+let y = 1;
+let f2 = fn (x) { x + y };
+{let x = 10;
+while x > 0 {
+    x := x - 1;
+    y := y * 2;
+    f1(10000)+f2(1000)
+}}
+
+

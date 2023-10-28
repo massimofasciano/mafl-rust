@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ops::{Add, Sub, Mul, Neg}};
+use std::ops::{Add, Sub, Mul, Neg};
 
 use pest_derive::Parser;
 
@@ -32,7 +32,7 @@ pub enum Ast {
     Assign(String,Box<Ast>),
     Loop(Box<Ast>),
     Function(Vec<String>,Box<Ast>),
-    Closure(Scope,Vec<String>,Box<Ast>),
+    Closure(Context,Vec<String>,Box<Ast>),
     Return(Box<Ast>),
     Continue, Break,
 }
@@ -57,9 +57,6 @@ pub enum AstAtom {
     String(String),
     Unit,
 }
-
-pub type Scope = HashMap<String,Value>;
-pub type Context = Scope;
 
 pub type Value = Ast;
 impl From<&Ast> for Value {
@@ -139,7 +136,7 @@ impl Neg for Value {
 }
 
 #[derive(Debug,Clone,PartialEq)]
-pub struct ContextStack {
+pub struct Context {
     stack: Vec<ContextItem>
 }
 
@@ -168,7 +165,7 @@ impl ContextItem {
     }
 }
 
-impl ContextStack {
+impl Context {
     pub fn new() -> Self {
         Self {
             stack: vec![]
@@ -207,9 +204,17 @@ impl ContextStack {
         }
         false
     }
+    pub fn add_context(&mut self, ctx: Context) {
+        for item in ctx.stack {
+            match item {
+                ContextItem::NewScope => {},
+                ContextItem::Binding(var, value) => self.add_binding(var, value),
+            }
+        }
+    }
 }
 
-impl Default for ContextStack {
+impl Default for Context {
     fn default() -> Self {
         Self::new()
     }
@@ -217,7 +222,7 @@ impl Default for ContextStack {
 
 #[cfg(test)]
 mod tests {
-    use super::{Value,ContextStack};
+    use super::{Value,Context};
 
     fn test_val(i: i64) -> Value {
         Value::Integer(i)
@@ -225,7 +230,7 @@ mod tests {
 
     #[test]
     fn stack_test() {
-        let mut ctx = ContextStack::new();
+        let mut ctx = Context::new();
         ctx.add_binding("v1".to_owned(), test_val(1));
         ctx.add_binding("v2".to_owned(), test_val(2));
             ctx.start_scope();
