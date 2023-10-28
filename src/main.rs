@@ -1,5 +1,5 @@
 use std::io::{read_to_string, stdin};
-use mfe_lang::{parse_string_to_ast, eval::eval, types::Context};
+use mfel::{parse_string_to_ast, eval::eval, types::Context};
 
 fn main() {
     let source = read_to_string(stdin()).unwrap();
