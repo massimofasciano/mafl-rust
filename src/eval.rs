@@ -16,7 +16,7 @@ impl Context {
                 self.end_scope();
                 block_value
             }
-            Ast::Let(id, val) => {
+            Ast::Var(id, val) => {
                 let val = self.eval(val);
                 self.add_binding(id.to_owned(), val.to_owned());
                 val

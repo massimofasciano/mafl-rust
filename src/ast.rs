@@ -102,11 +102,11 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Ast {
             };
             Ast::If(Box::new(cond), Box::new(then), Box::new(r#else))
         } 
-        Rule::r#let => {
+        Rule::var => {
             assert!(inner.len() == 2);
             let var = inner[0].as_str().to_owned();
             let val = parse_to_ast(inner[1].clone());
-            Ast::Let(var, Box::new(val))
+            Ast::Var(var, Box::new(val))
         } 
         Rule::assign => {
             assert!(inner.len() == 2);
@@ -189,7 +189,7 @@ pub fn parse_to_ast(parsed: Pair<Rule>) -> Ast {
         Rule::expr_mul | Rule::expr_apply_or_field | Rule::expr_post | 
         Rule::expr_prefix | Rule::expr_exp | Rule::variable |
         Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | 
-        Rule::assign | Rule::r#let | Rule::r#loop | Rule::function | Rule::r#return => {
+        Rule::assign | Rule::var | Rule::r#loop | Rule::function | Rule::r#return => {
             let rule = parsed.as_rule();
             let str = parsed.as_str().to_owned();
             let inner : Vec<Pair<Rule>> = parsed.into_inner().collect();

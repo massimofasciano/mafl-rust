@@ -6,7 +6,7 @@ COMMENT = _{ "#" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" |
     "return" | "break" | "continue" |
-    "let" | "fn" | 
+    "let" | "lambda" | "var" | "in" | 
     "true" | "false" |
     "and" | "or" | "not"
 }
@@ -44,7 +44,7 @@ string = @{
 
 function_args = { (identifier ~ ("," ~ identifier)*)? }
 function = {
-    "fn" ~ "(" ~ function_args ~ ")" ~ block
+    "lambda" ~ "(" ~ function_args ~ ")" ~ block
 }
 
 if = {
@@ -67,8 +67,12 @@ loop = {
     "loop" ~ block
 }
 
-let = {
-    "let" ~ identifier ~ "=" ~ expr
+let_in = {
+    "let" ~ identifier ~ "=" ~ expr ~ "in" ~ expr
+}
+
+var = {
+    "var" ~ identifier ~ "=" ~ expr
 }
 
 assign = {
@@ -128,7 +132,7 @@ expr_base = _{
     "(" ~ expr ~ ")" | 
     block | if | 
     while | unless | do_while | loop |
-    let | function | assign |
+    var | let_in | function | assign |
     return | continue | break |
     boolean | float | integer | string_literal | variable | unit_literal
 }
