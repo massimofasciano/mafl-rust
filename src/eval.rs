@@ -23,7 +23,7 @@ pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
             (ctx, val)
         }
         Ast::Variable(s) => {
-            let val = ctx.get(s).unwrap_or(&Value::Ast(ast.to_owned())).to_owned();
+            let val = ctx.get(s).unwrap_or(&Value::from(ast)).to_owned();
             (ctx, val)
         }
         Ast::If(cond, then, r#else) => {
@@ -37,7 +37,7 @@ pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
                         let (_, r#else) = eval(ctx.clone(),r#else.as_ref());
                         (ctx, r#else)
                     }
-                _ => (ctx, Value::Ast(ast.to_owned())),
+                _ => (ctx, Value::from(ast)),
             }
         }
         Ast::While(cond, body) => {
@@ -53,13 +53,13 @@ pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
                     } else {
                         (ctx, Value::Unit)
                     }
-                _ => (ctx, Value::Ast(ast.to_owned())),
+                _ => (ctx, Value::from(ast)),
             }
         }
         Ast::FunctionCall(lambda, arg_values) => {
             let lambda = eval(ctx.clone(), lambda).1;
             match lambda {
-                Value::Ast(Ast::Function(arg_names, body)) => {
+                Value::Function(arg_names, body) => {
                     let fctx = arg_names.iter().zip(arg_values).fold(ctx.clone(), |mut nctx,(name,value)| {
                         nctx.insert(name.to_owned(), eval(ctx.clone(),value).1);
                         nctx
@@ -84,7 +84,7 @@ pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
                 Ast::LeOp => Value::Boolean(left<=right),
                 Ast::EqOp => Value::Boolean(left==right),
                 Ast::NeOp => Value::Boolean(left!=right),
-                _ => Value::Ast(ast.to_owned()),
+                _ => Value::from(ast),
             })
         }
         Ast::UnaryOpCall(op, expr) => {
@@ -100,10 +100,10 @@ pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
                         _ => (ctx, expr)
                     }
                 }
-                _ => (ctx, Value::Ast(ast.to_owned())),
+                _ => (ctx, Value::from(ast)),
             }
         }
-        _ => (ctx, Value::Ast(ast.to_owned())),
+        _ => (ctx, Value::from(ast)),
     }
 }
 

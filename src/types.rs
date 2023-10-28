@@ -8,7 +8,7 @@ pub struct MfelParser;
 
 #[derive(Debug,Clone,PartialEq,PartialOrd)]
 pub enum Ast {
-    // Todo(String),
+    Error(String),
     Integer(i64),
     Float(f64),
     Boolean(bool),
@@ -38,12 +38,19 @@ pub enum Ast {
 
 pub type Context = HashMap<String,Value>;
 
-#[derive(Debug,Clone,PartialEq,PartialOrd)]
-pub enum Value {
-    Integer(i64),
-    Float(f64),
-    String(String),
-    Boolean(bool),
-    Unit,
-    Ast(Ast),
+// #[derive(Debug,Clone,PartialEq,PartialOrd)]
+// pub enum Value {
+//     Integer(i64),
+//     Float(f64),
+//     String(String),
+//     Boolean(bool),
+//     Unit,
+//     Ast(Ast),
+// }
+
+pub type Value = Ast;
+impl From<&Ast> for Value {
+    fn from(value: &Ast) -> Self {
+        value.to_owned()
+    }
 }

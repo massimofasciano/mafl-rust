@@ -198,7 +198,7 @@ pub fn parse_to_ast(parsed: Pair<Rule>) -> Ast {
         _ => {
             println!("TODO: [{:?}] {}",parsed.as_rule(), parsed.as_str());
             // let rule_name = format!("{:?}",parsed.as_rule());
-            // parsed.into_inner().next().map(parse).unwrap_or(Ast::Todo(rule_name))
+            // parsed.into_inner().next().map(parse).unwrap_or(Ast::Error(rule_name))
             unreachable!()
         }
     }
