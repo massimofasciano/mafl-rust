@@ -74,9 +74,19 @@
 #let y = 20;
 #let z = 30;
 
+#let f = fn (x,y,z) { 
+#    fn (a) {
+#        x + y * z + a
+#    }
+#};
+#f(2,3,4)(10)
+
+# currying!
+#fn(x,y,z){x+y*z}(1)(2)(2)
+
 let f = fn (x,y,z) { 
     fn (a) {
         x + y * z + a
     }
 };
-f(2,3,4)(10)
+f(2,3)(4,10)

@@ -61,13 +61,6 @@ pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
         Ast::FunctionCall(lambda, arg_values) => {
             let lambda = eval(ctx.clone(), lambda).1;
             match lambda {
-                Value::Function(arg_names, body) => {
-                    let fctx = arg_names.iter().zip(arg_values).fold(ctx.clone(), |mut nctx,(name,value)| {
-                        nctx.insert(name.to_owned(), eval(ctx.clone(),value).1);
-                        nctx
-                    });
-                    (ctx,eval(fctx,&body).1)
-                },
                 Value::Closure(cctx, arg_names, body) => {
                     let mut clctx = ctx.clone();
                     clctx.extend(cctx);
@@ -75,7 +68,16 @@ pub fn eval(mut ctx: Context, ast: &Ast) -> (Context,Value) {
                         nctx.insert(name.to_owned(), eval(ctx.clone(),value).1);
                         nctx
                     });
-                    (ctx,eval(fctx,&body).1)
+                    #[allow(clippy::comparison_chain)]
+                    if arg_names.len() > arg_values.len() {
+                        println!("performing currying: {arg_names:?} {arg_values:?}");
+                        (ctx,Value::Closure(fctx, arg_names[arg_values.len()..].to_vec(), body))
+                    } else if arg_names.len() < arg_values.len() {
+                        println!("extra args supplied: {arg_names:?} {arg_values:?}");
+                        (ctx,eval(fctx.clone(),&Value::FunctionCall(Box::new(eval(fctx,&body).1),arg_values[arg_names.len()..].to_vec())).1)
+                    } else {
+                        (ctx,eval(fctx,&body).1)
+                    }
                 },
                 _ => unreachable!()
             }
