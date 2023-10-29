@@ -95,25 +95,39 @@
 #var z = 20;
 #x*y+z
 
-#var f1 = lambda (x) { x + y };
-#var y = 1;
-#var f2 = lambda (x) { x + y };
-#{var x = 10;
-#while x > 0 {
-#    x := x - 1;
-#    y := y * 2;
-#    f1(10000)+f2(1000)
-#}}
+(# block comment...
 
-# dynamic binding interacting with recursion: solution ?
-var rec = lambda (x) { x };
-var rec = lambda (x) {
-    if x < 1 {
-        1
-    } else {
-        2*rec(x-1)
-    }
-};
-rec(4)
+var f1 = lambda (x) { x + y };
+var y = 1;
+var f2 = lambda (x) { x + y };
+{var x = 10;
+while x > 0 {
+    x := x - 1;
+    y := y * 2;
+    f1(10000)+f2(1000)
+}}
+
+#)
+
+#@println("hello, my value is: ",10^3);
+## dynamic binding interacting with recursion: solution ?
+#var rec = lambda (x) { x };
+#var rec = lambda (x) {
+#    if x < 1 (# comment #) {
+#        1
+#    } else {
+#        2*rec(x-1)
+#    }
+#};
+#rec(4)
+
+# NOTE: make block comments recursive 
 
 # NOTE: add let v = e in exp to grammar
+
+(#
+var sh = "hello";
+@eval("var "+sh+" = \"world\"");
+sh + " " + hello + "!"
+#)
+

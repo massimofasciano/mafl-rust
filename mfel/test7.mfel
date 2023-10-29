@@ -1,0 +1,4 @@
+# fix infix function op
+
+var add = lambda(x,y) { x+y };
+add(1,2) $add 3

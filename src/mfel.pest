@@ -1,7 +1,9 @@
 WHITESPACE = _{ " " | "\t" | NEWLINE }
 
+COMMENT = _{ block_comment | line_comment }
 // python-style line comments starting with #
-COMMENT = _{ "#" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
+line_comment = @{ "#" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
+block_comment = @{ "(#" ~ (!"#)" ~ ANY)* ~ ("#)" | EOI) }
 
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" |
@@ -17,6 +19,9 @@ identifier = @{
     (ASCII_ALPHANUMERIC | "_")* 
 }
 infix_identifier = ${
+    "$" ~ identifier
+}
+builtin = ${
     "@" ~ identifier
 }
 integer = @{ 
@@ -93,17 +98,19 @@ apply_args = {
     "(" ~ (expr ~ ("," ~ expr)*)? ~ ")"
 }
 
-variable = { identifier }
+variable = { identifier | builtin }
 
 question = @{ "?" }
 exclam = @{ "!" ~ !"=" }
 neg = @{ "-" }
 not = @{ "not" }
-dollar = @{ "$" }
+ref = @{ "&" }
+deref = @{ "*" }
 add = @{ "+" }
 sub = @{ "-" }
 mult = @{ "*" ~ !"*" }
 div = @{ "/" }
+mod = @{ "mod" | "%" }
 ge = @{ ">=" }
 le = @{ "<=" }
 gt = @{ ">" ~ !"=" }
@@ -127,7 +134,7 @@ expr_mul = { expr_exp ~ ((mult|div) ~ expr_exp)* }
 expr_exp = { expr_post ~ (exp ~ expr_post)* }
 expr_post = { expr_apply_or_field ~ (question|exclam)* }
 expr_apply_or_field = { expr_prefix ~ (apply_args | field_access)* }
-expr_prefix = { (not|neg|dollar)* ~ expr_base }
+expr_prefix = { (not|neg|ref|deref)* ~ expr_base }
 expr_base = _{
     "(" ~ expr ~ ")" | 
     block | if | 

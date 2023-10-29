@@ -27,8 +27,11 @@ impl Context {
                 val
             }
             Ast::Variable(s) => {
-                let val = self.get_binding(s).unwrap_or(&Value::from(ast)).to_owned();
-                val
+                if s.starts_with('@') {
+                    Value::Builtin(s.strip_prefix('@').unwrap().to_owned())
+                } else {
+                    self.get_binding(s).unwrap_or(&Value::from(ast)).to_owned()
+                }
             }
             Ast::If(cond, then, r#else) => {
                 let cond = self.eval(cond.as_ref());
@@ -61,6 +64,10 @@ impl Context {
             }
             Ast::FunctionCall(lambda, arg_values) => {
                 match self.eval(lambda) {
+                    Value::Builtin(name) => {
+                        let eval_args : Vec<_> = arg_values.iter().map(|e|self.eval(e)).collect();
+                        self.builtin(&name, &eval_args)
+                    }
                     Value::Closure(closure_ctx, arg_names, body) => {
                         let mut function_ctx = self.clone();
                         function_ctx.add_context(closure_ctx);
@@ -92,7 +99,8 @@ impl Context {
                     Ast::AddOp => left+right,
                     Ast::SubOp => left-right,
                     Ast::MultOp => left*right,
-                    Ast::ExpOp => left.pow(right),
+                    // Ast::ExpOp => left.pow(right),
+                    Ast::ExpOp => self.builtin("pow",&[left,right]),
                     Ast::GtOp => Value::Boolean(aleft>aright),
                     Ast::GeOp => Value::Boolean(aleft>=aright),
                     Ast::LtOp => Value::Boolean(aleft<aright),
@@ -107,14 +115,14 @@ impl Context {
                 let expr = self.eval(expr.as_ref());
                 match op {
                     Ast::NegOp => -expr,
-                    Ast::DollarOp => {
-                        match expr {
-                            Value::String(s) => {
-                                self.eval(&parse_string_to_ast(&s))
-                            }
-                            _ => expr
-                        }
-                    }
+                    // Ast::DollarOp => {
+                    //     match expr {
+                    //         Value::String(s) => {
+                    //             self.eval(&parse_string_to_ast(&s))
+                    //         }
+                    //         _ => expr
+                    //     }
+                    // }
                     _ => Value::from(ast),
                 }
             }
@@ -122,4 +130,43 @@ impl Context {
         }
     }
 
+    pub fn builtin(&mut self, name: &str, args: &[Value]) -> Value {
+        match (name, args) {
+            ("println", args) => {
+                self.builtin("print", args);
+                println!();
+                Value::Unit
+            }
+            ("print", args) => {
+                for arg in args { 
+                    match arg {
+                        Value::Float(a) => print!("{a}"),
+                        Value::Integer(a) => print!("{a}"),
+                        Value::String(a) => print!("{a}"),
+                        _ => print!("{:?}",arg),
+                    }
+                }
+                Value::Unit
+            }
+            ("eval", [arg]) => {
+                match arg {
+                    Value::String(s) => {
+                        println!("eval {s}");
+                        self.eval(&parse_string_to_ast(s))
+                    }
+                    _ => Value::from(arg)
+                }
+            }
+            ("pow", [lhs, rhs]) => match (lhs, rhs) {
+                (Value::Float(a), Value::Float(b)) => Value::Float(a.powf(*b)),
+                (Value::Float(a), Value::Integer(b)) => Value::Float(a.powf(*b as f64)),
+                (Value::Integer(a), Value::Float(b)) => Value::Float((*a as f64).powf(*b)),
+                (Value::Integer(a), Value::Integer(b)) => Value::Integer(a.pow(*b as u32)),
+                _ => Value::Error("pow".to_owned()),
+            }
+            _ => Value::Error("builtin".to_owned()),
+        }
+    }
+    
 }
+
