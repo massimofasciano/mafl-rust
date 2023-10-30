@@ -1,4 +1,5 @@
 use std::ops::{Add, Sub, Mul, Neg};
+use anyhow::{anyhow, Result};
 
 use pest_derive::Parser;
 
@@ -63,10 +64,9 @@ pub enum AtomicExpression {
     Unit,
 }
 
-// pub type Expression = Expression;
-impl From<&Expression> for Expression {
-    fn from(value: &Expression) -> Self {
-        value.to_owned()
+impl Expression {
+    pub fn as_error(&self) -> Result<Expression> {
+        Err(anyhow!(self.to_owned()))
     }
 }
 

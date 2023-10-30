@@ -1,8 +1,9 @@
 use crate::{unescape_string, expression::{Expression, AtomicExpression}, builtin, context::Context};
-use anyhow::{anyhow, Result};
+use anyhow::{Result,anyhow};
 
 pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
     Ok(match ast {
+        Expression::Unit => Expression::Unit,
         Expression::Integer(i) => Expression::Integer(*i),
         Expression::Float(f) => Expression::Float(*f),
         Expression::Boolean(b) => { Expression::Boolean(*b) }
@@ -37,8 +38,10 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
         Expression::Variable(s) => {
             if s.starts_with('@') {
                 Expression::Builtin(s.strip_prefix('@').unwrap().to_owned())
+            } else if let Some(value) = ctx.get_binding(s) {
+                value.to_owned()
             } else {
-                ctx.get_binding(s).unwrap_or(&Expression::from(ast)).to_owned()
+                Err(anyhow!("binding not found {s}"))?
             }
         }
         Expression::If(cond, then, r#else) => {
@@ -47,7 +50,7 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
                 Expression::Boolean(b) =>
                     if b { eval(ctx,then.as_ref())? } 
                     else { eval(ctx,r#else.as_ref())? }
-                _ => Expression::from(ast),
+                _ => ast.as_error()?,
             }
         }
         Expression::While(cond, body) => {
@@ -124,7 +127,7 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
                 Expression::LeOp => Expression::Boolean(aleft<=aright),
                 Expression::EqOp => Expression::Boolean(aleft==aright),
                 Expression::NeOp => Expression::Boolean(aleft!=aright),
-                _ => Expression::from(ast),
+                _ => ast.as_error()?,
             }
         }
         Expression::UnaryOpCall(op, expr) => {
@@ -132,10 +135,11 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
             let expr = eval(ctx,expr.as_ref())?;
             match op {
                 Expression::NegOp => -expr,
-                _ => Expression::from(ast),
+                _ => ast.as_error()?,
             }
         }
-        _ => Expression::from(ast),
+        Expression::Closure(_, _, _) => ast.to_owned(),
+        _ => ast.as_error()?,
     })
 }
 
@@ -145,7 +149,7 @@ pub fn builtin(ctx: &mut Context, name: &str, args: &[Expression]) -> Result<Exp
         ("print", args) => { builtin::print(ctx, args) },
         ("eval", [arg]) => { builtin::eval_string_as_source(ctx, arg) },
         ("pow", [lhs, rhs]) => builtin::pow(ctx, lhs, rhs),
-        _ => Ok(Expression::Error("builtin".to_owned())),
+        _ => Err(anyhow!("builtin {name}")),
     }
 }
 
