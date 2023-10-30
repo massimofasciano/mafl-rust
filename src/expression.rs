@@ -65,7 +65,7 @@ pub enum AtomicExpression {
 }
 
 impl Expression {
-    pub fn as_error(&self) -> Result<Expression> {
+    pub fn to_error(&self) -> Result<Expression> {
         Err(anyhow!(self.to_owned()))
     }
 }

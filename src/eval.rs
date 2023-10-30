@@ -50,7 +50,7 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
                 Expression::Boolean(b) =>
                     if b { eval(ctx,then.as_ref())? } 
                     else { eval(ctx,r#else.as_ref())? }
-                _ => ast.as_error()?,
+                _ => ast.to_error()?,
             }
         }
         Expression::While(cond, body) => {
@@ -127,7 +127,7 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
                 Expression::LeOp => Expression::Boolean(aleft<=aright),
                 Expression::EqOp => Expression::Boolean(aleft==aright),
                 Expression::NeOp => Expression::Boolean(aleft!=aright),
-                _ => ast.as_error()?,
+                _ => ast.to_error()?,
             }
         }
         Expression::UnaryOpCall(op, expr) => {
@@ -135,11 +135,11 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
             let expr = eval(ctx,expr.as_ref())?;
             match op {
                 Expression::NegOp => -expr,
-                _ => ast.as_error()?,
+                _ => ast.to_error()?,
             }
         }
         Expression::Closure(_, _, _) => ast.to_owned(),
-        _ => ast.as_error()?,
+        _ => ast.to_error()?,
     })
 }
 

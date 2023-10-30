@@ -27,6 +27,6 @@ pub fn eval_string_as_source(ctx: &mut Context, arg: &Expression) -> Result<Expr
         Expression::String(s) => {
             eval::eval(ctx, &parse_source(s).unwrap())
         }
-        _ => arg.as_error()
+        _ => arg.to_error()
     }
 }
