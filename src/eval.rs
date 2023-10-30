@@ -51,14 +51,12 @@ impl Context {
                 }
             }
             Ast::While(cond, body) => {
-                // we have no side-effects for now so we put a println in there
                 let mut body_value = Value::Unit;
                 #[allow(clippy::while_let_loop)]
                 loop {
                     match self.eval(cond.as_ref()) {
                         Value::Boolean(b) => if b {
                             body_value = self.eval(body.as_ref());
-                            println!("WHILE {self:?} {body:?}");
                         } else {
                             break;
                         },
