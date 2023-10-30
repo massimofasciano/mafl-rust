@@ -153,7 +153,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
     Ok(match parsed.as_rule() {
         Rule::integer => { Expression::Integer(parsed.as_str().parse()?) },
         Rule::float => { Expression::Float(parsed.as_str().parse()?) },
-        Rule::identifier => { Expression::Identifier(parsed.as_str().to_owned()) },
+        // Rule::identifier => { Expression::Identifier(parsed.as_str().to_owned()) },
         Rule::infix_identifier => { Expression::InfixOp(parsed.as_str().to_owned()) },
         Rule::string => { Expression::String(parsed.as_str().to_owned()) },
         Rule::variable => { Expression::Variable(parsed.as_str().to_owned()) },
@@ -171,6 +171,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::mult => { Expression::MultOp },
         Rule::sub => { Expression::SubOp },
         Rule::div => { Expression::DivOp },
+        Rule::r#mod => { Expression::ModOp },
         Rule::exp => { Expression::ExpOp },
         Rule::or => { Expression::OrOp },
         Rule::and => { Expression::AndOp },

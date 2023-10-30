@@ -50,6 +50,23 @@ pub fn mul(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expres
     })
 }
 
+pub fn div(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+    Ok(match (lhs, rhs) {
+        (Expression::Float(a), Expression::Float(b)) => Expression::Float(a/b),
+        (Expression::Float(a), Expression::Integer(b)) => Expression::Float(a / (*b as f64)),
+        (Expression::Integer(a), Expression::Float(b)) => Expression::Float((*a as f64) / b),
+        (Expression::Integer(a), Expression::Integer(b)) => Expression::Integer(a/b),
+        _ => Err(anyhow!("div {lhs:?} {rhs:?}"))?,
+    })
+}
+
+pub fn modulo(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+    Ok(match (lhs, rhs) {
+        (Expression::Integer(a), Expression::Integer(b)) => Expression::Integer(a % b),
+        _ => Err(anyhow!("mod {lhs:?} {rhs:?}"))?,
+    })
+}
+
 pub fn and(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs, rhs) {
         (Expression::Boolean(a), Expression::Boolean(b)) => Expression::Boolean(*a && *b),
