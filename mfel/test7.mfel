@@ -38,4 +38,11 @@ var x = ();
 @println(x);
 #f(f(f(f(f(f(f(1)))))))
 #1 | f | f | f | f | f | f | f
-1 | f | add(2) | f
+#1 | f | add(2) | f
+
+let o = {
+    var x = 1;
+    lambda() {}
+} in {
+    o.x
+}

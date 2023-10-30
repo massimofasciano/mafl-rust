@@ -21,7 +21,7 @@ pub enum Expression {
     Unit,
     Block(Vec<Expression>),
     FunctionCall(Box<Expression>,Vec<Expression>),
-    Field(Box<Expression>,Box<Expression>),
+    Field(Box<Expression>,String),
     BinOpCall(Box<Expression>,Box<Expression>,Box<Expression>),
     UnaryOpCall(Box<Expression>,Box<Expression>),
     AddOp, MultOp, SubOp, DivOp, ExpOp, ModOp,

@@ -1,3 +1,4 @@
+use log::debug;
 use pest::iterators::Pair;
 use anyhow::{anyhow, Result};
 use crate::expression::{Rule, Expression};
@@ -64,8 +65,8 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                         Rule::field_access => {
                             let inner : Vec<Pair<Rule>> = pair.clone().into_inner().collect();
                             assert!(inner.len() == 1);
-                            let field = parse_rule(inner[0].clone())?;
-                            Ok(Expression::Field(Box::new(ast), Box::new(field)))
+                            let field = inner[0].as_str().to_owned();
+                            Ok(Expression::Field(Box::new(ast), field))
                         }
                         _ => Err(anyhow!("parse error expr_apply_or_field"))
                     }
