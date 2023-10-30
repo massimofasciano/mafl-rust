@@ -41,27 +41,6 @@ pub enum Expression {
     Continue, Break,
 }
 
-impl From<Expression> for AtomicExpression {
-    fn from(value: Expression) -> Self {
-        match value {
-            Expression::Integer(i) => Self::Integer(i),
-            Expression::Float(f) => Self::Float(f),
-            Expression::Boolean(b) => Self::Boolean(b),
-            Expression::String(s) => Self::String(s),
-            _ => Self::Unit,
-        }
-    }
-}
-
-#[derive(Debug,Clone,PartialEq,PartialOrd)]
-pub enum AtomicExpression {
-    Integer(i64),
-    Float(f64),
-    Boolean(bool),
-    String(String),
-    Unit,
-}
-
 impl Expression {
     pub fn to_error(&self) -> Result<Expression> {
         Err(anyhow!(self.to_owned()))
@@ -72,6 +51,7 @@ impl std::fmt::Display for Expression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Expression::Unit => write!(f,"()"),
+            Expression::Boolean(a) => write!(f,"{a}"),
             Expression::Float(a) => write!(f,"{a}"),
             Expression::Integer(a) => write!(f,"{a}"),
             Expression::String(a) => write!(f,"{a}"),

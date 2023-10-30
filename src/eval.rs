@@ -1,4 +1,4 @@
-use crate::{unescape_string, expression::{Expression, AtomicExpression}, builtin, context::Context};
+use crate::{unescape_string, expression::Expression, builtin, context::Context};
 use anyhow::{Result,anyhow};
 use log::debug;
 
@@ -103,8 +103,6 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
             let op = op.as_ref();
             let left = eval(ctx,left.as_ref())?;
             let right = eval(ctx,right.as_ref())?;
-            let aleft = AtomicExpression::from(left.to_owned());
-            let aright = AtomicExpression::from(right.to_owned());
             match op {
                 Expression::InfixOp(fname) => {
                     if fname.starts_with('$') {
@@ -122,12 +120,12 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
                 Expression::SubOp => builtin::sub(ctx,&left,&right)?,
                 Expression::MultOp => builtin::mul(ctx,&left,&right)?,
                 Expression::ExpOp => builtin::pow(ctx, &left, &right)?,
-                Expression::GtOp => Expression::Boolean(aleft>aright),
-                Expression::GeOp => Expression::Boolean(aleft>=aright),
-                Expression::LtOp => Expression::Boolean(aleft<aright),
-                Expression::LeOp => Expression::Boolean(aleft<=aright),
-                Expression::EqOp => Expression::Boolean(aleft==aright),
-                Expression::NeOp => Expression::Boolean(aleft!=aright),
+                Expression::GtOp => builtin::gt(ctx, &left, &right)?,
+                Expression::GeOp => builtin::ge(ctx, &left, &right)?,
+                Expression::LtOp => builtin::lt(ctx, &left, &right)?,
+                Expression::LeOp => builtin::le(ctx, &left, &right)?,
+                Expression::EqOp => builtin::eq(ctx, &left, &right)?,
+                Expression::NeOp => builtin::ne(ctx, &left, &right)?,
                 _ => ast.to_error()?,
             }
         }
@@ -136,6 +134,7 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
             let expr = eval(ctx,expr.as_ref())?;
             match op {
                 Expression::NegOp => builtin::neg(ctx,&expr)?,
+                Expression::NotOp => builtin::not(ctx,&expr)?,
                 _ => ast.to_error()?,
             }
         }
@@ -154,6 +153,15 @@ pub fn builtin(ctx: &mut Context, name: &str, args: &[Expression]) -> Result<Exp
         ("sub", [lhs, rhs]) => builtin::sub(ctx, lhs, rhs),
         ("mul", [lhs, rhs]) => builtin::mul(ctx, lhs, rhs),
         ("neg", [val]) => builtin::neg(ctx, val),
+        ("not", [val]) => builtin::not(ctx, val),
+        ("and", [lhs, rhs]) => builtin::and(ctx, lhs, rhs),
+        ("or", [lhs, rhs]) => builtin::or(ctx, lhs, rhs),
+        ("gt", [lhs, rhs]) => builtin::gt(ctx, lhs, rhs),
+        ("lt", [lhs, rhs]) => builtin::lt(ctx, lhs, rhs),
+        ("eq", [lhs, rhs]) => builtin::eq(ctx, lhs, rhs),
+        ("ne", [lhs, rhs]) => builtin::ne(ctx, lhs, rhs),
+        ("ge", [lhs, rhs]) => builtin::ge(ctx, lhs, rhs),
+        ("le", [lhs, rhs]) => builtin::le(ctx, lhs, rhs),
         _ => Err(anyhow!("builtin {name}")),
     }
 }
