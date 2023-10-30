@@ -24,7 +24,7 @@ pub enum Ast {
     BinOpCall(Box<Ast>,Box<Ast>,Box<Ast>),
     UnaryOpCall(Box<Ast>,Box<Ast>),
     AddOp, MultOp, SubOp, DivOp, ExpOp,
-    NotOp, AndOp, OrOp, 
+    NotOp, AndOp, OrOp, PipeOp,
     GtOp, GeOp, LtOp, LeOp, NeOp, EqOp,
     NegOp, RefOp, DeRefOp, QuestionOp, ExclamOp,
     If(Box<Ast>,Box<Ast>,Box<Ast>),

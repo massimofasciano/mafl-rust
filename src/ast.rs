@@ -21,7 +21,7 @@ fn parse_block(parsed: Pair<Rule>) -> Ast {
 
 fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Ast {
     match rule {
-        Rule::expr_infix_id | Rule::expr_or | Rule::expr_and | Rule::expr_eq | 
+        Rule::expr_infix_id | Rule::expr_infix_pipe | Rule::expr_or | Rule::expr_and | Rule::expr_eq | 
         Rule::expr_rel | Rule::expr_add | Rule::expr_mul | Rule::expr_exp => {
             if inner.len() == 1 { return parse_to_ast(inner[0].clone()) }
             assert!(inner.len() > 2);
@@ -168,6 +168,7 @@ pub fn parse_to_ast(parsed: Pair<Rule>) -> Ast {
         Rule::deref => { Ast::DeRefOp },
         Rule::question => { Ast::QuestionOp },
         Rule::exclam => { Ast::ExclamOp },
+        Rule::pipe => { Ast::PipeOp },
         Rule::neg => { Ast::NegOp },
         Rule::add => { Ast::AddOp },
         Rule::mult => { Ast::MultOp },
@@ -190,7 +191,7 @@ pub fn parse_to_ast(parsed: Pair<Rule>) -> Ast {
             // these rules can't be made silent in the grammar (as of current version)
             parsed.into_inner().next().map(parse_to_ast).unwrap()
         }
-        Rule::expr_infix_id | Rule::expr_or | Rule::expr_and | 
+        Rule::expr_infix_id | Rule::expr_infix_pipe | Rule::expr_or | Rule::expr_and | 
         Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
         Rule::expr_mul | Rule::expr_apply_or_field | Rule::expr_post | 
         Rule::expr_prefix | Rule::expr_exp | Rule::let_in | 

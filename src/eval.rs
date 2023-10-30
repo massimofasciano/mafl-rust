@@ -110,6 +110,10 @@ impl Context {
                             Value::Error("infix op bad prefix".to_owned())
                         }
                     },
+                    Ast::PipeOp => {
+                        let fvar = Box::new(right);
+                        self.eval(&Ast::FunctionCall(fvar, vec![left]))
+                    },
                     Ast::AddOp => left+right,
                     Ast::SubOp => left-right,
                     Ast::MultOp => left*right,
