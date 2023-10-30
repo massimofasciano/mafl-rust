@@ -111,16 +111,16 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
                         let fvar = Box::new(Expression::Variable(fname.strip_prefix('$').unwrap().to_owned()));
                         eval(ctx,&Expression::FunctionCall(fvar, vec![left,right]))?
                     } else {
-                        Expression::Error("infix op bad prefix".to_owned())
+                        Err(anyhow!("infix op bad prefix: {fname}"))?
                     }
                 },
                 Expression::PipeOp => {
                     let fvar = Box::new(right);
                     eval(ctx,&Expression::FunctionCall(fvar, vec![left]))?
                 },
-                Expression::AddOp => left+right,
-                Expression::SubOp => left-right,
-                Expression::MultOp => left*right,
+                Expression::AddOp => builtin::add(ctx,&left,&right)?,
+                Expression::SubOp => builtin::sub(ctx,&left,&right)?,
+                Expression::MultOp => builtin::mul(ctx,&left,&right)?,
                 Expression::ExpOp => builtin::pow(ctx, &left, &right)?,
                 Expression::GtOp => Expression::Boolean(aleft>aright),
                 Expression::GeOp => Expression::Boolean(aleft>=aright),
@@ -135,7 +135,7 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
             let op = op.as_ref();
             let expr = eval(ctx,expr.as_ref())?;
             match op {
-                Expression::NegOp => -expr,
+                Expression::NegOp => builtin::neg(ctx,&expr)?,
                 _ => ast.to_error()?,
             }
         }
@@ -150,6 +150,10 @@ pub fn builtin(ctx: &mut Context, name: &str, args: &[Expression]) -> Result<Exp
         ("print", args) => { builtin::print(ctx, args) },
         ("eval", [arg]) => { builtin::eval_string_as_source(ctx, arg) },
         ("pow", [lhs, rhs]) => builtin::pow(ctx, lhs, rhs),
+        ("add", [lhs, rhs]) => builtin::add(ctx, lhs, rhs),
+        ("sub", [lhs, rhs]) => builtin::sub(ctx, lhs, rhs),
+        ("mul", [lhs, rhs]) => builtin::mul(ctx, lhs, rhs),
+        ("neg", [val]) => builtin::neg(ctx, val),
         _ => Err(anyhow!("builtin {name}")),
     }
 }

@@ -11,7 +11,6 @@ pub struct MfelParser;
 
 #[derive(Debug,Clone,PartialEq)]
 pub enum Expression {
-    Error(String),
     Integer(i64),
     Float(f64),
     Boolean(bool),
@@ -77,64 +76,6 @@ impl std::fmt::Display for Expression {
             Expression::Integer(a) => write!(f,"{a}"),
             Expression::String(a) => write!(f,"{a}"),
             _ => write!(f,"{:?}",self),
-        }
-    }
-}
-
-impl Add for Expression {
-    type Output = Expression;
-    fn add(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (Expression::Float(a), Expression::Float(b)) => Expression::Float(a+b),
-            (Expression::Float(a), Expression::Integer(b)) => Expression::Float(a+b as f64),
-            (Expression::Integer(a), Expression::Float(b)) => Expression::Float(a as f64+b),
-            (Expression::Integer(a), Expression::Integer(b)) => Expression::Integer(a+b),
-            (Expression::String(a), Expression::String(b)) => Expression::String(format!("{a}{b}")),
-            (Expression::String(a), Expression::Integer(b)) => Expression::String(format!("{a}{b}")),
-            (Expression::Integer(a), Expression::String(b)) => Expression::String(format!("{a}{b}")),
-            (Expression::String(a), Expression::Float(b)) => Expression::String(format!("{a}{b}")),
-            (Expression::Float(a), Expression::String(b)) => Expression::String(format!("{a}{b}")),
-            _ => Self::Error("add".to_owned()),
-        }
-    }
-}
-
-impl Sub for Expression {
-    type Output = Expression;
-    fn sub(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (Expression::Float(a), Expression::Float(b)) => Expression::Float(a-b),
-            (Expression::Float(a), Expression::Integer(b)) => Expression::Float(a-b as f64),
-            (Expression::Integer(a), Expression::Float(b)) => Expression::Float(a as f64-b),
-            (Expression::Integer(a), Expression::Integer(b)) => Expression::Integer(a-b),
-            _ => Self::Error("sub".to_owned()),
-        }
-    }
-}
-
-impl Mul for Expression {
-    type Output = Expression;
-    fn mul(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (Expression::Float(a), Expression::Float(b)) => Expression::Float(a*b),
-            (Expression::Float(a), Expression::Integer(b)) => Expression::Float(a*b as f64),
-            (Expression::Integer(a), Expression::Float(b)) => Expression::Float(a as f64*b),
-            (Expression::Integer(a), Expression::Integer(b)) => Expression::Integer(a*b),
-            (Expression::String(a), Expression::Integer(b)) => Expression::String(a.repeat(b as usize)),
-            (Expression::Integer(a), Expression::String(b)) => Expression::String(b.repeat(a as usize)),
-            _ => Self::Error("mul".to_owned()),
-        }
-    }
-}
-
-impl Neg for Expression {
-    type Output = Expression;
-    fn neg(self) -> Self::Output {
-        match self {
-            Expression::Float(a) => Expression::Float(-a),
-            Expression::Integer(a) => Expression::Integer(-a),
-            Expression::String(a) => Expression::String(a.chars().rev().collect::<String>()),
-            _ => Self::Error("neg".to_owned()),
         }
     }
 }
