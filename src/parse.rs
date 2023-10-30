@@ -1,6 +1,6 @@
 use pest::iterators::Pair;
 
-use crate::types::{Rule, Expression};
+use crate::expression::{Rule, Expression};
 
 fn parse_block(parsed: Pair<Rule>) -> Expression {
     let sequence : Vec<Expression> = parsed.into_inner()

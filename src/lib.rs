@@ -1,7 +1,8 @@
 use pest::Parser;
-use crate::types::{MfelParser, Rule, Expression};
+use crate::expression::{MfelParser, Rule, Expression};
 pub mod eval;
-pub mod types;
+pub mod expression;
+pub mod context;
 pub mod builtin;
 pub mod parse;
 

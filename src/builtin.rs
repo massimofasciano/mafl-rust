@@ -1,4 +1,4 @@
-use crate::{types::{Context, Expression}, parse_source};
+use crate::{expression::Expression, parse_source, eval, context::Context};
 
 pub fn pow(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Expression {
     match (lhs, rhs) {
@@ -11,26 +11,20 @@ pub fn pow(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Expression {
 }
 
 pub fn print(_: &mut Context, args: &[Expression]) -> Expression {
-    for arg in args { 
-        match arg {
-            Expression::Float(a) => print!("{a}"),
-            Expression::Integer(a) => print!("{a}"),
-            Expression::String(a) => print!("{a}"),
-            _ => print!("{:?}",arg),
-        }
-    }
+    for arg in args { print!("{arg}"); }
     Expression::Unit
 }
 
-pub fn println(ctx: &mut Context, args: &[Expression]) -> Expression {
-    print(ctx, args); println!();
+pub fn println(_: &mut Context, args: &[Expression]) -> Expression {
+    for arg in args { print!("{arg}"); }
+    println!();
     Expression::Unit
 }
 
-pub fn eval_string(ctx: &mut Context, arg: &Expression) -> Expression {
+pub fn eval_string_as_source(ctx: &mut Context, arg: &Expression) -> Expression {
     match arg {
         Expression::String(s) => {
-            ctx.eval(&parse_source(s))
+            eval::eval(ctx, &parse_source(s))
         }
         _ => Expression::from(arg)
     }

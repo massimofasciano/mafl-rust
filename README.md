@@ -19,3 +19,5 @@ TODO:
 - let obj = context { var field1 = 1; var field2 = 2; }  and then obj.field1, obj.field2 (works on function closures too)
 - context { ... } is equiv to function () in () { ... }
 - arrays and varargs
+- how to mutate a binding (for arrays)
+- explain why pairs instead of hashmap for bindings
