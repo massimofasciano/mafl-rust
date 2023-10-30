@@ -24,7 +24,7 @@ pub fn println(_: &mut Context, args: &[Expression]) -> Expression {
 pub fn eval_string_as_source(ctx: &mut Context, arg: &Expression) -> Expression {
     match arg {
         Expression::String(s) => {
-            eval::eval(ctx, &parse_source(s))
+            eval::eval(ctx, &parse_source(s).unwrap())
         }
         _ => Expression::from(arg)
     }
