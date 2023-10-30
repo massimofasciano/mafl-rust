@@ -1,5 +1,6 @@
 use crate::{unescape_string, expression::{Expression, AtomicExpression}, builtin, context::Context};
 use anyhow::{Result,anyhow};
+use log::debug;
 
 pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
     Ok(match ast {
@@ -85,10 +86,10 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
                     }
                     #[allow(clippy::comparison_chain)]
                     if arg_names.len() > arg_values.len() {
-                        eprintln!("performing currying: {arg_names:?} {arg_values:?}");
+                        debug!("performing currying: {arg_names:?} {arg_values:?}");
                         Expression::Closure(function_ctx, arg_names[arg_values.len()..].to_vec(), body)
                     } else if arg_names.len() < arg_values.len() {
-                        eprintln!("extra args supplied: {arg_names:?} {arg_values:?}");
+                        debug!("extra args supplied: {arg_names:?} {arg_values:?}");
                         let uncurried = eval(&mut function_ctx,&body)?;
                         eval(&mut function_ctx,&Expression::FunctionCall(Box::new(uncurried),arg_values[arg_names.len()..].to_vec()))?
                     } else {

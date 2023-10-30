@@ -1,5 +1,6 @@
 use crate::{expression::Expression, parse_source, eval, context::Context};
 use anyhow::Result;
+use log::debug;
 
 pub fn pow(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs, rhs) {
@@ -25,6 +26,7 @@ pub fn println(_: &mut Context, args: &[Expression]) -> Result<Expression> {
 pub fn eval_string_as_source(ctx: &mut Context, arg: &Expression) -> Result<Expression> {
     match arg {
         Expression::String(s) => {
+            debug!("evaluating string: {s}");
             eval::eval(ctx, &parse_source(s).unwrap())
         }
         _ => arg.to_error()

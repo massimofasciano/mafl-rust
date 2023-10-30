@@ -18,6 +18,7 @@ var x = let i = 0 in let j = 1 in while i < 10 {
 x
 #)
 
+@eval("@println(\"hello\")");
 var add = lambda(x,y) { x+y };
 var f = lambda (x) {
     if x = () {
