@@ -1,4 +1,3 @@
-use std::ops::{Add, Sub, Mul, Neg};
 use anyhow::{anyhow, Result};
 
 use pest_derive::Parser;
@@ -72,6 +71,7 @@ impl Expression {
 impl std::fmt::Display for Expression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Expression::Unit => write!(f,"()"),
             Expression::Float(a) => write!(f,"{a}"),
             Expression::Integer(a) => write!(f,"{a}"),
             Expression::String(a) => write!(f,"{a}"),
