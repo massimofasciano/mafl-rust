@@ -82,10 +82,10 @@ use crate::{unescape_string, expression::{Expression, AtomicExpression}, builtin
                         }
                         #[allow(clippy::comparison_chain)]
                         if arg_names.len() > arg_values.len() {
-                            println!("performing currying: {arg_names:?} {arg_values:?}");
+                            eprintln!("performing currying: {arg_names:?} {arg_values:?}");
                             Expression::Closure(function_ctx, arg_names[arg_values.len()..].to_vec(), body)
                         } else if arg_names.len() < arg_values.len() {
-                            println!("extra args supplied: {arg_names:?} {arg_values:?}");
+                            eprintln!("extra args supplied: {arg_names:?} {arg_values:?}");
                             let uncurried = eval(&mut function_ctx,&body);
                             eval(&mut function_ctx,&Expression::FunctionCall(Box::new(uncurried),arg_values[arg_names.len()..].to_vec()))
                         } else {

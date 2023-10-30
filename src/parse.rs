@@ -24,20 +24,20 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 assert!(inner.len() > 2);
                 assert!(inner.len() % 2 == 1);
                 let left = parse_rule(inner[0].clone())?;
-                inner[1..].chunks_exact(2).fold(left, |ast, pair| {
-                    let op = parse_rule(pair[0].clone()).unwrap();
-                    let right = parse_rule(pair[1].clone()).unwrap();
-                    Expression::BinOpCall(Box::new(op), Box::new(ast), Box::new(right))
-                })
+                inner[1..].chunks_exact(2).try_fold(left, |ast, pair| -> Result<Expression> {
+                    let op = parse_rule(pair[0].clone())?;
+                    let right = parse_rule(pair[1].clone())?;
+                    Ok(Expression::BinOpCall(Box::new(op), Box::new(ast), Box::new(right)))
+                })?
             }
             Rule::expr_post => {
                 if inner.len() == 1 { return parse_rule(inner[0].clone()) }
                 assert!(!inner.is_empty());
                 let expr = parse_rule(inner[0].clone())?;
-                inner[1..].iter().fold(expr, |ast, pair| {
-                    let op = parse_rule(pair.clone()).unwrap();
-                    Expression::UnaryOpCall(Box::new(op), Box::new(ast))
-                })
+                inner[1..].iter().try_fold(expr, |ast, pair| -> Result<Expression> {
+                    let op = parse_rule(pair.clone())?;
+                    Ok(Expression::UnaryOpCall(Box::new(op), Box::new(ast)))
+                })?
             }
             Rule::expr_prefix => {
                 if inner.len() == 1 { return parse_rule(inner[0].clone()) }
@@ -45,30 +45,31 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 let mut rinner = inner;
                 rinner.reverse();
                 let expr = parse_rule(rinner[0].clone())?;
-                rinner[1..].iter().fold(expr, |ast, pair| {
-                    let op = parse_rule(pair.clone()).unwrap();
-                    Expression::UnaryOpCall(Box::new(op), Box::new(ast))
-                })
+                rinner[1..].iter().try_fold(expr, |ast, pair| -> Result<Expression> {
+                    let op = parse_rule(pair.clone())?;
+                    Ok(Expression::UnaryOpCall(Box::new(op), Box::new(ast)))
+                })?
             }
             Rule::expr_apply_or_field => {
                 if inner.len() == 1 { return parse_rule(inner[0].clone()) }
                 assert!(inner.len() > 1);
                 let target = parse_rule(inner[0].clone())?;
-                inner[1..].iter().fold(target, |ast, pair| {
+                inner[1..].iter().try_fold(target, |ast, pair| -> Result<Expression> {
                     match pair.as_rule() {
                         Rule::apply_args => {
-                            let args : Vec<_> = pair.clone().into_inner().map(|e| (parse_rule(e.clone()).unwrap())).collect();
-                            Expression::FunctionCall(Box::new(ast), args)
+                            let args = pair.clone().into_inner()
+                                .map(|e| (parse_rule(e.clone()))).collect::<Result<Vec<_>>>()?;
+                            Ok(Expression::FunctionCall(Box::new(ast), args))
                         }
                         Rule::field_access => {
                             let inner : Vec<Pair<Rule>> = pair.clone().into_inner().collect();
                             assert!(inner.len() == 1);
-                            let field = parse_rule(inner[0].clone()).unwrap();
-                            Expression::Field(Box::new(ast), Box::new(field))
+                            let field = parse_rule(inner[0].clone())?;
+                            Ok(Expression::Field(Box::new(ast), Box::new(field)))
                         }
-                        _ => unreachable!()
+                        _ => Err(anyhow!("parse error expr_apply_or_field"))
                     }
-                })
+                })?
             } 
             Rule::function => {
                 assert!(inner.len() == 2);
