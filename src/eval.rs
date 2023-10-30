@@ -16,6 +16,14 @@ impl Context {
                 self.end_scope();
                 block_value
             }
+            Ast::Let(id, val, expr) => {
+                let val = self.eval(val);
+                self.start_scope();
+                self.add_binding(id.to_owned(), val.to_owned());
+                let result = self.eval(expr);
+                self.end_scope();
+                result
+            }
             Ast::Var(id, val) => {
                 let val = self.eval(val);
                 self.add_binding(id.to_owned(), val.to_owned());
@@ -96,11 +104,18 @@ impl Context {
                 let aleft = AstAtom::from(left.to_owned());
                 let aright = AstAtom::from(right.to_owned());
                 match op {
+                    Ast::InfixOp(fname) => {
+                        if fname.starts_with('$') {
+                            let fvar = Box::new(Ast::Variable(fname.strip_prefix('$').unwrap().to_owned()));
+                            self.eval(&Ast::FunctionCall(fvar, vec![left,right]))
+                        } else {
+                            Value::Error("infix op bad prefix".to_owned())
+                        }
+                    },
                     Ast::AddOp => left+right,
                     Ast::SubOp => left-right,
                     Ast::MultOp => left*right,
-                    // Ast::ExpOp => left.pow(right),
-                    Ast::ExpOp => self.builtin("pow",&[left,right]),
+                    Ast::ExpOp => self.builtin_pow(&left, &right),
                     Ast::GtOp => Value::Boolean(aleft>aright),
                     Ast::GeOp => Value::Boolean(aleft>=aright),
                     Ast::LtOp => Value::Boolean(aleft<aright),
@@ -115,14 +130,6 @@ impl Context {
                 let expr = self.eval(expr.as_ref());
                 match op {
                     Ast::NegOp => -expr,
-                    // Ast::DollarOp => {
-                    //     match expr {
-                    //         Value::String(s) => {
-                    //             self.eval(&parse_string_to_ast(&s))
-                    //         }
-                    //         _ => expr
-                    //     }
-                    // }
                     _ => Value::from(ast),
                 }
             }
@@ -157,16 +164,18 @@ impl Context {
                     _ => Value::from(arg)
                 }
             }
-            ("pow", [lhs, rhs]) => match (lhs, rhs) {
-                (Value::Float(a), Value::Float(b)) => Value::Float(a.powf(*b)),
-                (Value::Float(a), Value::Integer(b)) => Value::Float(a.powf(*b as f64)),
-                (Value::Integer(a), Value::Float(b)) => Value::Float((*a as f64).powf(*b)),
-                (Value::Integer(a), Value::Integer(b)) => Value::Integer(a.pow(*b as u32)),
-                _ => Value::Error("pow".to_owned()),
-            }
+            ("pow", [lhs, rhs]) => self.builtin_pow(lhs, rhs),
             _ => Value::Error("builtin".to_owned()),
         }
     }
-    
+    pub fn builtin_pow(&mut self, lhs: &Value, rhs: &Value) -> Value {
+        match (lhs, rhs) {
+            (Value::Float(a), Value::Float(b)) => Value::Float(a.powf(*b)),
+            (Value::Float(a), Value::Integer(b)) => Value::Float(a.powf(*b as f64)),
+            (Value::Integer(a), Value::Float(b)) => Value::Float((*a as f64).powf(*b)),
+            (Value::Integer(a), Value::Integer(b)) => Value::Integer(a.pow(*b as u32)),
+            _ => Value::Error("pow".to_owned()),
+        }
+    }
 }
 

@@ -15,6 +15,7 @@ pub enum Ast {
     Identifier(String),
     String(String),
     Variable(String),
+    InfixOp(String),
     Builtin(String),
     Unit,
     Block(Vec<Ast>),

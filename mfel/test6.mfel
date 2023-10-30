@@ -109,21 +109,21 @@ while x > 0 {
 
 #)
 
-#@println("hello, my value is: ",10^3);
-## dynamic binding interacting with recursion: solution ?
-#var rec = lambda (x) { x };
-#var rec = lambda (x) {
-#    if x < 1 (# comment #) {
-#        1
-#    } else {
-#        2*rec(x-1)
-#    }
-#};
-#rec(4)
+(# recursive block comments!!!
+@println("hello, my value is: ",10^3);
+# dynamic binding interacting with recursion: solution ?
+var rec = lambda (x) { x };
+var rec = lambda (x) {
+    if x < 1 (# comment #) {
+        1
+    } else {
+        2*rec(x-1)
+    }
+};
+rec(4)
+#)
 
 # NOTE: make block comments recursive 
-
-# NOTE: add let v = e in exp to grammar
 
 (#
 var sh = "hello";
@@ -131,3 +131,20 @@ var sh = "hello";
 sh + " " + hello + "!"
 #)
 
+(#
+let 
+x
+# (#  block commenets don't matter inside line comments
+= 10 in 
+(#
+  # (#
+   line comments don't matter inside block comments
+    (#  
+    
+    (# a couple of levels of block comments # #)
+    #)
+   #)
+
+#)
+x*2
+#)

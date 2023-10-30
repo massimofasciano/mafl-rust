@@ -2,8 +2,17 @@ WHITESPACE = _{ " " | "\t" | NEWLINE }
 
 COMMENT = _{ block_comment | line_comment }
 // python-style line comments starting with #
-line_comment = @{ "#" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
-block_comment = @{ "(#" ~ (!"#)" ~ ANY)* ~ ("#)" | EOI) }
+line_comment_start = @{ "#" }
+line_comment = @{ line_comment_start ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
+// recursive block comments (# ... #)
+block_comment_start = @{ "(#" }
+block_comment_end = @{ "#)" }
+block_comment = @{ 
+    block_comment_start ~ 
+    (!(block_comment_end|block_comment_start) ~ ANY)* ~ 
+    block_comment? ~ 
+    (!block_comment_end ~ ANY)* ~ (block_comment_end | EOI) 
+}
 
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" |
@@ -19,7 +28,7 @@ identifier = @{
     (ASCII_ALPHANUMERIC | "_")* 
 }
 infix_identifier = ${
-    "$" ~ identifier
+    "$" ~ ( builtin | identifier )
 }
 builtin = ${
     "@" ~ identifier
