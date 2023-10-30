@@ -40,6 +40,20 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
             }
             val
         }
+        Expression::AssignToExpression(target, val) => {
+            let val = eval(ctx,val)?;
+            match target.as_ref() {
+                Expression::Variable(id) => {
+                    if let Some(binding) = ctx.get_mut_binding(id) {
+                        *binding = val.to_owned();
+                    } else {
+                        Err(anyhow!("binding not found {id}"))?
+                    }
+                    val
+                },
+                _ => ast.to_error()?,
+            }
+        }
         Expression::Variable(s) => {
             if s.starts_with('@') {
                 Expression::Builtin(s.strip_prefix('@').unwrap().to_owned())
@@ -72,6 +86,19 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
                 };
             }
             body_value
+        }
+        Expression::Field(target, field) => {
+            let target = eval(ctx, target)?;
+            match target {
+                Expression::Closure(closure_ctx, _arg_names, _body) => {
+                    if let Some(value) = closure_ctx.get_binding(field) {
+                        value.to_owned()
+                    } else {
+                        Err(anyhow!("field binding not found {field}"))?
+                    }
+                }
+                _ => ast.to_error()?,
+            }
         }
         Expression::Function(arg_names, body) => {
             Expression::Closure(ctx.to_owned(), arg_names.to_owned(), body.to_owned())

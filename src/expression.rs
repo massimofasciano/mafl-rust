@@ -34,6 +34,7 @@ pub enum Expression {
     Var(String,Box<Expression>),
     Let(String,Box<Expression>,Box<Expression>),
     Assign(String,Box<Expression>),
+    AssignToExpression(Box<Expression>,Box<Expression>),
     Loop(Box<Expression>),
     Function(Vec<String>,Box<Expression>),
     Closure(Context,Vec<String>,Box<Expression>),

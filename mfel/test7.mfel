@@ -42,7 +42,8 @@ var x = ();
 
 let o = {
     var x = 1;
+    var f = lambda(y) { x + y };
     lambda() {}
 } in {
-    o.x
+    o.f(5)
 }

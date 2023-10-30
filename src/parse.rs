@@ -1,4 +1,3 @@
-use log::debug;
 use pest::iterators::Pair;
 use anyhow::{anyhow, Result};
 use crate::expression::{Rule, Expression};
@@ -114,7 +113,8 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 assert!(inner.len() == 2);
                 let var = inner[0].as_str().to_owned();
                 let val = parse_rule(inner[1].clone())?;
-                Expression::Assign(var, Box::new(val))
+                // Expression::Assign(var, Box::new(val))
+                Expression::AssignToExpression(Box::new(Expression::Variable(var)), Box::new(val))
             } 
             Rule::r#while => {
                 assert!(inner.len() == 2);
