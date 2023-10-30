@@ -8,7 +8,7 @@ pub fn pow(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expres
         (Expression::Float(a), Expression::Integer(b)) => Expression::Float(a.powf(*b as f64)),
         (Expression::Integer(a), Expression::Float(b)) => Expression::Float((*a as f64).powf(*b)),
         (Expression::Integer(a), Expression::Integer(b)) => Expression::Integer(a.pow(*b as u32)),
-        _ => Err(anyhow!("pow {lhs},{rhs}"))?,
+        _ => Err(anyhow!("pow {lhs:?} {rhs:?}"))?,
     })
 }
 
@@ -23,7 +23,7 @@ pub fn add(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expres
         (Expression::Integer(a), Expression::String(b)) => Expression::String(format!("{a}{b}")),
         (Expression::String(a), Expression::Float(b)) => Expression::String(format!("{a}{b}")),
         (Expression::Float(a), Expression::String(b)) => Expression::String(format!("{a}{b}")),
-        _ => Err(anyhow!("add {lhs},{rhs}"))?,
+        _ => Err(anyhow!("add {lhs:?} {rhs:?}"))?,
         })
 }
 
@@ -34,7 +34,7 @@ pub fn sub(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expres
         (Expression::Float(a), Expression::Integer(b)) => Expression::Float(a - (*b as f64)),
         (Expression::Integer(a), Expression::Float(b)) => Expression::Float((*a as f64) - b),
         (Expression::Integer(a), Expression::Integer(b)) => Expression::Integer(a-b),
-        _ => Err(anyhow!("sub {lhs},{rhs}"))?,
+        _ => Err(anyhow!("sub {lhs:?} {rhs:?}"))?,
     })
 }
 
@@ -46,21 +46,21 @@ pub fn mul(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expres
         (Expression::Integer(a), Expression::Integer(b)) => Expression::Integer(a*b),
         (Expression::String(a), Expression::Integer(b)) => Expression::String(a.repeat(*b as usize)),
         (Expression::Integer(a), Expression::String(b)) => Expression::String(b.repeat(*a as usize)),
-        _ => Err(anyhow!("mul {lhs},{rhs}"))?,
+        _ => Err(anyhow!("mul {lhs:?} {rhs:?}"))?,
     })
 }
 
 pub fn and(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs, rhs) {
         (Expression::Boolean(a), Expression::Boolean(b)) => Expression::Boolean(*a && *b),
-        _ => Err(anyhow!("and {lhs},{rhs}"))?,
+        _ => Err(anyhow!("and {lhs:?} {rhs:?}"))?,
     })
 }
 
 pub fn or(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs, rhs) {
         (Expression::Boolean(a), Expression::Boolean(b)) => Expression::Boolean(*a || *b),
-        _ => Err(anyhow!("or {lhs},{rhs}"))?,
+        _ => Err(anyhow!("or {lhs:?} {rhs:?}"))?,
     })
 }
 
@@ -71,7 +71,7 @@ pub fn gt(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Express
         (Expression::String(a), Expression::String(b)) => Expression::Boolean(a>b),
         (Expression::Boolean(a), Expression::Boolean(b)) => Expression::Boolean(a>b),
         (Expression::Unit, Expression::Unit) => Expression::Boolean(false),
-        _ => Err(anyhow!("gt {lhs},{rhs}"))?,
+        _ => Err(anyhow!("gt {lhs:?} {rhs:?}"))?,
     })
 }
 
@@ -82,7 +82,7 @@ pub fn lt(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Express
         (Expression::String(a), Expression::String(b)) => Expression::Boolean(a<b),
         (Expression::Boolean(a), Expression::Boolean(b)) => Expression::Boolean(a<b),
         (Expression::Unit, Expression::Unit) => Expression::Boolean(false),
-        _ => Err(anyhow!("lt {lhs},{rhs}"))?,
+        _ => Err(anyhow!("lt {lhs:?} {rhs:?}"))?,
     })
 }
 
@@ -111,14 +111,14 @@ pub fn neg(_: &mut Context, val: &Expression) -> Result<Expression> {
         Expression::Float(a) => Expression::Float(-a),
         Expression::Integer(a) => Expression::Integer(-a),
         Expression::String(a) => Expression::String(a.chars().rev().collect::<String>()),
-        _ => Err(anyhow!("neg {val}"))?,
+        _ => Err(anyhow!("neg {val:?}"))?,
     })
 }
 
 pub fn not(_: &mut Context, val: &Expression) -> Result<Expression> {
     Ok(match val {
         Expression::Boolean(b) => Expression::Boolean(! *b),
-        _ => Err(anyhow!("not {val}"))?,
+        _ => Err(anyhow!("not {val:?}"))?,
     })
 }
 
