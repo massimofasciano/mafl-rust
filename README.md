@@ -1,8 +1,8 @@
 Rust interpreter for the MFEL language
 
 TODO:
-- closures as objects (field notation accesses context bindings)
-- how to mutate a binding: should Context use Rc and RefCell ?
+- closures as objects (field notation accesses context bindings)  EXPERIMENTAL (o.x works, not o.x.y on assign)
+- using Rc+RefCell on closure context for field mutation. should extend to other parts of expression and context ?
 
 - ref and deref (by name ?)
 - lambda/closure (rename?) vs function/func/fn (no env capture)
