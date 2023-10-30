@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use anyhow::{anyhow, Result};
 
 use pest_derive::Parser;
@@ -37,14 +39,15 @@ pub enum Expression {
     AssignToExpression(Box<Expression>,Box<Expression>),
     Loop(Box<Expression>),
     Function(Vec<String>,Box<Expression>),
-    Closure(Context,Vec<String>,Box<Expression>),
+    // Closure(Context,Vec<String>,Box<Expression>),
+    Closure(Rc<RefCell<Context>>,Vec<String>,Box<Expression>),
     Return(Box<Expression>),
     Continue, Break,
 }
 
 impl Expression {
     pub fn to_error(&self) -> Result<Expression> {
-        Err(anyhow!(self.to_owned()))
+        Err(anyhow!("{:#?}",self))
     }
 }
 
@@ -56,7 +59,7 @@ impl std::fmt::Display for Expression {
             Expression::Float(a) => write!(f,"{a}"),
             Expression::Integer(a) => write!(f,"{a}"),
             Expression::String(a) => write!(f,"{a}"),
-            _ => write!(f,"{:?}",self),
+            _ => write!(f,"{:#?}",self),
         }
     }
 }

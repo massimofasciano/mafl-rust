@@ -93,11 +93,11 @@ impl Context {
         index.map(|i|st[i].value_mut(var).unwrap())
     }
     
-    pub fn add_context(&mut self, ctx: Context) {
-        for item in ctx.stack {
+    pub fn add_context(&mut self, ctx: &Context) {
+        for item in ctx.stack.iter() {
             match item {
                 ContextItem::NewScope => {},
-                ContextItem::Binding(var, value) => self.add_binding(var, value),
+                ContextItem::Binding(var, value) => self.add_binding(var.to_owned(), value.to_owned()),
             }
         }
     }

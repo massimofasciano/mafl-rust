@@ -1,8 +1,10 @@
 Rust interpreter for the MFEL language
 
 TODO:
+- closures as objects (field notation accesses context bindings)
+- how to mutate a binding: should Context use Rc and RefCell ?
+
 - ref and deref (by name ?)
-- Rc instead of Box ?
 - lambda/closure (rename?) vs function/func/fn (no env capture)
 - test recursion
 - builtins: $readln $readfile $include $add $sub $arg_str $arg_val
@@ -11,9 +13,7 @@ TODO:
 - general while/for loop
 - foreach and iterator (returns unit or value)
 - currying on builtins ?
-- closures as objects (field notation accesses context bindings)
 - let f = function (x,y,z) in (g1,g2) { ... g1+g2}  captures g1 and g2 only in closure
 - let obj = context { var field1 = 1; var field2 = 2; }  and then obj.field1, obj.field2 (works on function closures too)
 - context { ... } is equiv to function () in () { ... }
 - arrays and varargs
-- how to mutate a binding (for arrays)

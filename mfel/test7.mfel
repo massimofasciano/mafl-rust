@@ -46,5 +46,6 @@ let o = {
     lambda() {}
 } in {
     @println(o.f(5));
-    o.f := add
+    o.f := add;
+    @println(o.f(5,6));
 }
