@@ -144,8 +144,7 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 Expression::Return(Box::new(body)) 
             },
             _ => {
-                println!("TODO: [{:?}] {}",rule,string);
-                unreachable!()
+                Err(anyhow!("TODO: [{:?}] {}",rule,string))?
             }
         })
 }
@@ -202,8 +201,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
             parse_vec(rule,str,inner)?
         }
         _ => {
-            println!("TODO: [{:?}] {}",parsed.as_rule(), parsed.as_str());
-            unreachable!()
+            Err(anyhow!("TODO: [{:?}] {}",parsed.as_rule(), parsed.as_str()))?
         }
     })
 }

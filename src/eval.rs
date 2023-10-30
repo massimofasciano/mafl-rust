@@ -96,7 +96,7 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
                         eval(&mut function_ctx,&body)?
                     }
                 },
-                _ => unreachable!()
+                _ => ast.to_error()?
             }
         }
         Expression::BinOpCall(op, left, right) => {
