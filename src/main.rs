@@ -7,7 +7,7 @@ fn main() -> Result<()> {
     let ast = parse_source(&source)?;
     // println!("{ast:#?}");
     let mut ctx = Context::new();
-    let result = eval(&mut ctx, &ast);
+    let result = eval(&mut ctx, &ast)?;
     // println!("{result:#?}");
     println!("{result}");
     Ok(())
