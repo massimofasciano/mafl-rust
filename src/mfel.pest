@@ -90,7 +90,8 @@ var = {
 }
 
 assign = {
-    identifier ~ ":=" ~ expr
+    identifier ~ field_access* ~ ":=" ~ expr
+    // identifier ~ ":=" ~ expr
 }
 
 return = {

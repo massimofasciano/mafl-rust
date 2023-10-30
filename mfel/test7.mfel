@@ -45,5 +45,6 @@ let o = {
     var f = lambda(y) { x + y };
     lambda() {}
 } in {
-    o.f(5)
+    @println(o.f(5));
+    o.f := add
 }

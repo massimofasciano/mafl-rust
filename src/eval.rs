@@ -51,6 +51,20 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
                     }
                     val
                 },
+                // this can't work because the expression is not mutable!!!!
+                Expression::Field(target, field) => {
+                    let target = eval(ctx, target)?;
+                    match target {
+                        Expression::Closure(mut closure_ctx, _arg_names, _body) => {
+                            if let Some(value) = closure_ctx.get_mut_binding(field) {
+                                value.to_owned()
+                            } else {
+                                Err(anyhow!("field binding not found {field}"))?
+                            }
+                        }
+                        _ => ast.to_error()?,
+                    }
+                },
                 _ => ast.to_error()?,
             }
         }

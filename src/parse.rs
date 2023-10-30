@@ -109,12 +109,28 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 let val = parse_rule(inner[1].clone())?;
                 Expression::Var(var, Box::new(val))
             } 
+            // Rule::assign => {
+            //     assert!(inner.len() == 2);
+            //     let var = inner[0].as_str().to_owned();
+            //     let val = parse_rule(inner[1].clone())?;
+            //     Expression::Assign(var, Box::new(val))
+            // } 
             Rule::assign => {
-                assert!(inner.len() == 2);
+                assert!(inner.len() >= 2);
                 let var = inner[0].as_str().to_owned();
-                let val = parse_rule(inner[1].clone())?;
-                // Expression::Assign(var, Box::new(val))
-                Expression::AssignToExpression(Box::new(Expression::Variable(var)), Box::new(val))
+                if inner.len() == 2 {
+                    let val = parse_rule(inner[1].clone())?;
+                    Expression::AssignToExpression(Box::new(Expression::Variable(var)), Box::new(val))
+                } else if inner.len() == 3 {
+                    let field_inner : Vec<Pair<Rule>> = inner[1].clone().into_inner().collect();
+                    assert!(field_inner.len() == 1);
+                    let field = field_inner[0].as_str().to_owned();
+                    let val = parse_rule(inner[2].clone())?;
+                    Expression::AssignToExpression(Box::new(Expression::Field(Box::new(Expression::Variable(var)),field)), Box::new(val))
+                }
+                else {
+                    Err(anyhow!("error parsing assign (TODO: treat more than one field in chain)"))?
+                }
             } 
             Rule::r#while => {
                 assert!(inner.len() == 2);
