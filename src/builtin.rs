@@ -1,4 +1,4 @@
-use crate::{types::{Context, Expression}, parse_string_to_ast};
+use crate::{types::{Context, Expression}, parse_source};
 
 pub fn pow(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Expression {
     match (lhs, rhs) {
@@ -30,7 +30,7 @@ pub fn println(ctx: &mut Context, args: &[Expression]) -> Expression {
 pub fn eval_string(ctx: &mut Context, arg: &Expression) -> Expression {
     match arg {
         Expression::String(s) => {
-            ctx.eval(&parse_string_to_ast(s))
+            ctx.eval(&parse_source(s))
         }
         _ => Expression::from(arg)
     }

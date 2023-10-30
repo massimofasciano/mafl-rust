@@ -1,4 +1,4 @@
-use crate::{parse_string_to_ast, unescape_string, types::{Expression, Context, AtomicExpression}, builtin};
+use crate::{unescape_string, types::{Expression, Context, AtomicExpression}, builtin};
 
 impl Context {
     pub fn eval(&mut self, ast: &Expression) -> Expression {

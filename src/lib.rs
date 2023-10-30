@@ -1,17 +1,16 @@
 use pest::Parser;
-use crate::ast::parse_to_ast;
 use crate::types::{MfelParser, Rule, Expression};
-pub mod ast;
 pub mod eval;
 pub mod types;
 pub mod builtin;
+pub mod parse;
 
-pub fn parse_string_to_ast(source: &str) -> Expression {
+pub fn parse_source(source: &str) -> Expression {
     let parsed = MfelParser::parse(Rule::file, source)
         .expect("unsuccessful parse") 
         .next().unwrap(); 
     // println!("{:#?}",parsed);
-    parse_to_ast(parsed)
+    parse::parse_rule(parsed)
 }
 
 pub fn unescape_string(text: String) -> String {
