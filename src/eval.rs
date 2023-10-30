@@ -33,7 +33,11 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
         }
         Expression::Assign(id, val) => {
             let val = eval(ctx,val)?;
-            ctx.set_binding(id.to_owned(), val.to_owned());
+            if let Some(binding) = ctx.get_mut_binding(id) {
+                *binding = val.to_owned();
+            } else {
+                Err(anyhow!("binding not found {id}"))?
+            }
             val
         }
         Expression::Variable(s) => {

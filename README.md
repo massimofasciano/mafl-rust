@@ -1,7 +1,6 @@
 Rust interpreter for the MFEL language
 
 TODO:
-- deal with errors
 - ref and deref (by name ?)
 - Rc instead of Box ?
 - lambda/closure (rename?) vs function/func/fn (no env capture)

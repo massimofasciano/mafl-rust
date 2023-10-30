@@ -30,6 +30,16 @@ impl ContextItem {
             }
         }
     }
+    pub fn value_mut(&mut self, search_var: &str) -> Option<&mut Expression> {
+        match self {
+            Self::NewScope => None,
+            Self::Binding(var, value) => if var == search_var {
+                Some(value)
+            } else {
+                None
+            }
+        }
+    }
 }
 
 impl Context {
@@ -71,6 +81,18 @@ impl Context {
         }
         false
     }
+    pub fn get_mut_binding(&mut self, var: &str) -> Option<&mut Expression> {
+        let st = &mut self.stack;
+        let mut index = None;
+        for idx in (0..st.len()).rev() {
+            if st[idx].value(var).is_some() {
+                index = Some(idx);
+                break;
+            }
+        }
+        index.map(|i|st[i].value_mut(var).unwrap())
+    }
+    
     pub fn add_context(&mut self, ctx: Context) {
         for item in ctx.stack {
             match item {
