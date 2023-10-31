@@ -159,3 +159,24 @@ pub fn eval_string_as_source(ctx: &Context, arg: &Expression) -> Result<Expressi
         _ => arg.to_error()
     }
 }
+
+pub fn array(ctx: &Context, size: &Expression, init: &Expression) -> Result<Expression> {
+    let mut arr : Vec<Expression> = vec![];
+    if let Expression::Integer(size) = size {
+        let size = *size;
+        let init = &eval::eval(ctx,init)?;
+        for i in 0..size {
+            let init = match init {
+                Expression::Closure(_, _, _) => {
+                    eval::eval(ctx, &Expression::FunctionCall(Box::new(init.to_owned()), vec![Expression::Integer(i)]))?
+                }
+                _ => init.to_owned(),
+            };
+            arr.push(init);
+        }
+        Ok(Expression::Array(arr))
+    } else {
+        Err(anyhow!("array {size:?} {init:?}"))?
+    }
+}
+

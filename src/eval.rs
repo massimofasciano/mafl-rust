@@ -216,7 +216,7 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
                 _ => ast.to_error()?,
             }
         }
-        // Expression::Closure(_, _, _) => ast.to_owned(), 
+        Expression::Closure(_, _, _) => ast.to_owned(), 
         Expression::Array(vals) => {
             debug!("eval array");
             Expression::Array(vals.iter().map(|v|eval(ctx,v)).collect::<Result<Vec<_>>>()?)
@@ -246,6 +246,7 @@ pub fn builtin(ctx: &Context, name: &str, args: &[Expression]) -> Result<Express
         ("ne", [lhs, rhs]) => builtin::ne(ctx, lhs, rhs),
         ("ge", [lhs, rhs]) => builtin::ge(ctx, lhs, rhs),
         ("le", [lhs, rhs]) => builtin::le(ctx, lhs, rhs),
+        ("array", [size, init]) => builtin::array(ctx, size, init),
         _ => Err(anyhow!("builtin {name}")),
     }
 }

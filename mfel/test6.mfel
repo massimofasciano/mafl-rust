@@ -1,16 +1,23 @@
 #let f = function(x) {if x > 0 {x} else {-x}} in 
 #let g = function(a,b,c) { a+b*f(c)} in g(1,2,3)
 
-var o = {
-    var x = 1;
-    var y = 2;
-    var z = 3;
-    var p = {
-        var q = 4;
-        function () {q}
-    };
-    function() {x+y+z+p()}
-};
-o.y := 12;
-o()
+#var o = {
+#    var x = 1;
+#    var y = 2;
+#    var z = 3;
+#    var p = {
+#        var q = 4;
+#        function () {q}
+#    };
+#    function() {x+y+z+p()}
+#};
+#o.y := 12;
+#o()
+
+var a1 = [1,2,3,4];
+var a2 = @array(10,4);
+var a3 = @array(10, function(x) { if x < 5 { (x + 1) * 10 } else { x + 1 } });
+@println(a1);
+@println(a2);
+a3
 
