@@ -149,6 +149,15 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
                 _ => ast.to_error()?
             }
         }
+        Expression::Context(arg_names, body) => {
+            let mut local_ctx = Context::new();
+            for name in arg_names {
+                if let Some(val) = ctx.get_binding(name) { 
+                    local_ctx.add_binding(name.to_owned(), val.to_owned()) 
+                }
+            }
+            eval(&mut local_ctx, body)?
+        }
         Expression::BinOpCall(op, left, right) => {
             let op = op.as_ref();
             let left = eval(ctx,left.as_ref())?;
@@ -190,7 +199,7 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
                 _ => ast.to_error()?,
             }
         }
-        Expression::Closure(_, _, _) => ast.to_owned(), // need a Rc in closure!!!
+        Expression::Closure(_, _, _) => ast.to_owned(), 
         _ => ast.to_error()?,
     })
 }

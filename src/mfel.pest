@@ -17,7 +17,7 @@ block_comment = @{
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" |
     "return" | "break" | "continue" |
-    "let" | "lambda" | "var" | "in" | 
+    "let" | "function" | "var" | "in" | "context" |
     "true" | "false" |
     "and" | "or" | "not"
 }
@@ -57,8 +57,13 @@ string = @{
 }
 
 function_args = { (identifier ~ ("," ~ identifier)*)? }
+
 function = {
-    "lambda" ~ "(" ~ function_args ~ ")" ~ block
+    "function" ~ "(" ~ function_args ~ ")" ~ block
+}
+
+context = {
+    "context" ~ "(" ~ function_args ~ ")" ~ ( ("in" ~ expr) | block )
 }
 
 if = {
@@ -151,7 +156,7 @@ expr_base = _{
     "(" ~ expr ~ ")" | unit_literal |
     block | if | 
     while | unless | do_while | loop |
-    var | let_in | function | assign |
+    var | let_in | function | assign | context |
     return | continue | break |
     boolean | float | integer | string_literal | variable 
 }

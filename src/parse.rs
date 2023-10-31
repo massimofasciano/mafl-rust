@@ -79,6 +79,13 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 let body = parse_rule(inner[1].clone())?;
                 Expression::Function(args, Box::new(body))
             } 
+            Rule::context => {
+                assert!(inner.len() == 2);
+                assert!(inner[0].as_rule() == Rule::function_args);
+                let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
+                let body = parse_rule(inner[1].clone())?;
+                Expression::Context(args, Box::new(body))
+            } 
             Rule::r#if | Rule::unless => {
                 assert!(inner.len() == 2 || inner.len() == 3);
                 let expr = parse_rule(inner[0].clone())?;
@@ -210,7 +217,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::expr_infix_id | Rule::expr_infix_pipe | Rule::expr_or | Rule::expr_and | 
         Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
         Rule::expr_mul | Rule::expr_apply_or_field | Rule::expr_post | 
-        Rule::expr_prefix | Rule::expr_exp | Rule::let_in | 
+        Rule::expr_prefix | Rule::expr_exp | Rule::let_in | Rule::context |
         Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | 
         Rule::assign | Rule::var | Rule::r#loop | Rule::function | Rule::r#return => {
             let rule = parsed.as_rule();
