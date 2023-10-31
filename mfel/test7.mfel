@@ -76,4 +76,7 @@ var q = 1;
 q := q + 1;
 #var p = context (q) { function () { q := q + 1; @println(q) } };
 var p = function () { q := q + 1; @println(q) };
-p
+p(); p(); p();
+
+var arr = [1,2, 3,1+4,rec(4) ];
+arr

@@ -42,6 +42,7 @@ pub enum Expression {
     Function(Vec<String>,Box<Expression>),
     // Closure(Context,Vec<String>,Box<Expression>),
     Closure(Rc<RefCell<Context>>,Vec<String>,Box<Expression>),
+    Array(Vec<Expression>),
     Return(Box<Expression>),
     Continue, Break,
 }
@@ -60,6 +61,7 @@ impl std::fmt::Display for Expression {
             Expression::Float(a) => write!(f,"{a}"),
             Expression::Integer(a) => write!(f,"{a}"),
             Expression::String(a) => write!(f,"{a}"),
+            Expression::Array(a) => write!(f,"{a:?}"),
             _ => write!(f,"{:#?}",self),
         }
     }

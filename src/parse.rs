@@ -79,6 +79,9 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 let body = parse_rule(inner[1].clone())?;
                 Expression::Function(args, Box::new(body))
             } 
+            Rule::array => {
+                Expression::Array(inner.iter().map(|e| parse_rule(e.to_owned())).collect::<Result<Vec<_>>>()?)
+            } 
             Rule::context => {
                 assert!(inner.len() == 2);
                 assert!(inner[0].as_rule() == Rule::function_args);
@@ -218,7 +221,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
         Rule::expr_mul | Rule::expr_apply_or_field | Rule::expr_post | 
         Rule::expr_prefix | Rule::expr_exp | Rule::let_in | Rule::context |
-        Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | 
+        Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
         Rule::assign | Rule::var | Rule::r#loop | Rule::function | Rule::r#return => {
             let rule = parsed.as_rule();
             let str = parsed.as_str().to_owned();

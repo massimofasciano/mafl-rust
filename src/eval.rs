@@ -200,6 +200,9 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
             }
         }
         Expression::Closure(_, _, _) => ast.to_owned(), 
+        Expression::Array(vals) => {
+            Expression::Array(vals.iter().map(|v|eval(ctx,v)).collect::<Result<Vec<_>>>()?)
+        }
         _ => ast.to_error()?,
     })
 }

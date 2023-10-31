@@ -56,6 +56,8 @@ string = @{
     )* 
 }
 
+array = { "[" ~ (expr ~ ("," ~ expr)*)? ~ "]"}
+
 function_args = { (identifier ~ ("," ~ identifier)*)? }
 
 function = {
@@ -154,6 +156,7 @@ expr_apply_or_field = { expr_prefix ~ (apply_args | field_access)* }
 expr_prefix = { (not|neg|ref|deref)* ~ expr_base }
 expr_base = _{
     "(" ~ expr ~ ")" | unit_literal |
+    array |
     block | if | 
     while | unless | do_while | loop |
     var | let_in | function | assign | context |
