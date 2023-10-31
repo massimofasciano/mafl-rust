@@ -2,7 +2,11 @@ Rust interpreter for the MFEL language
 
 TODO:
 - there is a loop somewhere (circular expressions are sometimes created, stack overflows...)
-- closures as objects (field notation accesses context bindings)  EXPERIMENTAL (o.x works, not o.x.y on assign)
+- closures as objects (field notation accesses context bindings)  EXPERIMENTAL (o.x works, not o.x.y on assign) GET RID OF THIS
+
+- array @map @fold ?
+- store arrays in RefCell to allow mutation of elements ?
+- context objects (lists of hashes exposing the Context type to the language): reuse the field syntax ? use builtin functions ?
 
 - ref and deref (by name ?)
 - lambda/closure (rename?) vs function/func/fn (no env capture)
