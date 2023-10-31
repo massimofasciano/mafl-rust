@@ -127,6 +127,21 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
                     let eval_args = arg_values.iter().map(|e|eval(ctx,e)).collect::<Result<Vec<_>>>()?;
                     builtin(ctx,&name, &eval_args)?
                 }
+                Expression::Array(vals) => {
+                    if arg_values.len() == 1 {
+                        if let Expression::Integer(index) = eval(ctx, &arg_values[0])? {
+                            if let Some(result) = vals.get(index as usize) {
+                                result.to_owned()
+                            } else {
+                                Err(anyhow!("index {index} out of bounds"))?
+                            }
+                        } else {
+                            Err(anyhow!("index by non-integer"))?
+                        }
+                    } else {
+                        Err(anyhow!("indexing is only supported with one index"))?
+                    }
+                }
                 Expression::Closure(closure_ctx, arg_names, body) => {
                     let mut function_ctx = ctx.clone();
                     let closure_ctx = closure_ctx.borrow();
