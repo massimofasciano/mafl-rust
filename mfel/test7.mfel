@@ -1,5 +1,3 @@
-# fix infix function op
-
 #var add = function(x,y) { x+y };
 #add(1,2) $add 3
 #1 $add 2
@@ -20,6 +18,8 @@ x
 
 @eval("@println(\"hello\")");
 var add = function(x,y) { x+y };
+add(1,2)
+(###################################
 var f = function (x) {
     if x = () {
         ()
@@ -70,7 +70,8 @@ let fibo = context () {
 } in fibo(34)
 #)
 
-(#
+
+
 # this example never works because of a cloned context in closure application
 # (q is never mutated in the global context via function p)
 var q = 1;
@@ -78,8 +79,12 @@ q := q + 1;
 #var p = context (q) { function () { q := q + 1; @println(q) } };
 var p = function () { q := q + 1; @println(q) };
 p(); p(); p();
-#)
 
 var arr = [1,2, 3,1+4,rec(4) ];
 @println(arr);
 arr(4)
+
+#context (q) {
+#    var f = function (x,y) {x*y}; f(1,2)+q
+#}
+#)

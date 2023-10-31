@@ -1,150 +1,16 @@
-#1 @add 2 + 3 * 4
-#1 > 4 and 2 <= 3
-#$x+7
-#x!
-#{lambda(x,y){x+y}}(1,2)
-#x.g(1)?.f()
-#((x?)?)?
-#1.z()+2.f(1+1)
-#f(1) @add 2+2
-#-x*2
+#let f = function(x) {if x > 0 {x} else {-x}} in 
+#let g = function(a,b,c) { a+b*f(c)} in g(1,2,3)
 
-#2.5;
-#{ a; @print(3.4) }
-#1+2*3+4 and not 1 or 4
-#a.b(1).c(1,2,3)
-#var r := unless x > 3 {
-#    x.init(2)
-#};
-
-#loop {
-#    @print()
-#}
-
-#var f := lambda (x,y) {
-#    @print("x+y=");
-#    x or y? and $z or w
-#    return;
-#    return 3+5;
-#    continue;
-#    break;
-#};
-
-#$-x?!
-
-#var x := var y = 1;
-
-#f(1).g(1,2).h()
-
-#a.get(1)(1,2)().run()
-
-#var a.x = 3;
-#var a = 10;
-#var $"x" := 20! <> 2 != false = 2;
-
-#if a.x > 2 { return }
-
-#var x = 2;
-#var y = 3;
-#1+x*y+10^2**2
-
-#var sh := "hello";
-#$("var "+sh+" := \"world\"");
-#hello + " " + sh + "!"
-
-#$("var x "+":= 10; x+1")
-#"hello\n\"x\""
-
-#var x = 2;
-#var y = 3;
-
-#if x <> y {
-#    1
-#} else {
-#    2
-#}
-
-#while y < 10 {
-#    y := y + 1;
-#}
-
-#lambda(x){x+1}(1)
-
-#var x = 10;
-#var y = 20;
-#var z = 30;
-
-#var f = lambda (x,y,z) { 
-#    lambda (a) {
-#        x + y * z + a
-#    }
-#};
-#f(2,3,4)(10)
-
-# currying!
-#lambda(x,y,z){x+y*z}(1)(2)(2)
-
-#var f = lambda (x,y,z) { 
-#    lambda (a) {
-#        x + y * z + a
-#    }
-#};
-#f(2,3)(4,10)
-
-#var x = var y = 10;
-#var z = 20;
-#x*y+z
-
-(# block comment...
-
-var f1 = lambda (x) { x + y };
-var y = 1;
-var f2 = lambda (x) { x + y };
-{var x = 10;
-while x > 0 {
-    x := x - 1;
-    y := y * 2;
-    f1(10000)+f2(1000)
-}}
-
-#)
-
-(# recursive block comments!!!
-@println("hello, my value is: ",10^3);
-# dynamic binding interacting with recursion: solution ?
-var rec = lambda (x) { x };
-var rec = lambda (x) {
-    if x < 1 (# comment #) {
-        1
-    } else {
-        2*rec(x-1)
-    }
+var o = {
+    var x = 1;
+    var y = 2;
+    var z = 3;
+    var p = {
+        var q = 4;
+        function () {q}
+    };
+    function() {x+y+z+p()}
 };
-rec(4)
-#)
+o.y := 12;
+o()
 
-# NOTE: make block comments recursive 
-
-(#
-var sh = "hello";
-@eval("var "+sh+" = \"world\"");
-sh + " " + hello + "!"
-#)
-
-(#
-let 
-x
-# (#  block commenets don't matter inside line comments
-= 10 in 
-(#
-  # (#
-   line comments don't matter inside block comments
-    (#  
-    
-    (# a couple of levels of block comments # #)
-    #)
-   #)
-
-#)
-x*2
-#)

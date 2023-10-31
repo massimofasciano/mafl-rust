@@ -5,10 +5,10 @@ use anyhow::Result;
 fn main() -> Result<()> {
     env_logger::init();
     let source = read_to_string(stdin())?;
-    let ast = parse_source(&source)?;
+    let expr = parse_source(&source)?;
     // println!("{ast:#?}");
-    let mut ctx = Context::new();
-    let result = eval(&mut ctx, &ast)?;
+    let ctx = Context::new();
+    let result = eval(&ctx, &expr)?;
     // println!("{result:#?}");
     println!("{result}");
     Ok(())

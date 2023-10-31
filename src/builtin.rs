@@ -2,7 +2,7 @@ use crate::{expression::Expression, parse_source, eval, context::Context};
 use anyhow::{Result,anyhow};
 use log::debug;
 
-pub fn pow(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+pub fn pow(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs, rhs) {
         (Expression::Float(a), Expression::Float(b)) => Expression::Float(a.powf(*b)),
         (Expression::Float(a), Expression::Integer(b)) => Expression::Float(a.powf(*b as f64)),
@@ -12,7 +12,7 @@ pub fn pow(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expres
     })
 }
 
-pub fn add(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+pub fn add(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs, rhs) {
         (Expression::Float(a), Expression::Float(b)) => Expression::Float(a+b),
         (Expression::Float(a), Expression::Integer(b)) => Expression::Float(a + (*b as f64)),
@@ -28,7 +28,7 @@ pub fn add(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expres
 }
 
 
-pub fn sub(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+pub fn sub(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs, rhs) {
         (Expression::Float(a), Expression::Float(b)) => Expression::Float(a-b),
         (Expression::Float(a), Expression::Integer(b)) => Expression::Float(a - (*b as f64)),
@@ -38,7 +38,7 @@ pub fn sub(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expres
     })
 }
 
-pub fn mul(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+pub fn mul(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs, rhs) {
         (Expression::Float(a), Expression::Float(b)) => Expression::Float(a*b),
         (Expression::Float(a), Expression::Integer(b)) => Expression::Float(a * (*b as f64)),
@@ -50,7 +50,7 @@ pub fn mul(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expres
     })
 }
 
-pub fn div(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+pub fn div(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs, rhs) {
         (Expression::Float(a), Expression::Float(b)) => Expression::Float(a/b),
         (Expression::Float(a), Expression::Integer(b)) => Expression::Float(a / (*b as f64)),
@@ -60,28 +60,28 @@ pub fn div(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expres
     })
 }
 
-pub fn modulo(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+pub fn modulo(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs, rhs) {
         (Expression::Integer(a), Expression::Integer(b)) => Expression::Integer(a % b),
         _ => Err(anyhow!("mod {lhs:?} {rhs:?}"))?,
     })
 }
 
-pub fn and(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+pub fn and(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs, rhs) {
         (Expression::Boolean(a), Expression::Boolean(b)) => Expression::Boolean(*a && *b),
         _ => Err(anyhow!("and {lhs:?} {rhs:?}"))?,
     })
 }
 
-pub fn or(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+pub fn or(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs, rhs) {
         (Expression::Boolean(a), Expression::Boolean(b)) => Expression::Boolean(*a || *b),
         _ => Err(anyhow!("or {lhs:?} {rhs:?}"))?,
     })
 }
 
-pub fn gt(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+pub fn gt(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs, rhs) {
         (Expression::Float(a), Expression::Float(b)) => Expression::Boolean(a>b),
         (Expression::Integer(a), Expression::Integer(b)) => Expression::Boolean(a>b),
@@ -92,7 +92,7 @@ pub fn gt(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Express
     })
 }
 
-pub fn lt(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+pub fn lt(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs, rhs) {
         (Expression::Float(a), Expression::Float(b)) => Expression::Boolean(a<b),
         (Expression::Integer(a), Expression::Integer(b)) => Expression::Boolean(a<b),
@@ -103,27 +103,27 @@ pub fn lt(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Express
     })
 }
 
-pub fn eq(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+pub fn eq(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(Expression::Boolean(lhs == rhs))
 }
 
-pub fn ne(_: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+pub fn ne(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(Expression::Boolean(lhs != rhs))
 }
 
-pub fn ge(ctx: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+pub fn ge(ctx: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     let eq = eq(ctx,lhs,rhs)?;
     let gt = gt(ctx,lhs,rhs)?;
     or(ctx,&eq,&gt)
 }
 
-pub fn le(ctx: &mut Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+pub fn le(ctx: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     let eq = eq(ctx,lhs,rhs)?;
     let lt = lt(ctx,lhs,rhs)?;
     or(ctx,&eq,&lt)
 }
 
-pub fn neg(_: &mut Context, val: &Expression) -> Result<Expression> {
+pub fn neg(_: &Context, val: &Expression) -> Result<Expression> {
     Ok(match val {
         Expression::Float(a) => Expression::Float(-a),
         Expression::Integer(a) => Expression::Integer(-a),
@@ -132,25 +132,25 @@ pub fn neg(_: &mut Context, val: &Expression) -> Result<Expression> {
     })
 }
 
-pub fn not(_: &mut Context, val: &Expression) -> Result<Expression> {
+pub fn not(_: &Context, val: &Expression) -> Result<Expression> {
     Ok(match val {
         Expression::Boolean(b) => Expression::Boolean(! *b),
         _ => Err(anyhow!("not {val:?}"))?,
     })
 }
 
-pub fn print(_: &mut Context, args: &[Expression]) -> Result<Expression> {
+pub fn print(_: &Context, args: &[Expression]) -> Result<Expression> {
     for arg in args { print!("{arg}"); }
     Ok(Expression::Unit)
 }
 
-pub fn println(_: &mut Context, args: &[Expression]) -> Result<Expression> {
+pub fn println(_: &Context, args: &[Expression]) -> Result<Expression> {
     for arg in args { print!("{arg}"); }
     println!();
     Ok(Expression::Unit)
 }
 
-pub fn eval_string_as_source(ctx: &mut Context, arg: &Expression) -> Result<Expression> {
+pub fn eval_string_as_source(ctx: &Context, arg: &Expression) -> Result<Expression> {
     match arg {
         Expression::String(s) => {
             debug!("evaluating string: {s}");

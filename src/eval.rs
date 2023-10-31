@@ -1,10 +1,8 @@
-use std::{cell::RefCell, rc::Rc};
-
 use crate::{unescape_string, expression::Expression, builtin, context::Context};
 use anyhow::{Result,anyhow};
 use log::debug;
 
-pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
+pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
     Ok(match ast {
         Expression::Unit => Expression::Unit,
         Expression::Integer(i) => Expression::Integer(*i),
@@ -12,57 +10,55 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
         Expression::Boolean(b) => { Expression::Boolean(*b) }
         Expression::String(s) => Expression::String(unescape_string(s.to_string())),
         Expression::Block(exprs) => {
-            ctx.start_scope();
+            debug!("eval block");
+            let ctx = &ctx.with_new_scope();
             let mut block_value = Expression::Unit;
             for expr in exprs {
                 block_value = eval(ctx,expr)?;
             }
-            ctx.end_scope();
             block_value
         }
         Expression::Let(id, val, expr) => {
+            debug!("eval let {id} in");
             let val = eval(ctx,val)?;
-            ctx.start_scope();
+            let ctx = &ctx.with_new_scope();
             ctx.add_binding(id.to_owned(), val.to_owned());
-            let result = eval(ctx,expr)?;
-            ctx.end_scope();
-            result
+            eval(ctx,expr)?
         }
         Expression::Var(id, val) => {
+            debug!("eval var declaration: {id}");
             let val = eval(ctx,val)?;
             ctx.add_binding(id.to_owned(), val.to_owned());
             val
         }
         Expression::Assign(id, val) => {
+            debug!("eval assign to identifier: {id}");
             let val = eval(ctx,val)?;
-            if let Some(binding) = ctx.get_mut_binding(id) {
-                *binding = val.to_owned();
-            } else {
+            if ctx.set_binding(id.to_owned(), val.to_owned()).is_none() {
                 Err(anyhow!("binding not found {id}"))?
+            } else {
+                val
             }
-            val
         }
         Expression::AssignToExpression(target, val) => {
+            debug!("eval assign to expression");
             let val = eval(ctx,val)?;
             match target.as_ref() {
                 Expression::Variable(id) => {
-                    if let Some(binding) = ctx.get_mut_binding(id) {
-                        *binding = val.to_owned();
-                    } else {
+                    if ctx.set_binding(id.to_owned(), val.to_owned()).is_none() {
                         Err(anyhow!("binding not found {id}"))?
+                    } else {
+                        val
                     }
-                    val
                 },
                 Expression::Field(target, field) => {
                     let target = eval(ctx, target)?;
                     match target {
                         Expression::Closure(closure_ctx, _arg_names, _body) => {
-                            let mut closure_ctx = closure_ctx.borrow_mut();
-                            if let Some(target_value) = closure_ctx.get_mut_binding(field) {
-                                *target_value = val.to_owned();
-                                val
-                            } else {
+                            if closure_ctx.set_binding(field.to_owned(), val.to_owned()).is_none() {
                                 Err(anyhow!("field binding not found {field}"))?
+                            } else {
+                                val
                             }
                         }
                         _ => ast.to_error()?,
@@ -72,6 +68,7 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
             }
         }
         Expression::Variable(s) => {
+            debug!("eval variable: {s}");
             if s.starts_with('@') {
                 Expression::Builtin(s.strip_prefix('@').unwrap().to_owned())
             } else if let Some(value) = ctx.get_binding(s) {
@@ -81,6 +78,7 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
             }
         }
         Expression::If(cond, then, r#else) => {
+            debug!("eval if");
             let cond = eval(ctx,cond.as_ref())?;
             match cond {
                 Expression::Boolean(b) =>
@@ -90,6 +88,7 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
             }
         }
         Expression::While(cond, body) => {
+            debug!("eval while");
             let mut body_value = Expression::Unit;
             #[allow(clippy::while_let_loop)]
             loop {
@@ -105,10 +104,10 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
             body_value
         }
         Expression::Field(target, field) => {
+            debug!("eval field: .{field}");
             let target = eval(ctx, target)?;
             match target {
                 Expression::Closure(closure_ctx, _arg_names, _body) => {
-                    let closure_ctx = closure_ctx.borrow();
                     if let Some(value) = closure_ctx.get_binding(field) {
                         value.to_owned()
                     } else {
@@ -119,9 +118,11 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
             }
         }
         Expression::Function(arg_names, body) => {
-            Expression::Closure(Rc::new(RefCell::new(ctx.to_owned())), arg_names.to_owned(), body.to_owned())
+            debug!("eval function");
+            Expression::Closure(ctx.to_owned(), arg_names.to_owned(), body.to_owned())
         }
         Expression::FunctionCall(lambda, arg_values) => {
+            debug!("eval function call");
             match eval(ctx,lambda)? {
                 Expression::Builtin(name) => {
                     let eval_args = arg_values.iter().map(|e|eval(ctx,e)).collect::<Result<Vec<_>>>()?;
@@ -143,37 +144,37 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
                     }
                 }
                 Expression::Closure(closure_ctx, arg_names, body) => {
-                    let mut function_ctx = ctx.clone();
-                    let closure_ctx = closure_ctx.borrow();
-                    function_ctx.add_context(&closure_ctx);
+                    let function_ctx = closure_ctx.with_new_scope();
                     for (name,value) in arg_names.iter().zip(arg_values) {
                         function_ctx.add_binding(name.to_owned(), eval(ctx,value)?);
                     }
                     #[allow(clippy::comparison_chain)]
                     if arg_names.len() > arg_values.len() {
                         debug!("performing currying: {arg_names:?} {arg_values:?}");
-                        Expression::Closure(Rc::new(RefCell::new(function_ctx)), arg_names[arg_values.len()..].to_vec(), body)
+                        Expression::Closure(function_ctx, arg_names[arg_values.len()..].to_vec(), body)
                     } else if arg_names.len() < arg_values.len() {
                         debug!("extra args supplied: {arg_names:?} {arg_values:?}");
-                        let uncurried = eval(&mut function_ctx,&body)?;
-                        eval(&mut function_ctx,&Expression::FunctionCall(Box::new(uncurried),arg_values[arg_names.len()..].to_vec()))?
+                        let uncurried = eval(&function_ctx,&body)?;
+                        eval(&function_ctx,&Expression::FunctionCall(Box::new(uncurried),arg_values[arg_names.len()..].to_vec()))?
                     } else {
-                        eval(&mut function_ctx,&body)?
+                        eval(&function_ctx,&body)?
                     }
                 },
                 _ => ast.to_error()?
             }
         }
         Expression::Context(arg_names, body) => {
-            let mut local_ctx = Context::new();
+            debug!("eval context: {arg_names:?}");
+            let local_ctx = Context::new();
             for name in arg_names {
                 if let Some(val) = ctx.get_binding(name) { 
-                    local_ctx.add_binding(name.to_owned(), val.to_owned()) 
+                    local_ctx.add_binding(name.to_owned(), val.to_owned()); 
                 }
             }
-            eval(&mut local_ctx, body)?
+            eval(&local_ctx, body)?
         }
         Expression::BinOpCall(op, left, right) => {
+            debug!("eval bin op call");
             let op = op.as_ref();
             let left = eval(ctx,left.as_ref())?;
             let right = eval(ctx,right.as_ref())?;
@@ -206,6 +207,7 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
             }
         }
         Expression::UnaryOpCall(op, expr) => {
+            debug!("eval unary op call");
             let op = op.as_ref();
             let expr = eval(ctx,expr.as_ref())?;
             match op {
@@ -214,15 +216,16 @@ pub fn eval(ctx: &mut Context, ast: &Expression) -> Result<Expression> {
                 _ => ast.to_error()?,
             }
         }
-        Expression::Closure(_, _, _) => ast.to_owned(), 
+        // Expression::Closure(_, _, _) => ast.to_owned(), 
         Expression::Array(vals) => {
+            debug!("eval array");
             Expression::Array(vals.iter().map(|v|eval(ctx,v)).collect::<Result<Vec<_>>>()?)
         }
         _ => ast.to_error()?,
     })
 }
 
-pub fn builtin(ctx: &mut Context, name: &str, args: &[Expression]) -> Result<Expression> {
+pub fn builtin(ctx: &Context, name: &str, args: &[Expression]) -> Result<Expression> {
     match (name, args) {
         ("println", args) => { builtin::println(ctx, args) },
         ("print", args) => { builtin::print(ctx, args) },

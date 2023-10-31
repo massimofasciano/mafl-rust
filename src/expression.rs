@@ -1,5 +1,3 @@
-use std::{cell::RefCell, rc::Rc};
-
 use anyhow::{anyhow, Result};
 
 use pest_derive::Parser;
@@ -40,8 +38,7 @@ pub enum Expression {
     Loop(Box<Expression>),
     Context(Vec<String>,Box<Expression>),
     Function(Vec<String>,Box<Expression>),
-    // Closure(Context,Vec<String>,Box<Expression>),
-    Closure(Rc<RefCell<Context>>,Vec<String>,Box<Expression>),
+    Closure(Context,Vec<String>,Box<Expression>),
     Array(Vec<Expression>),
     Return(Box<Expression>),
     Continue, Break,
