@@ -194,3 +194,14 @@ pub fn len(_: &Context, val: &Expression) -> Result<Expression> {
     })
 }
 
+pub fn include(ctx: &Context, file_expr: &Expression) -> Result<Expression> {
+    debug!("include {file_expr:?}");
+    Ok(match file_expr {
+        Expression::String(file) => {
+            let source = std::fs::read_to_string(file)?;
+            eval_string_as_source(ctx, &Expression::String(source))?
+        }
+        _ => Err(anyhow!("include {file_expr:?}"))?,
+    })
+}
+

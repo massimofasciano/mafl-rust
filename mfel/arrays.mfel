@@ -1,3 +1,5 @@
+@include("mfel/stdlib.mfel");
+
 @println("******* testing arrays *******");
 
 var a1 = [1,2,3,4];
@@ -22,18 +24,10 @@ var a4 = a1 + a2 + a3;
 var a1_2_3 = a1(2)+a1(3);
 @println("a1[2]+a1[3]=",a1_2_3);
 a1(2,a1_2_3); # a1[2]=a1_2_3
-a1(0,100); # mutate a1
+a1(0,100); # mutate a1 index 0
 @println("a1=",a1); 
 
-var amap = function (f,a) {
-    var i = 0;
-    var out = @array(@len(a),0);
-    while i < @len(a) {
-        out(i,f(a(i)));
-        i := i + 1;
-    }
-    out
-};
+# amap is defined in stdlib (included at the top)
 @println("map (*100) a1=",amap(function(x){x*100},a1));
 
 @println("******************************");

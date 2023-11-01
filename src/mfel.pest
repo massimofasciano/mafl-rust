@@ -22,11 +22,12 @@ reserved = _{
     "and" | "or" | "not"
 }
 
-identifier = @{ 
-    !reserved ~
+identifier_syntax = @{
     (ASCII_ALPHA | "_") ~ 
     (ASCII_ALPHANUMERIC | "_")* 
 }
+identifier = @{ !reserved ~ identifier_syntax | reserved ~ identifier_syntax }
+
 infix_identifier = ${
     "$" ~ ( builtin | identifier )
 }

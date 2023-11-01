@@ -21,6 +21,7 @@ pub enum Expression {
     Builtin(String),
     Unit,
     Block(Vec<Expression>),
+    Sequence(Vec<Expression>),
     FunctionCall(Box<Expression>,Vec<Expression>),
     Field(Box<Expression>,String),
     BinOpCall(Box<Expression>,Box<Expression>,Box<Expression>),

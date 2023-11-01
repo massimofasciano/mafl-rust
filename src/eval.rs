@@ -20,6 +20,14 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
             }
             block_value
         }
+        Expression::Sequence(exprs) => {
+            debug!("eval sequence");
+            let mut seq_value = Expression::Unit;
+            for expr in exprs {
+                seq_value = eval(ctx,expr)?;
+            }
+            seq_value
+        }
         Expression::Let(id, val, expr) => {
             debug!("eval let {id} in");
             let val = eval(ctx,val)?;
@@ -252,6 +260,7 @@ pub fn builtin(ctx: &Context, name: &str, args: &[Expression]) -> Result<Express
         ("println", args) => { builtin::println(ctx, args) },
         ("print", args) => { builtin::print(ctx, args) },
         ("eval", [arg]) => { builtin::eval_string_as_source(ctx, arg) },
+        ("include", [file_expr]) => builtin::include(ctx, file_expr),
         ("pow", [lhs, rhs]) => builtin::pow(ctx, lhs, rhs),
         ("add", [lhs, rhs]) => builtin::add(ctx, lhs, rhs),
         ("sub", [lhs, rhs]) => builtin::sub(ctx, lhs, rhs),

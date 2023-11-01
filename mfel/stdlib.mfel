@@ -1,0 +1,13 @@
+@println("******* loading stdlib *******");
+
+### map function on arrays
+var amap = function (f,a) {
+    var i = 0;
+    var out = @array(@len(a),());
+    while i < @len(a) {
+        out(i,f(a(i)));
+        i := i + 1;
+    }
+    out
+};
+
