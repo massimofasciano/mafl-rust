@@ -9,6 +9,7 @@ FEATURES:
 - mutable arrays with @array, @len, @append and literals
 
 TODO:
+- builtins: readln readfile arg
 - when a function needs to call another by name, currently we have 2 choices
 1) use dynamic instead of function
 2) use context (g) in closure (x) { g(x) }
@@ -19,7 +20,6 @@ TODO:
 - context objects (lists of hashes exposing the Context type to the language): reuse the field syntax ? use builtin functions ?
 
 - ref and deref (by name ?)
-- builtins: $readln $readfile $include $add $sub $arg_str $arg_val
 - change unit literal from () to ?  (nil, none, void, null, etc...) 
 - implement return continue break
 - general while/for loop
