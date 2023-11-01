@@ -1,7 +1,9 @@
-#(#
-var obj = context () {
+var y = 30;
+
+(#
+var obj = context (y) {
+    # example with var
     var x = 10;
-    var y = 30;
     var get_x = function() {x}; 
     var get_y = function() {y};
     var set_x = function(new_x) {x := new_x};
@@ -10,11 +12,10 @@ var obj = context () {
 };
 #)
 
-(#
-## this one works because a new scope is created after each let
-var obj = context () {
+#(#
+var obj = context (y) {
+    # same example with let .. in ..
     let x = 10 in
-    let y = 30 in
     let get_x = function() {x} in
     let get_y = function() {y} in
     let set_x = function(new_x) {x := new_x} in
@@ -22,9 +23,11 @@ var obj = context () {
     @struct()
 };
 #)
+
 @println(obj.get_x());
 @println(obj.y);
 obj.set_x(obj.x + 1);
 obj.set_y(obj.y + 5);
 @println(obj.x);
 @println(obj.get_y());
+y
