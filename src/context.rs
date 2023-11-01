@@ -1,4 +1,4 @@
-use std::{collections::HashMap, cell::RefCell, rc::Rc};
+use std::{collections::HashMap, cell::RefCell, rc::Rc, mem::swap};
 
 use log::debug;
 
@@ -29,6 +29,20 @@ impl Context {
         let scope = Scope::new();
         *scope.parent.borrow_mut() = Some(self.to_owned());
         Self{inner:Rc::new(scope)}
+    }
+    pub fn capture(&self) -> Self {
+        debug!("capture");
+        let captured = Context::new();
+        {   // we swap old and new in a block to contain the mut borrows
+            let new_bindings = &mut *captured.inner.bindings.borrow_mut();
+            let new_parent = &mut *captured.inner.parent.borrow_mut();
+            let old_bindings = &mut *self.inner.bindings.borrow_mut();
+            let old_parent = &mut *self.inner.parent.borrow_mut();
+            swap(old_bindings,new_bindings);
+            swap(old_parent,new_parent);
+            *old_parent = Some(captured.to_owned());
+        }
+        captured
     }
     pub fn append(&self, ctx: &Self) {
         debug!("append");
@@ -165,5 +179,16 @@ mod tests {
         assert_eq!(ctx2.get_binding("v2"),Some(test_val(12)));
         assert_eq!(ctx3.get_binding("v2"),None);
         assert_eq!(ctx4.get_binding("v2"),None);
+
+        let ctx1_cap = ctx1.capture();
+        ctx1_cap.set_binding("v10".to_owned(), test_val(110));
+        ctx1.add_binding("v11".to_owned(), test_val(111));
+        ctx1_cap.add_binding("v12".to_owned(), test_val(112));
+        assert_eq!(ctx1_cap.get_binding("v10"),Some(test_val(110)));
+        assert_eq!(ctx1_cap.get_binding("v11"),None);
+        assert_eq!(ctx1_cap.get_binding("v12"),Some(test_val(112)));
+        assert_eq!(ctx1.get_binding("v10"),Some(test_val(110)));
+        assert_eq!(ctx1.get_binding("v11"),Some(test_val(111)));
+        assert_eq!(ctx1.get_binding("v12"),Some(test_val(112)));
     }
 }

@@ -1,0 +1,7 @@
+var x = 1;
+var f1 = function() {x};
+var y = 2;
+print(@struct()); # the full environment is captured here
+print(f1); # f1 only captured x
+
+
