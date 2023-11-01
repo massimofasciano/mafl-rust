@@ -9,8 +9,6 @@ FEATURES:
 - mutable arrays with @array, @len, @append and literals
 
 TODO:
-- while cond { ... }  : the block is eveluated in separate ctx for each loop iteration!!!! make special case!
-- syntax: capture () { ... } equiv to context () { ...;closure(){} }
 - make builtin @id return an expression (a closure if functional) ?
 - when a function needs to call another by name, currently we have 2 choices
 1) use dynamic instead of function

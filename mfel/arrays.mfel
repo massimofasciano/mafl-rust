@@ -44,7 +44,7 @@ a1(0,100); # mutate a1 index 0
 @println("sum(a1)=",asum(a1));
 @println("prod(a1)=",aprod(a1));
 # test if all elements are greater than n (using fold)
-let all_gt := dynamic(n,arr) { 
+let all_gt := function(n,arr) { 
     afold(
         function(x,y){x and y},
         true,
@@ -52,7 +52,7 @@ let all_gt := dynamic(n,arr) {
     )
 };
 # test if all elements are greater than n (using filter)
-let all_gt := dynamic(n,arr) { 
+let all_gt := function(n,arr) { 
     let filtered := afilter(closure(x){x > n},arr);
     @len(filtered) == @len(arr)
 };

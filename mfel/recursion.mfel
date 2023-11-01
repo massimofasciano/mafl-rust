@@ -1,4 +1,4 @@
-let fibo := dynamic (x) {
+let fibo := function (x) {
     if x < 2 {
         x
     } else {

@@ -1,5 +1,5 @@
 let f := function (x) {
-    if x = () {
+    if x == () {
         ()
     } 
     else {

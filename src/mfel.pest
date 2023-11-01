@@ -17,7 +17,7 @@ block_comment = @{
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" |
     "return" | "break" | "continue" |
-    "let" | "function" | "closure" | "dynamic" | "in" | "context" | "capture" |
+    "let" | "function" | "closure" | "staticfn" | "in" | "context" | "capture" |
     "true" | "false" |
     "and" | "or" | "not"
 }
@@ -69,8 +69,8 @@ closure = {
     "closure" ~ "(" ~ function_args ~ ")" ~ block
 }
 
-dynamic = {
-    "dynamic" ~ "(" ~ function_args ~ ")" ~ block
+staticfn = {
+    "staticfn" ~ "(" ~ function_args ~ ")" ~ block
 }
 
 context = {
@@ -176,7 +176,7 @@ expr_base = _{
     array |
     block | if | 
     while | unless | do_while | loop |
-    let | let_in | function | closure | dynamic | assign | context | capture |
+    let | let_in | function | closure | staticfn | assign | context | capture |
     return | continue | break |
     boolean | float | integer | string_literal | variable 
 }

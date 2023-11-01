@@ -79,16 +79,16 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                     }
                 })?
             } 
-            Rule::function | Rule::closure | Rule::dynamic => {
+            Rule::function | Rule::closure | Rule::staticfn => {
                 assert!(inner.len() == 2);
                 assert!(inner[0].as_rule() == Rule::function_args);
                 assert!(inner[1].as_rule() == Rule::block);
                 let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
                 let body = parse_rule(inner[1].clone())?;
                 match rule {
-                    Rule::function => Expression::Function(args, Box::new(body)),
-                    Rule::closure => Expression::ClosureSyntax(args, Box::new(body)),
-                    Rule::dynamic => Expression::FunctionDynamic(args, Box::new(body)),
+                    Rule::staticfn => Expression::FunctionStatic(args, Box::new(body)),
+                    Rule::closure => Expression::FunctionClosure(args, Box::new(body)),
+                    Rule::function => Expression::FunctionDynamic(args, Box::new(body)),
                     _ => Err(anyhow!("parse error function or closure"))?
                 }
             }
@@ -243,7 +243,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::let_in | Rule::context | Rule::capture |
         Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
         Rule::assign | Rule::r#let | Rule::r#loop | 
-        Rule::function | Rule::closure | Rule::dynamic |
+        Rule::function | Rule::closure | Rule::staticfn |
         Rule::r#return => {
             let rule = parsed.as_rule();
             let str = parsed.as_str().to_owned();

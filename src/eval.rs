@@ -128,11 +128,11 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
                 _ => ast.to_error()?,
             }
         }
-        Expression::ClosureSyntax(arg_names, body) => {
+        Expression::FunctionClosure(arg_names, body) => {
             debug!("eval function");
             Expression::Closure(ctx.capture(), arg_names.to_owned(), body.to_owned())
         }
-        Expression::Function(arg_names, body) => {
+        Expression::FunctionStatic(arg_names, body) => {
             debug!("eval function");
             Expression::Closure(Context::new(), arg_names.to_owned(), body.to_owned())
         }

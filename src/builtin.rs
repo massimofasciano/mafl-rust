@@ -178,6 +178,9 @@ pub fn array(ctx: &Context, size: &Expression, init: &Expression) -> Result<Expr
                 Expression::Closure(_, _, _) => {
                     eval::eval(ctx, &Expression::FunctionCall(Box::new(init.to_owned()), vec![Expression::Integer(i)]))?
                 }
+                Expression::FunctionDynamic(_, _) => {
+                    eval::eval(ctx, &Expression::FunctionCall(Box::new(init.to_owned()), vec![Expression::Integer(i)]))?
+                }
                 _ => init.to_owned(),
             };
             arr.push(init);
