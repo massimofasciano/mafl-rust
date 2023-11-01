@@ -223,6 +223,8 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
                     let fvar = Box::new(right);
                     eval(ctx,&Expression::FunctionCall(fvar, vec![left]))?
                 },
+                Expression::AndOp => builtin::and(ctx,&left,&right)?,
+                Expression::OrOp => builtin::or(ctx,&left,&right)?,
                 Expression::AddOp => builtin::add(ctx,&left,&right)?,
                 Expression::SubOp => builtin::sub(ctx,&left,&right)?,
                 Expression::MultOp => builtin::mul(ctx,&left,&right)?,

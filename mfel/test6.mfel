@@ -1,3 +1,0 @@
-@include("mfel/stdlib.mfel");
-### this will cause an infinite loop (context cycle)
-amap

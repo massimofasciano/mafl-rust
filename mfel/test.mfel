@@ -1,0 +1,10 @@
+# recursion not working (need letrec ?)
+let fibo = 
+    function (x) {
+        if x < 2 {
+            x
+        } else {
+            fibo(x-2) + fibo(x-1)
+        }
+    }
+in fibo(5)

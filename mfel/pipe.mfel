@@ -1,0 +1,18 @@
+var f = function (x) {
+    if x = () {
+        ()
+    } 
+    else {
+        if x > 5 {
+            ()
+        } else {
+            x+1
+        }
+    }
+};
+
+@println(f(f(f(f(f(f(1)))))));
+@println(1 | f | f | f | f | f | f | f);
+
+@println(f(f(f(1))));
+@println(1 | f | f | f);
