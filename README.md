@@ -2,6 +2,12 @@ Rust interpreter for the MFEL language
 
 TODO:
 - there is a loop somewhere (circular expressions are sometimes created, stack overflows...)
+when function becomes closure, it keeps a Rc to the parent context
+when it is bound to a variable in the outside ctx, that binding appears inside the shared ctx too (pointers to same ctx)
+that creates a circular ref
+it's also undesirable semantically (changing the closure from outside)
+the problem happens with "var" inside a sequence/block but not with "let in" chains because they create a new scope at every level
+
 - closures as objects (field notation accesses context bindings)  EXPERIMENTAL (o.x works, not o.x.y on assign) GET RID OF THIS
 
 - array @map @fold ?

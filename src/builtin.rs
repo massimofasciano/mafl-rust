@@ -205,3 +205,6 @@ pub fn include(ctx: &Context, file_expr: &Expression) -> Result<Expression> {
     })
 }
 
+pub fn struct_from_context(ctx: &Context) -> Result<Expression> {
+    Ok(Expression::Struct(ctx.to_owned()))
+}

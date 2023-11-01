@@ -50,33 +50,33 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
                 val
             }
         }
-        Expression::AssignToExpression(target, val) => {
-            debug!("eval assign to expression");
-            let val = eval(ctx,val)?;
-            match target.as_ref() {
-                Expression::Variable(id) => {
-                    if ctx.set_binding(id.to_owned(), val.to_owned()).is_none() {
-                        Err(anyhow!("binding not found {id}"))?
-                    } else {
-                        val
-                    }
-                },
-                Expression::Field(target, field) => {
-                    let target = eval(ctx, target)?;
-                    match target {
-                        Expression::Closure(closure_ctx, _arg_names, _body) => {
-                            if closure_ctx.set_binding(field.to_owned(), val.to_owned()).is_none() {
-                                Err(anyhow!("field binding not found {field}"))?
-                            } else {
-                                val
-                            }
-                        }
-                        _ => ast.to_error()?,
-                    }
-                },
-                _ => ast.to_error()?,
-            }
-        }
+        // Expression::AssignToExpression(target, val) => {
+        //     debug!("eval assign to expression");
+        //     let val = eval(ctx,val)?;
+        //     match target.as_ref() {
+        //         Expression::Variable(id) => {
+        //             if ctx.set_binding(id.to_owned(), val.to_owned()).is_none() {
+        //                 Err(anyhow!("binding not found {id}"))?
+        //             } else {
+        //                 val
+        //             }
+        //         },
+        //         Expression::Field(target, field) => {
+        //             let target = eval(ctx, target)?;
+        //             match target {
+        //                 Expression::Closure(closure_ctx, _arg_names, _body) => {
+        //                     if closure_ctx.set_binding(field.to_owned(), val.to_owned()).is_none() {
+        //                         Err(anyhow!("field binding not found {field}"))?
+        //                     } else {
+        //                         val
+        //                     }
+        //                 }
+        //                 _ => ast.to_error()?,
+        //             }
+        //         },
+        //         _ => ast.to_error()?,
+        //     }
+        // }
         Expression::Variable(s) => {
             debug!("eval variable: {s}");
             if s.starts_with('@') {
@@ -117,8 +117,15 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
             debug!("eval field: .{field}");
             let target = eval(ctx, target)?;
             match target {
-                Expression::Closure(closure_ctx, _arg_names, _body) => {
-                    if let Some(value) = closure_ctx.get_binding(field) {
+                // Expression::Closure(closure_ctx, _arg_names, _body) => {
+                //     if let Some(value) = closure_ctx.get_binding(field) {
+                //         value.to_owned()
+                //     } else {
+                //         Err(anyhow!("field binding not found {field}"))?
+                //     }
+                // }
+                Expression::Struct(struct_ctx) => {
+                    if let Some(value) = struct_ctx.get_binding(field) {
                         value.to_owned()
                     } else {
                         Err(anyhow!("field binding not found {field}"))?
@@ -279,6 +286,7 @@ pub fn builtin(ctx: &Context, name: &str, args: &[Expression]) -> Result<Express
         ("ge", [lhs, rhs]) => builtin::ge(ctx, lhs, rhs),
         ("le", [lhs, rhs]) => builtin::le(ctx, lhs, rhs),
         ("array", [size, init]) => builtin::array(ctx, size, init),
+        ("struct", []) => builtin::struct_from_context(ctx),
         _ => Err(anyhow!("builtin {name}")),
     }
 }

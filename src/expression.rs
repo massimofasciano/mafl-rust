@@ -44,6 +44,7 @@ pub enum Expression {
     Array(Rc<RefCell<Vec<Expression>>>),
     Return(Box<Expression>),
     Continue, Break,
+    Struct(Context),
 }
 
 impl Expression {
