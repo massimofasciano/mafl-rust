@@ -142,6 +142,10 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
             debug!("eval function");
             Expression::Closure(Context::new(), arg_names.to_owned(), body.to_owned())
         }
+        Expression::FunctionDynamic(_arg_names, _body) => {
+            debug!("eval dynamic function");
+            ast.to_owned()
+        }
         Expression::FunctionCall(lambda, arg_values) => {
             debug!("eval function call");
             match eval(ctx,lambda)? {
@@ -195,6 +199,13 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
                     } else {
                         eval(&function_ctx,&body)?
                     }
+                },
+                Expression::FunctionDynamic(arg_names, body) => {
+                    // a dynamic function is applied in the global context
+                    // so we create a closure at application time and apply it
+                    let closure = Box::new(Expression::Closure(ctx.to_owned(), arg_names, body));
+                    let apply = Expression::FunctionCall(closure, arg_values.to_owned());
+                    eval(ctx, &apply)?
                 },
                 _ => ast.to_error()?
             }

@@ -1,0 +1,35 @@
+### a quick test to show the difference between
+### - function: normal function with only local variables
+### - closure: function that captures the context in which it is defined
+### - dynamic: function that captures the context in which it is evaluated
+
+var x = 1;
+var y = 100;
+var z = 1000;
+
+var dyn = dynamic(z) {x+y+z};
+
+# useless because a function is run in an empty context (all variables are local)
+var fun = function(z) {x+y+z};
+# it's equivalent to
+#var fun = context () { closure(z) {x+y+z} };
+
+var clo = closure(z) {x+y+z};
+
+# here, we shadow y (this is another y, the older y is still captured by the closure)
+var y = 10;
+
+# the dynamic function is evaluated in the current context (it sees the new y binding)
+@println("dynamic: ",dyn(10));
+
+# this always fails because a function is run in an empty context (all variables are local)
+#@println("function: ",fun(10));
+
+# the closure is evaluated in the context where it was defined (it sees the old y binding)
+@println("closure: ",clo(10));
+
+# but if we mutate x instead of shadowing it, they have similar behavior
+x := 2;
+@println("dynamic: ",dyn(10));
+@println("closure: ",clo(10));
+

@@ -8,6 +8,7 @@ FEATURES:
 - added stdlib (coded in mfel)
 
 TODO:
+- dynamic(x) {x+y}: evaluated in dynamic ctx 
 - builtin STDLIB (returns struct) ?
 - test recursion
 - closures as objects (field notation accesses context bindings)  EXPERIMENTAL (o.x works, not o.x.y on assign) GET RID OF THIS

@@ -40,6 +40,7 @@ pub enum Expression {
     Loop(Box<Expression>),
     Context(Vec<String>,Box<Expression>),
     Function(Vec<String>,Box<Expression>),
+    FunctionDynamic(Vec<String>,Box<Expression>),
     ClosureSyntax(Vec<String>,Box<Expression>),
     Closure(Context,Vec<String>,Box<Expression>),
     Array(Rc<RefCell<Vec<Expression>>>),

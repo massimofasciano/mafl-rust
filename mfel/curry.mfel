@@ -1,0 +1,13 @@
+### currying/uncurrying is performed automatically
+
+var f = function (x,y,z) {
+    closure (w) {
+        x+y*z+w
+    }
+};
+@println(f(1,2,3,4));
+@println(f(1)(2)(3)(4));
+@println(f(1,2)(3)(4));
+@println(f(1,2)(3,4));
+@println(f(1)(2,3,4));
+@println(f(1)(2,3)(4));
