@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use pest::iterators::Pair;
 use anyhow::{anyhow, Result};
 use crate::expression::{Rule, Expression};
@@ -80,7 +82,9 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 Expression::Function(args, Box::new(body))
             } 
             Rule::array => {
-                Expression::Array(inner.iter().map(|e| parse_rule(e.to_owned())).collect::<Result<Vec<_>>>()?)
+                Expression::Array(Rc::new(RefCell::new(
+                    inner.iter().map(|e| parse_rule(e.to_owned())).collect::<Result<Vec<_>>>()?
+                )))
             } 
             Rule::context => {
                 assert!(inner.len() == 2);

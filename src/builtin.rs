@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{expression::Expression, parse_source, eval, context::Context};
 use anyhow::{Result,anyhow};
 use log::debug;
@@ -23,6 +25,10 @@ pub fn add(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression
         (Expression::Integer(a), Expression::String(b)) => Expression::String(format!("{a}{b}")),
         (Expression::String(a), Expression::Float(b)) => Expression::String(format!("{a}{b}")),
         (Expression::Float(a), Expression::String(b)) => Expression::String(format!("{a}{b}")),
+        (Expression::Array(a), Expression::Array(b)) => 
+                Expression::Array(Rc::new(RefCell::new(
+                    [a.borrow().to_owned(), b.borrow().to_owned()].concat()
+                ))),
         _ => Err(anyhow!("add {lhs:?} {rhs:?}"))?,
         })
 }
@@ -174,9 +180,17 @@ pub fn array(ctx: &Context, size: &Expression, init: &Expression) -> Result<Expr
             };
             arr.push(init);
         }
-        Ok(Expression::Array(arr))
+        Ok(Expression::Array(Rc::new(RefCell::new(arr))))
     } else {
         Err(anyhow!("array {size:?} {init:?}"))?
     }
+}
+
+pub fn len(_: &Context, val: &Expression) -> Result<Expression> {
+    Ok(match val {
+        Expression::Array(a) => Expression::Integer(a.borrow().len() as i64),
+        Expression::String(a) => Expression::Integer(a.len() as i64),
+        _ => Err(anyhow!("len {val:?}"))?,
+    })
 }
 

@@ -1,0 +1,39 @@
+@println("******* testing arrays *******");
+
+var a1 = [1,2,3,4];
+@println("a1=",a1);
+
+var a2 = @array(10,4);
+@println("a2=",a2);
+
+var a3 = @array(10, function(x) { 
+    if x < 5 { 
+        (x + 1) * 10 
+    } else { 
+        x + 1 
+    } 
+});
+@println("a3=",a3);
+
+var a4 = a1 + a2 + a3;
+@println("a4=",a4);
+
+@println("a1[2]=",a1(2));
+var a1_2_3 = a1(2)+a1(3);
+@println("a1[2]+a1[3]=",a1_2_3);
+a1(2,a1_2_3); # a1[2]=a1_2_3
+a1(0,100); # mutate a1
+@println("a1=",a1); 
+
+var amap = function (f,a) {
+    var i = 0;
+    var out = @array(@len(a),0);
+    while i < @len(a) {
+        out(i,f(a(i)));
+        i := i + 1;
+    }
+    out
+};
+@println("map (*100) a1=",amap(function(x){x*100},a1));
+
+@println("******************************");

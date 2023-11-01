@@ -1,6 +1,8 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{unescape_string, expression::Expression, builtin, context::Context};
 use anyhow::{Result,anyhow};
-use log::debug;
+use log::{debug, error};
 
 pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
     Ok(match ast {
@@ -129,9 +131,24 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
                     builtin(ctx,&name, &eval_args)?
                 }
                 Expression::Array(vals) => {
+                    // indexing
                     if arg_values.len() == 1 {
                         if let Expression::Integer(index) = eval(ctx, &arg_values[0])? {
-                            if let Some(result) = vals.get(index as usize) {
+                            if let Some(result) = vals.borrow().get(index as usize) {
+                                result.to_owned()
+                            } else {
+                                Err(anyhow!("index {index} out of bounds"))?
+                            }
+                        } else {
+                            Err(anyhow!("index by non-integer"))?
+                        }
+                    // mutate at index
+                    } else if arg_values.len() == 2 {
+                        if let Expression::Integer(index) = eval(ctx, &arg_values[0])? {
+                            debug!("array set index {index}");
+                            if let Some(result) = vals.borrow_mut().get_mut(index as usize) {
+                                *result = eval(ctx, &arg_values[1])?;
+                                error!("array set index {index} to {result:?}");
                                 result.to_owned()
                             } else {
                                 Err(anyhow!("index {index} out of bounds"))?
@@ -140,7 +157,7 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
                             Err(anyhow!("index by non-integer"))?
                         }
                     } else {
-                        Err(anyhow!("indexing is only supported with one index"))?
+                        Err(anyhow!("array get or set index: too many arguments"))?
                     }
                 }
                 Expression::Closure(closure_ctx, arg_names, body) => {
@@ -216,10 +233,15 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
                 _ => ast.to_error()?,
             }
         }
-        Expression::Closure(_, _, _) => ast.to_owned(), 
+        Expression::Closure(_, _, _) => {
+            debug!("eval closure");
+            ast.to_owned()
+        } 
         Expression::Array(vals) => {
             debug!("eval array");
-            Expression::Array(vals.iter().map(|v|eval(ctx,v)).collect::<Result<Vec<_>>>()?)
+            Expression::Array(Rc::new(RefCell::new(
+                vals.borrow().iter().map(|v|eval(ctx,v)).collect::<Result<Vec<_>>>()?
+            )))
         }
         _ => ast.to_error()?,
     })
@@ -238,6 +260,7 @@ pub fn builtin(ctx: &Context, name: &str, args: &[Expression]) -> Result<Express
         ("mod", [lhs, rhs]) => builtin::modulo(ctx, lhs, rhs),
         ("neg", [val]) => builtin::neg(ctx, val),
         ("not", [val]) => builtin::not(ctx, val),
+        ("len", [val]) => builtin::len(ctx, val),
         ("and", [lhs, rhs]) => builtin::and(ctx, lhs, rhs),
         ("or", [lhs, rhs]) => builtin::or(ctx, lhs, rhs),
         ("gt", [lhs, rhs]) => builtin::gt(ctx, lhs, rhs),
