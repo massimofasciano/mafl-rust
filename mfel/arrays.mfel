@@ -15,13 +15,13 @@
 ### + operator creates a new array from the concatenation of 2 arrays
 ### @append(a,expr): adds result of expr to the end of a
 
-var a1 = [1,2,3,4];
+let a1 := [1,2,3,4];
 @println("a1=",a1);
 
-var a2 = @array(10,4);
+let a2 := @array(10,4);
 @println("a2=",a2);
 
-var a3 = @array(10, function(x) { 
+let a3 := @array(10, function(x) { 
     if x < 5 { 
         (x + 1) * 10 
     } else { 
@@ -30,11 +30,11 @@ var a3 = @array(10, function(x) {
 });
 @println("a3=",a3);
 
-var a4 = a1 + a2 + a3;
+let a4 := a1 + a2 + a3;
 @println("a4=",a4);
 
 @println("a1[2]=",a1(2));
-var a1_2_3 = a1(2)+a1(3);
+let a1_2_3 := a1(2)+a1(3);
 @println("a1[2]+a1[3]=",a1_2_3);
 a1(2,a1_2_3); # a1[2]=a1_2_3
 a1(0,100); # mutate a1 index 0
@@ -44,16 +44,16 @@ a1(0,100); # mutate a1 index 0
 @println("sum(a1)=",asum(a1));
 @println("prod(a1)=",aprod(a1));
 # test if all elements are greater than n (using fold)
-var all_gt = function(n,arr) { 
+let all_gt := dynamic(n,arr) { 
     afold(
         function(x,y){x and y},
         true,
-        amap(function(x){x > n},arr)
+        amap(closure(x){x > n},arr)
     )
 };
 # test if all elements are greater than n (using filter)
-var all_gt = function(n,arr) { 
-    var filtered = afilter(function(x){x > n},arr);
+let all_gt := dynamic(n,arr) { 
+    let filtered := afilter(closure(x){x > n},arr);
     @len(filtered) = @len(arr)
 };
 @println("all_gt_0(a1)=",all_gt(0,a1));

@@ -1,9 +1,8 @@
-# recursion not working (need letrec ?)
-var fibo = function (x) {
+let fibo := dynamic (x) {
     if x < 2 {
         x
     } else {
         fibo(x-2) + fibo(x-1)
     }
 };
-fibo(5)
+fibo(10)

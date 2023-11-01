@@ -1,7 +1,7 @@
 ### contexts can be manipulated as first-class objects in the language
 ###
 ### a syntactical context block starts with an empty "local" context
-### and adds bindings for a list of variables from the 
+### and adds bindings for a list of letiables from the 
 ### external context ("copies" by value)
 ### - syntax 1 : context (g1,...,gn) { epr1; expr2;... }
 ### - syntax 2 : context (g1,...,gn) in expr
@@ -13,33 +13,33 @@
 ### @capture() is equivalent to closure(){}
 ###
 
-var y = 30;
+let y := 30;
 
 # note how block comments can be commented out by 
 # putting a # infront of the opening (#
 # and the closing #) is self-commenting
 
 #(#
-var obj = context (y) {
-    # example with var
-    var x = 10;
-    var get_x = closure() {x}; 
-    var get_y = closure() {y};
-    var set_x = closure(new_x) {x := new_x};
-    var set_y = closure(new_y) {y := new_y};
+let obj := context (y) {
+    # example with let
+    let x := 10;
+    let get_x := closure() {x}; 
+    let get_y := closure() {y};
+    let set_x := closure(new_x) {x := new_x};
+    let set_y := closure(new_y) {y := new_y};
     @capture()
     #closure(){}
 };
 #)
 
 (#
-var obj = context (y) {
+let obj := context (y) {
     # same example with let .. in ..
-    let x = 10 in
-    let get_x = closure() {x} in
-    let get_y = closure() {y} in
-    let set_x = closure(new_x) {x := new_x} in
-    let set_y = closure(new_y) {y := new_y} in
+    let x := 10 in
+    let get_x := closure() {x} in
+    let get_y := closure() {y} in
+    let set_x := closure(new_x) {x := new_x} in
+    let set_y := closure(new_y) {y := new_y} in
     #@capture()
     closure(){}
 };

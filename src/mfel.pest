@@ -101,8 +101,8 @@ let_in = {
     "let" ~ identifier ~ "=" ~ expr ~ "in" ~ expr
 }
 
-var = {
-    "var" ~ identifier ~ "=" ~ expr
+let = {
+    "let" ~ identifier ~ ":=" ~ expr
 }
 
 assign = {
@@ -168,7 +168,7 @@ expr_base = _{
     array |
     block | if | 
     while | unless | do_while | loop |
-    var | let_in | function | closure | dynamic | assign | context |
+    let | let_in | function | closure | dynamic | assign | context |
     return | continue | break |
     boolean | float | integer | string_literal | variable 
 }

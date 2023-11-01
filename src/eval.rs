@@ -28,14 +28,14 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
             }
             seq_value
         }
-        Expression::Let(id, val, expr) => {
+        Expression::LetIn(id, val, expr) => {
             debug!("eval let {id} in");
             let val = eval(ctx,val)?;
             let ctx = &ctx.with_new_scope();
             ctx.add_binding(id.to_owned(), val.to_owned());
             eval(ctx,expr)?
         }
-        Expression::Var(id, val) => {
+        Expression::Let(id, val) => {
             debug!("eval var declaration: {id}");
             let val = eval(ctx,val)?;
             ctx.add_binding(id.to_owned(), val.to_owned());

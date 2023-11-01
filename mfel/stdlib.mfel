@@ -1,9 +1,9 @@
 @println("******* loading stdlib *******");
 
 ### map function on arrays
-var amap = function (f,a) {
-    var i = 0;
-    var out = @array(@len(a),());
+let amap := function (f,a) {
+    let i := 0;
+    let out := @array(@len(a),());
     while i < @len(a) {
         out(i,f(a(i)));
         i := i + 1;
@@ -12,8 +12,8 @@ var amap = function (f,a) {
 };
 
 ### fold function on arrays
-var afold = function (f,acc,arr) {
-    var i = 0;
+let afold := function (f,acc,arr) {
+    let i := 0;
     while i < @len(arr) {
         acc := f(acc,arr(i));
         i := i + 1;
@@ -22,22 +22,22 @@ var afold = function (f,acc,arr) {
 };
 
 ### sum of array elements
-var asum = function(arr) {
+let asum := context (afold) in closure(arr) {
     afold(function(x,y){x+y}, 0, arr)
 };
 
 ### product of array elements
-var aprod = function(arr) {
+let aprod := context (afold) in closure(arr) {
     afold(function(x,y){x*y}, 1, arr)
 };
 
 ### reduce function on arrays
-var areduce = function (f,arr) {
+let areduce := function (f,arr) {
     if @len(arr) < 1 {
         ()
     } else {
-        var acc = arr(0);
-        var i = 1;
+        let acc := arr(0);
+        let i := 1;
         while i < @len(arr) {
             acc := f(acc,arr(i));
             i := i + 1;
@@ -47,9 +47,9 @@ var areduce = function (f,arr) {
 };
 
 ### filter function on arrays
-var afilter = function (f,arr) {
-    var i = 0;
-    var out = @array(0,());
+let afilter := function (f,arr) {
+    let i := 0;
+    let out := @array(0,());
     while i < @len(arr) {
         if f(arr(i)) {
             @append(out,arr(i));

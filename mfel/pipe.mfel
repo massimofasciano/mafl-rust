@@ -1,4 +1,4 @@
-var f = function (x) {
+let f := function (x) {
     if x = () {
         ()
     } 

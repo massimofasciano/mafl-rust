@@ -9,9 +9,11 @@ FEATURES:
 - mutable arrays with @array, @len, @append and literals
 
 TODO:
-- dynamic(x) {x+y}: evaluated in dynamic ctx 
+- when a function needs to call another by name, currently we have 2 choices
+1) use dynamic instead of function
+2) use context (g) in closure (x) { g(x) }
+- recursion is a more complicated case of this ^^
 - builtin STDLIB (returns struct) ?
-- test recursion
 - closures as objects (field notation accesses context bindings)  EXPERIMENTAL (o.x works, not o.x.y on assign) GET RID OF THIS
 
 - context objects (lists of hashes exposing the Context type to the language): reuse the field syntax ? use builtin functions ?

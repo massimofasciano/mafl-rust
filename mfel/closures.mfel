@@ -1,6 +1,6 @@
-var x = 1;
-var f1 = closure() {x};
-var y = 2;
+let x := 1;
+let f1 := closure() {x};
+let y := 2;
 @println(@capture()); # the full environment is captured here
 @println(f1); # f1 only captured x
 

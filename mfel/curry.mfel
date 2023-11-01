@@ -1,6 +1,6 @@
 ### currying/uncurrying is performed automatically
 
-var f = function (x,y,z) {
+let f := function (x,y,z) {
     closure (w) {
         x+y*z+w
     }
