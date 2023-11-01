@@ -194,6 +194,17 @@ pub fn len(_: &Context, val: &Expression) -> Result<Expression> {
     })
 }
 
+pub fn append(ctx: &Context, target: &Expression, new: &Expression) -> Result<Expression> {
+    Ok(match target {
+        Expression::Array(a) => {
+            let new = eval::eval(ctx,new)?;
+            a.borrow_mut().push(new);
+            Expression::Array(a.to_owned())
+        }
+        _ => Err(anyhow!("append {target:?} {new:?}"))?,
+    })
+}
+
 pub fn include(ctx: &Context, file_expr: &Expression) -> Result<Expression> {
     debug!("include {file_expr:?}");
     Ok(match file_expr {

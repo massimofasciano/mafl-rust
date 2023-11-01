@@ -21,6 +21,16 @@ var afold = function (f,acc,arr) {
     acc
 };
 
+### sum of array elements
+var asum = function(arr) {
+    afold(function(x,y){x+y}, 0, arr)
+};
+
+### product of array elements
+var aprod = function(arr) {
+    afold(function(x,y){x*y}, 1, arr)
+};
+
 ### reduce function on arrays
 var areduce = function (f,arr) {
     if @len(arr) < 1 {
@@ -36,13 +46,16 @@ var areduce = function (f,arr) {
     }
 };
 
-### sum of array elements
-var asum = function(arr) {
-    afold(function(x,y){x+y}, 0, arr)
-};
-
-### product of array elements
-var aprod = function(arr) {
-    afold(function(x,y){x*y}, 1, arr)
+### filter function on arrays
+var afilter = function (f,arr) {
+    var i = 0;
+    var out = @array(0,());
+    while i < @len(arr) {
+        if f(arr(i)) {
+            @append(out,arr(i));
+        }
+        i := i + 1;
+    }
+    out
 };
 

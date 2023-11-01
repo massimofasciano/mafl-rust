@@ -288,6 +288,7 @@ pub fn builtin(ctx: &Context, name: &str, args: &[Expression]) -> Result<Express
         ("ge", [lhs, rhs]) => builtin::ge(ctx, lhs, rhs),
         ("le", [lhs, rhs]) => builtin::le(ctx, lhs, rhs),
         ("array", [size, init]) => builtin::array(ctx, size, init),
+        ("append", [target, new]) => builtin::append(ctx, target, new),
         ("struct", []) => builtin::struct_from_context(ctx),
         _ => Err(anyhow!("builtin {name}")),
     }

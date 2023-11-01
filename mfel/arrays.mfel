@@ -1,4 +1,5 @@
 @include("mfel/stdlib.mfel");
+# defined in stdlib: amap, afold, asum, aprod, areduce, afilter
 
 @println("******* testing arrays *******");
 
@@ -12,6 +13,7 @@
 ###     - a 1 argument function to be called for each index
 ### length of array a: @len(a)
 ### + operator creates a new array from the concatenation of 2 arrays
+### @append(a,expr): adds result of expr to the end of a
 
 var a1 = [1,2,3,4];
 @println("a1=",a1);
@@ -38,10 +40,10 @@ a1(2,a1_2_3); # a1[2]=a1_2_3
 a1(0,100); # mutate a1 index 0
 @println("a1=",a1); 
 
-# defined in stdlib (included at the top): amap, afold, asum, aprod, areduce
 @println("map (*100) a1=",amap(function(x){x*100},a1));
 @println("sum(a1)=",asum(a1));
 @println("prod(a1)=",aprod(a1));
+# test if all elements are greater than n (using fold)
 var all_gt = function(n,arr) { 
     afold(
         function(x,y){x and y},
@@ -49,8 +51,17 @@ var all_gt = function(n,arr) {
         amap(function(x){x > n},arr)
     )
 };
+# test if all elements are greater than n (using filter)
+var all_gt = function(n,arr) { 
+    var filtered = afilter(function(x){x > n},arr);
+    @len(filtered) = @len(arr)
+};
 @println("all_gt_0(a1)=",all_gt(0,a1));
 @println("all_gt_5(a1)=",all_gt(5,a1));
 @println("chain_div([9,3,4])=",areduce(function(x,y){x*1.0/y},[9,3,4]));
+
+@append(a1,42);
+@println("a1=",a1); 
+@println("filter >10 in a1=",afilter(function(x){x>10},a1));
 
 @println("******************************");
