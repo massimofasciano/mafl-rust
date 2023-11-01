@@ -3,8 +3,12 @@ Rust interpreter for the MFEL language
 FIXED:
 - added capture method to Context to fix circular references in closures
 
+FEATURES:
+- added function (no capture) vs closure (captures context)
+- added stdlib (coded in mfel)
+
 TODO:
-- lambda/closure (rename?) vs function/func/fn (no env capture)
+- builtin STDLIB (returns struct) ?
 - test recursion
 - closures as objects (field notation accesses context bindings)  EXPERIMENTAL (o.x works, not o.x.y on assign) GET RID OF THIS
 

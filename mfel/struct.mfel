@@ -4,10 +4,10 @@ var y = 30;
 var obj = context (y) {
     # example with var
     var x = 10;
-    var get_x = function() {x}; 
-    var get_y = function() {y};
-    var set_x = function(new_x) {x := new_x};
-    var set_y = function(new_y) {y := new_y};
+    var get_x = closure() {x}; 
+    var get_y = closure() {y};
+    var set_x = closure(new_x) {x := new_x};
+    var set_y = closure(new_y) {y := new_y};
     @struct()
 };
 #)
@@ -16,10 +16,10 @@ var obj = context (y) {
 var obj = context (y) {
     # same example with let .. in ..
     let x = 10 in
-    let get_x = function() {x} in
-    let get_y = function() {y} in
-    let set_x = function(new_x) {x := new_x} in
-    let set_y = function(new_y) {y := new_y} in
+    let get_x = closure() {x} in
+    let get_y = closure() {y} in
+    let set_x = closure(new_x) {x := new_x} in
+    let set_y = closure(new_y) {y := new_y} in
     @struct()
 };
 #)

@@ -17,7 +17,7 @@ block_comment = @{
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" |
     "return" | "break" | "continue" |
-    "let" | "function" | "var" | "in" | "context" |
+    "let" | "function" | "closure" | "var" | "in" | "context" |
     "true" | "false" |
     "and" | "or" | "not"
 }
@@ -63,6 +63,10 @@ function_args = { (identifier ~ ("," ~ identifier)*)? }
 
 function = {
     "function" ~ "(" ~ function_args ~ ")" ~ block
+}
+
+closure = {
+    "closure" ~ "(" ~ function_args ~ ")" ~ block
 }
 
 context = {
@@ -160,7 +164,7 @@ expr_base = _{
     array |
     block | if | 
     while | unless | do_while | loop |
-    var | let_in | function | assign | context |
+    var | let_in | function | closure | assign | context |
     return | continue | break |
     boolean | float | integer | string_literal | variable 
 }

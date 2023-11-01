@@ -134,9 +134,13 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
                 _ => ast.to_error()?,
             }
         }
-        Expression::Function(arg_names, body) => {
+        Expression::ClosureSyntax(arg_names, body) => {
             debug!("eval function");
             Expression::Closure(ctx.capture(), arg_names.to_owned(), body.to_owned())
+        }
+        Expression::Function(arg_names, body) => {
+            debug!("eval function");
+            Expression::Closure(Context::new(), arg_names.to_owned(), body.to_owned())
         }
         Expression::FunctionCall(lambda, arg_values) => {
             debug!("eval function call");
@@ -250,9 +254,13 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
                 _ => ast.to_error()?,
             }
         }
-        Expression::Closure(_, _, _) => {
+        // Expression::Closure(_, _, _) => {
+        //     debug!("eval closure");
+        //     ast.to_owned()
+        // } 
+        Expression::Closure(cctx, args, body) => {
             debug!("eval closure");
-            ast.to_owned()
+            Expression::Closure(cctx.capture(), args.to_owned(), body.to_owned())
         } 
         Expression::Array(vals) => {
             debug!("eval array");
