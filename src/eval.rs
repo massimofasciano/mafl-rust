@@ -100,6 +100,7 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
         Expression::While(cond, body) => {
             debug!("eval while");
             let mut body_value = Expression::Unit;
+            let ctx = &ctx.with_new_scope();
             #[allow(clippy::while_let_loop)]
             loop {
                 match eval(ctx,cond.as_ref())? {
@@ -213,6 +214,17 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
             }
             eval(&local_ctx, body)?
         }
+        Expression::CaptureSyntax(arg_names, body) => {
+            debug!("eval capture: {arg_names:?}");
+            let local_ctx = Context::new();
+            for name in arg_names {
+                if let Some(val) = ctx.get_binding(name) { 
+                    local_ctx.add_binding(name.to_owned(), val.to_owned()); 
+                }
+            }
+            eval(&local_ctx, body)?;
+            builtin::capture_context(&local_ctx)?
+        }
         Expression::BinOpCall(op, left, right) => {
             debug!("eval bin op call");
             let op = op.as_ref();
@@ -299,7 +311,7 @@ pub fn builtin(ctx: &Context, name: &str, args: &[Expression]) -> Result<Express
         ("le", [lhs, rhs]) => builtin::le(ctx, lhs, rhs),
         ("array", [size, init]) => builtin::array(ctx, size, init),
         ("append", [target, new]) => builtin::append(ctx, target, new),
-        ("capture", []) => builtin::capture_context(ctx),
+        ("ctx", []) => builtin::capture_context(ctx),
         ("readline", []) => builtin::read_line(ctx),
         ("env", []) => ctx.get_binding("@env").ok_or(anyhow!("special @env not in context")),
         _ => Err(anyhow!("builtin {name}")),

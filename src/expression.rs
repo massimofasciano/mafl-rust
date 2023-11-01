@@ -39,6 +39,7 @@ pub enum Expression {
     AssignToExpression(Box<Expression>,Box<Expression>),
     Loop(Box<Expression>),
     ContextSyntax(Vec<String>,Box<Expression>),
+    CaptureSyntax(Vec<String>,Box<Expression>),
     Function(Vec<String>,Box<Expression>),
     FunctionDynamic(Vec<String>,Box<Expression>),
     ClosureSyntax(Vec<String>,Box<Expression>),

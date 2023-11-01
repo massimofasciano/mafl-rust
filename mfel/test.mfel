@@ -1,0 +1,6 @@
+let x := 1;
+let o := capture (x) {
+    let f := closure(y) {x+y};
+    let z := 3;
+};
+o.f(5+o.z)

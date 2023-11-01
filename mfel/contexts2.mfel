@@ -1,4 +1,4 @@
-# if context is not used , circular references are created
+# if context is not used, circular references are created
 # (closure captures context that contains a reference to the closure)
 
 let o := context () {
@@ -15,4 +15,4 @@ let o := context () {
 @println(o.y(5));
 @println(o.y(20));
 @println(o.y.z);
-o
+

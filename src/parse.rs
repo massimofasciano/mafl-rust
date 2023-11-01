@@ -5,7 +5,7 @@ use anyhow::{anyhow, Result};
 use crate::expression::{Rule, Expression};
 
 fn parse_block(parsed: Pair<Rule>) -> Result<Expression> {
-    let is_block = parsed.as_rule() != Rule::file;
+    let rule = parsed.as_rule().to_owned();
     let sequence = parsed.into_inner()
         .filter_map(|e| {
             if e.as_rule() == Rule::EOI { None } 
@@ -15,10 +15,11 @@ fn parse_block(parsed: Pair<Rule>) -> Result<Expression> {
     Ok(match sequence.len() {
         0 => Expression::Unit,
         1 => sequence[0].clone(),
-        _ => if is_block { 
-            Expression::Block(sequence) 
-        } else { 
-            Expression::Sequence(sequence) 
+        _ => match rule { 
+            Rule::block => Expression::Block(sequence),
+            Rule::block_syntax => Expression::Sequence(sequence),
+            Rule::file => Expression::Sequence(sequence),
+            _ => Err(anyhow!("parse error block type: {rule:?}"))?,
         },
     })
 }
@@ -96,12 +97,16 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                     inner.iter().map(|e| parse_rule(e.to_owned())).collect::<Result<Vec<_>>>()?
                 )))
             } 
-            Rule::context => {
+            Rule::context | Rule::capture => {
                 assert!(inner.len() == 2);
                 assert!(inner[0].as_rule() == Rule::function_args);
                 let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
                 let body = parse_rule(inner[1].clone())?;
-                Expression::ContextSyntax(args, Box::new(body))
+                match rule {
+                    Rule::context => Expression::ContextSyntax(args, Box::new(body)),
+                    Rule::capture => Expression::CaptureSyntax(args, Box::new(body)),
+                    _ => Err(anyhow!("parse error context or capture"))?
+                }
             } 
             Rule::r#if | Rule::unless => {
                 assert!(inner.len() == 2 || inner.len() == 3);
@@ -159,20 +164,20 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
             Rule::r#while => {
                 assert!(inner.len() == 2);
                 let cond = parse_rule(inner[0].clone())?;
-                assert!(inner[1].as_rule() == Rule::block);
+                assert!(inner[1].as_rule() == Rule::block_syntax);
                 let body = parse_rule(inner[1].clone())?;
                 Expression::While(Box::new(cond), Box::new(body))
             } 
             Rule::do_while => {
                 assert!(inner.len() == 2);
                 let cond = parse_rule(inner[1].clone())?;
-                assert!(inner[0].as_rule() == Rule::block);
+                assert!(inner[0].as_rule() == Rule::block_syntax);
                 let body = parse_rule(inner[0].clone())?;
                 Expression::DoWhile(Box::new(cond), Box::new(body))
             } 
             Rule::r#loop => {
                 assert!(inner.len() == 1);
-                assert!(inner[0].as_rule() == Rule::block);
+                assert!(inner[0].as_rule() == Rule::block_syntax);
                 let body = parse_rule(inner[0].clone())?;
                 Expression::Loop(Box::new(body))
             }
@@ -225,7 +230,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::eq => { Expression::EqOp },
         Rule::r#continue => { Expression::Continue },
         Rule::r#break => { Expression::Break },
-        Rule::block | Rule::file  => { parse_block(parsed)? },
+        Rule::block_syntax | Rule::block | Rule::file  => { parse_block(parsed)? },
         Rule::string_literal => {
             // these rules can't be made silent in the grammar (as of current version)
             let inner = parsed.into_inner().next().ok_or(anyhow!("problem parsing silent rule"))?;
@@ -234,7 +239,8 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::expr_infix_id | Rule::expr_infix_pipe | Rule::expr_or | Rule::expr_and | 
         Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
         Rule::expr_mul | Rule::expr_apply_or_field | Rule::expr_post | 
-        Rule::expr_prefix | Rule::expr_exp | Rule::let_in | Rule::context |
+        Rule::expr_prefix | Rule::expr_exp | 
+        Rule::let_in | Rule::context | Rule::capture |
         Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
         Rule::assign | Rule::r#let | Rule::r#loop | 
         Rule::function | Rule::closure | Rule::dynamic |

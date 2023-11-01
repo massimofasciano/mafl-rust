@@ -17,7 +17,7 @@ block_comment = @{
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" |
     "return" | "break" | "continue" |
-    "let" | "function" | "closure" | "dynamic" | "in" | "context" |
+    "let" | "function" | "closure" | "dynamic" | "in" | "context" | "capture" |
     "true" | "false" |
     "and" | "or" | "not"
 }
@@ -77,6 +77,10 @@ context = {
     "context" ~ "(" ~ function_args ~ ")" ~ ( ("in" ~ expr) | block )
 }
 
+capture = {
+    "capture" ~ "(" ~ function_args ~ ")" ~ ( ("in" ~ expr) | block_syntax )
+}
+
 if = {
     "if" ~ expr ~ block ~ ("else" ~ block)?
 }
@@ -86,15 +90,15 @@ unless = {
 }
 
 while = {
-    "while" ~ expr ~ block
+    "while" ~ expr ~ block_syntax
 }
 
 do_while = {
-    "do" ~ block ~ "while" ~ "(" ~ expr ~ ")"
+    "do" ~ block_syntax ~ "while" ~ "(" ~ expr ~ ")"
 }
 
 loop = {
-    "loop" ~ block
+    "loop" ~ block_syntax
 }
 
 let_in = {
@@ -117,6 +121,10 @@ continue = { "continue" }
 break = { "break" }
 
 block = {
+    "{" ~ sequence ~ "}"
+}
+
+block_syntax = {
     "{" ~ sequence ~ "}"
 }
 
@@ -168,7 +176,7 @@ expr_base = _{
     array |
     block | if | 
     while | unless | do_while | loop |
-    let | let_in | function | closure | dynamic | assign | context |
+    let | let_in | function | closure | dynamic | assign | context | capture |
     return | continue | break |
     boolean | float | integer | string_literal | variable 
 }
