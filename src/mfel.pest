@@ -17,7 +17,7 @@ block_comment = @{
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" |
     "return" | "break" | "continue" |
-    "let" | "function" | "closure" | "dynamic" | "var" | "in" | "context" |
+    "let" | "function" | "closure" | "dynamic" | "in" | "context" |
     "true" | "false" |
     "and" | "or" | "not"
 }
@@ -106,8 +106,8 @@ let = {
 }
 
 assign = {
-    identifier ~ field_access* ~ ":=" ~ expr
-    // identifier ~ ":=" ~ expr
+    // identifier ~ field_access* ~ ":=" ~ expr
+    identifier ~ ":=" ~ expr
 }
 
 return = {
@@ -141,7 +141,7 @@ ge = @{ ">=" }
 le = @{ "<=" }
 gt = @{ ">" ~ !"=" }
 lt = @{ "<" ~ !"=" }
-eq = @{ "=" }
+eq = @{ "==" }
 ne = @{ "!=" | "<>" }
 and = @{ "and" }
 or = @{ "or" }

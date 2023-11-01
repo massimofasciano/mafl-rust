@@ -54,7 +54,7 @@ let all_gt := dynamic(n,arr) {
 # test if all elements are greater than n (using filter)
 let all_gt := dynamic(n,arr) { 
     let filtered := afilter(closure(x){x > n},arr);
-    @len(filtered) = @len(arr)
+    @len(filtered) == @len(arr)
 };
 @println("all_gt_0(a1)=",all_gt(0,a1));
 @println("all_gt_5(a1)=",all_gt(5,a1));
