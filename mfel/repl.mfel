@@ -1,0 +1,15 @@
+#@println(@capture());
+#@env()
+#@readfile("Cargo.toml")
+
+#@type({1;})
+
+@print("MFEL> ");
+let line = () in 
+let result = () in
+while (line := @readline()) != () {
+    @println(result := @eval(line));
+    #@println(@capture());
+    @print("MFEL> ");
+};
+@println();

@@ -1,4 +1,5 @@
 use std::{cell::RefCell, rc::Rc};
+use std::io::{self, BufRead, stdout, Write};
 
 use crate::{expression::Expression, parse_source, eval, context::Context};
 use anyhow::{Result,anyhow};
@@ -32,7 +33,6 @@ pub fn add(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression
         _ => Err(anyhow!("add {lhs:?} {rhs:?}"))?,
         })
 }
-
 
 pub fn sub(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs, rhs) {
@@ -147,12 +147,14 @@ pub fn not(_: &Context, val: &Expression) -> Result<Expression> {
 
 pub fn print(_: &Context, args: &[Expression]) -> Result<Expression> {
     for arg in args { print!("{arg}"); }
+    stdout().flush()?;
     Ok(Expression::Unit)
 }
 
 pub fn println(_: &Context, args: &[Expression]) -> Result<Expression> {
     for arg in args { print!("{arg}"); }
     println!();
+    stdout().flush()?;
     Ok(Expression::Unit)
 }
 
@@ -216,6 +218,41 @@ pub fn include(ctx: &Context, file_expr: &Expression) -> Result<Expression> {
     })
 }
 
+pub fn read_file(_ctx: &Context, file_expr: &Expression) -> Result<Expression> {
+    debug!("read_file {file_expr:?}");
+    Ok(match file_expr {
+        Expression::String(file) => {
+            let source = std::fs::read_to_string(file)?;
+            Expression::String(source)
+        }
+        _ => Err(anyhow!("read_file {file_expr:?}"))?,
+    })
+}
+
 pub fn capture_context(ctx: &Context) -> Result<Expression> {
     Ok(Expression::Closure(ctx.capture(),vec![],Box::new(Expression::Unit)))
+}
+
+pub fn type_of(_: &Context, expr: &Expression) -> Result<Expression> {
+    debug!("type of");
+    Ok(Expression::String(match expr {
+        Expression::Unit => "()",
+        Expression::Float(_) => "Float",
+        Expression::Integer(_) => "Integer",
+        Expression::String(_) => "String",
+        Expression::Boolean(_) => "Boolean",
+        Expression::Array(_) => "Array",
+        Expression::Closure(_,_,_) => "Closure",
+        _ => Err(anyhow!("type of {expr:?}"))?,
+    }.to_owned()))
+}
+
+pub fn read_line(_ctx: &Context) -> Result<Expression> {
+    let stdin = io::stdin();
+    let next_line = stdin.lock().lines().next();
+    if let Some(line_result) = next_line {
+        Ok(Expression::String(line_result?))
+    } else {
+        Ok(Expression::Unit)
+    }
 }

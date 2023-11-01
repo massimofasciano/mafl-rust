@@ -258,10 +258,6 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
                 _ => ast.to_error()?,
             }
         }
-        // Expression::Closure(_, _, _) => {
-        //     debug!("eval closure");
-        //     ast.to_owned()
-        // } 
         Expression::Closure(cctx, args, body) => {
             debug!("eval closure");
             Expression::Closure(cctx.capture(), args.to_owned(), body.to_owned())
@@ -282,6 +278,7 @@ pub fn builtin(ctx: &Context, name: &str, args: &[Expression]) -> Result<Express
         ("print", args) => { builtin::print(ctx, args) },
         ("eval", [arg]) => { builtin::eval_string_as_source(ctx, arg) },
         ("include", [file_expr]) => builtin::include(ctx, file_expr),
+        ("readfile", [file_expr]) => builtin::read_file(ctx, file_expr),
         ("pow", [lhs, rhs]) => builtin::pow(ctx, lhs, rhs),
         ("add", [lhs, rhs]) => builtin::add(ctx, lhs, rhs),
         ("sub", [lhs, rhs]) => builtin::sub(ctx, lhs, rhs),
@@ -291,6 +288,7 @@ pub fn builtin(ctx: &Context, name: &str, args: &[Expression]) -> Result<Express
         ("neg", [val]) => builtin::neg(ctx, val),
         ("not", [val]) => builtin::not(ctx, val),
         ("len", [val]) => builtin::len(ctx, val),
+        ("type", [val]) => builtin::type_of(ctx, val),
         ("and", [lhs, rhs]) => builtin::and(ctx, lhs, rhs),
         ("or", [lhs, rhs]) => builtin::or(ctx, lhs, rhs),
         ("gt", [lhs, rhs]) => builtin::gt(ctx, lhs, rhs),
@@ -302,6 +300,8 @@ pub fn builtin(ctx: &Context, name: &str, args: &[Expression]) -> Result<Express
         ("array", [size, init]) => builtin::array(ctx, size, init),
         ("append", [target, new]) => builtin::append(ctx, target, new),
         ("capture", []) => builtin::capture_context(ctx),
+        ("readline", []) => builtin::read_line(ctx),
+        ("env", []) => ctx.get_binding("@env").ok_or(anyhow!("special @env not in context")),
         _ => Err(anyhow!("builtin {name}")),
     }
 }

@@ -1,0 +1,18 @@
+# if context is not used , circular references are created
+# (closure captures context that contains a reference to the closure)
+
+let o := context () {
+    let x := 1;
+    let y := context () {  
+        let z := 2;
+        closure(p){let old := z; z := p; old}
+    };
+    closure(p){x+y.z+p}
+};
+
+@println(o.y.z);
+@println(o(100));
+@println(o.y(5));
+@println(o.y(20));
+@println(o.y.z);
+o
