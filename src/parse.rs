@@ -101,7 +101,7 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 assert!(inner[0].as_rule() == Rule::function_args);
                 let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
                 let body = parse_rule(inner[1].clone())?;
-                Expression::Context(args, Box::new(body))
+                Expression::ContextSyntax(args, Box::new(body))
             } 
             Rule::r#if | Rule::unless => {
                 assert!(inner.len() == 2 || inner.len() == 3);

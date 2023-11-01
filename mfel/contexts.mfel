@@ -1,6 +1,25 @@
+### contexts can be manipulated as first-class objects in the language
+###
+### a syntactical context block starts with an empty "local" context
+### and adds bindings for a list of variables from the 
+### external context ("copies" by value)
+### - syntax 1 : context (g1,...,gn) { epr1; expr2;... }
+### - syntax 2 : context (g1,...,gn) in expr
+###
+### contexts can be used as structs or hash maps
+### field notation is supported: obj.x, obj.get_y()
+###
+### the builtin @capture() function "captures" the current environment
+### @capture() is equivalent to closure(){}
+###
+
 var y = 30;
 
-(#
+# note how block comments can be commented out by 
+# putting a # infront of the opening (#
+# and the closing #) is self-commenting
+
+#(#
 var obj = context (y) {
     # example with var
     var x = 10;
@@ -8,11 +27,12 @@ var obj = context (y) {
     var get_y = closure() {y};
     var set_x = closure(new_x) {x := new_x};
     var set_y = closure(new_y) {y := new_y};
-    @struct()
+    @capture()
+    #closure(){}
 };
 #)
 
-#(#
+(#
 var obj = context (y) {
     # same example with let .. in ..
     let x = 10 in
@@ -20,7 +40,8 @@ var obj = context (y) {
     let get_y = closure() {y} in
     let set_x = closure(new_x) {x := new_x} in
     let set_y = closure(new_y) {y := new_y} in
-    @struct()
+    #@capture()
+    closure(){}
 };
 #)
 

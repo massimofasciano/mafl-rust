@@ -216,6 +216,6 @@ pub fn include(ctx: &Context, file_expr: &Expression) -> Result<Expression> {
     })
 }
 
-pub fn struct_from_context(ctx: &Context) -> Result<Expression> {
-    Ok(Expression::Struct(ctx.capture()))
+pub fn capture_context(ctx: &Context) -> Result<Expression> {
+    Ok(Expression::Closure(ctx.capture(),vec![],Box::new(Expression::Unit)))
 }

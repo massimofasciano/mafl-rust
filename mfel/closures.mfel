@@ -1,7 +1,7 @@
 var x = 1;
 var f1 = closure() {x};
 var y = 2;
-@println(@struct()); # the full environment is captured here
+@println(@capture()); # the full environment is captured here
 @println(f1); # f1 only captured x
 
 

@@ -12,7 +12,7 @@ var dyn = dynamic(z) {x+y+z};
 # useless because a function is run in an empty context (all variables are local)
 var fun = function(z) {x+y+z};
 # it's equivalent to
-#var fun = context () { closure(z) {x+y+z} };
+#var fun = context () in closure(z) {x+y+z};
 
 var clo = closure(z) {x+y+z};
 

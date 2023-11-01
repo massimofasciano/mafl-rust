@@ -38,7 +38,7 @@ pub enum Expression {
     Assign(String,Box<Expression>),
     AssignToExpression(Box<Expression>,Box<Expression>),
     Loop(Box<Expression>),
-    Context(Vec<String>,Box<Expression>),
+    ContextSyntax(Vec<String>,Box<Expression>),
     Function(Vec<String>,Box<Expression>),
     FunctionDynamic(Vec<String>,Box<Expression>),
     ClosureSyntax(Vec<String>,Box<Expression>),
@@ -46,7 +46,6 @@ pub enum Expression {
     Array(Rc<RefCell<Vec<Expression>>>),
     Return(Box<Expression>),
     Continue, Break,
-    Struct(Context),
 }
 
 impl Expression {

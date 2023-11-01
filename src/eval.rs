@@ -117,15 +117,8 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
             debug!("eval field: .{field}");
             let target = eval(ctx, target)?;
             match target {
-                // Expression::Closure(closure_ctx, _arg_names, _body) => {
-                //     if let Some(value) = closure_ctx.get_binding(field) {
-                //         value.to_owned()
-                //     } else {
-                //         Err(anyhow!("field binding not found {field}"))?
-                //     }
-                // }
-                Expression::Struct(struct_ctx) => {
-                    if let Some(value) = struct_ctx.get_binding(field) {
+                Expression::Closure(closure_ctx, _arg_names, _body) => {
+                    if let Some(value) = closure_ctx.get_binding(field) {
                         value.to_owned()
                     } else {
                         Err(anyhow!("field binding not found {field}"))?
@@ -210,7 +203,7 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
                 _ => ast.to_error()?
             }
         }
-        Expression::Context(arg_names, body) => {
+        Expression::ContextSyntax(arg_names, body) => {
             debug!("eval context: {arg_names:?}");
             let local_ctx = Context::new();
             for name in arg_names {
@@ -308,7 +301,7 @@ pub fn builtin(ctx: &Context, name: &str, args: &[Expression]) -> Result<Express
         ("le", [lhs, rhs]) => builtin::le(ctx, lhs, rhs),
         ("array", [size, init]) => builtin::array(ctx, size, init),
         ("append", [target, new]) => builtin::append(ctx, target, new),
-        ("struct", []) => builtin::struct_from_context(ctx),
+        ("capture", []) => builtin::capture_context(ctx),
         _ => Err(anyhow!("builtin {name}")),
     }
 }
