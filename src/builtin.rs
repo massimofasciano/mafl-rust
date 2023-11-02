@@ -87,6 +87,34 @@ pub fn or(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression>
     })
 }
 
+pub fn and_lazy(ctx: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+    let lhs = eval::eval(ctx,lhs)?;
+    match lhs {
+        Expression::Boolean(b) => if !b { return Ok(Expression::Boolean(false)) },
+        _ => Err(anyhow!("and_lazy lhs not boolean: {lhs:?}"))?,
+    };
+    let rhs = eval::eval(ctx,rhs)?;
+    match rhs {
+        Expression::Boolean(b) => if !b { return Ok(Expression::Boolean(false)) },
+        _ => Err(anyhow!("and_lazy rhs not boolean: {rhs:?}"))?,
+    };
+    Ok(Expression::Boolean(true))
+}
+
+pub fn or_lazy(ctx: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+    let lhs = eval::eval(ctx,lhs)?;
+    match lhs {
+        Expression::Boolean(b) => if b { return Ok(Expression::Boolean(true)) },
+        _ => Err(anyhow!("or_lazy lhs not boolean: {lhs:?}"))?,
+    };
+    let rhs = eval::eval(ctx,rhs)?;
+    match rhs {
+        Expression::Boolean(b) => if b { return Ok(Expression::Boolean(true)) },
+        _ => Err(anyhow!("or_lazy rhs not boolean: {rhs:?}"))?,
+    };
+    Ok(Expression::Boolean(false))
+}
+
 pub fn gt(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs, rhs) {
         (Expression::Float(a), Expression::Float(b)) => Expression::Boolean(a>b),

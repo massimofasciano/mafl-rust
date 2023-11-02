@@ -202,6 +202,12 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
         Expression::BinOpCall(op, left, right) => {
             debug!("eval bin op call");
             let op = op.as_ref();
+            if op == &Expression::AndOp {
+                return builtin::and_lazy(ctx,left,right);
+            }
+            if op == &Expression::OrOp {
+                return builtin::or_lazy(ctx,left,right);
+            }
             let left = eval(ctx,left.as_ref())?;
             let right = eval(ctx,right.as_ref())?;
             match op {
@@ -217,8 +223,8 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
                     let fvar = Box::new(right);
                     eval(ctx,&Expression::FunctionCall(fvar, vec![left]))?
                 },
-                Expression::AndOp => builtin::and(ctx,&left,&right)?,
-                Expression::OrOp => builtin::or(ctx,&left,&right)?,
+                // Expression::AndOp => builtin::and(ctx,&left,&right)?,
+                // Expression::OrOp => builtin::or(ctx,&left,&right)?,
                 Expression::AddOp => builtin::add(ctx,&left,&right)?,
                 Expression::SubOp => builtin::sub(ctx,&left,&right)?,
                 Expression::MultOp => builtin::mul(ctx,&left,&right)?,
@@ -277,8 +283,8 @@ pub fn builtin(ctx: &Context, name: &str, args: &[Expression]) -> Result<Express
         ("not", [val]) => builtin::not(ctx, val),
         ("len", [val]) => builtin::len(ctx, val),
         ("type", [val]) => builtin::type_of(ctx, val),
-        ("and", [lhs, rhs]) => builtin::and(ctx, lhs, rhs),
-        ("or", [lhs, rhs]) => builtin::or(ctx, lhs, rhs),
+        ("and_eager", [lhs, rhs]) => builtin::and(ctx, lhs, rhs),
+        ("or_eager", [lhs, rhs]) => builtin::or(ctx, lhs, rhs),
         ("gt", [lhs, rhs]) => builtin::gt(ctx, lhs, rhs),
         ("lt", [lhs, rhs]) => builtin::lt(ctx, lhs, rhs),
         ("eq", [lhs, rhs]) => builtin::eq(ctx, lhs, rhs),
