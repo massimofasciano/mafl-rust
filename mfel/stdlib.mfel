@@ -59,3 +59,12 @@ let afilter := function (f,arr) {
     out
 };
 
+### for function on arrays
+let afor := function (f,a) {
+    let i := 0;
+    while i < @len(a) {
+        f(a(i));
+        i := i + 1;
+    };
+};
+
