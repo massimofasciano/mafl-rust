@@ -15,7 +15,7 @@ block_comment = @{
 }
 
 reserved = _{
-    "if" | "else" | "while" | "unless" | "do" |
+    "if" | "else" | "while" | "unless" | "do" | "for" |
     "return" | "break" | "continue" |
     "let" | "function" | "closure" | "staticfn" | "in" | "context" | "capture" |
     "true" | "false" |
@@ -104,6 +104,10 @@ loop = {
     "loop" ~ block_syntax
 }
 
+for = {
+    "for" ~ variable ~ "in" ~ expr ~ block_syntax
+}
+
 let_in = {
     "let" ~ identifier ~ "=" ~ expr ~ "in" ~ expr
 }
@@ -178,14 +182,14 @@ expr_base = _{
     "(" ~ expr ~ ")" | unit_literal |
     array |
     block | if | 
-    while | unless | do_while | loop |
+    while | unless | do_while | loop | for |
     let | let_in | function | closure | staticfn | assign | context | capture |
     return | continue | break |
     boolean | float | integer | string_literal | char_literal | variable 
 }
 
 // expressions that behave like blocks
-expr_block = _{ block | if | while | unless | loop }
+expr_block = _{ block | if | while | unless | loop | for }
 
 semicolons = _{ ";" ~ semicolons | ";" }
 unit_implicit = { "" }

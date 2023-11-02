@@ -36,6 +36,7 @@ pub enum ExpressionType {
     If(Expression,Expression,Expression),
     While(Expression,Expression),
     DoWhile(Expression,Expression),
+    For(String,Expression,Expression),
     Let(String,Expression),
     LetIn(String,Expression,Expression),
     Assign(String,Expression),

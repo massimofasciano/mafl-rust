@@ -4,12 +4,14 @@ use log::{debug, error};
 
 pub fn eval(ctx: &Context, ast: Expression) -> Result<Expression> {
     Ok(match ast.as_ref() {
-        ExpressionType::Unit => ast.to_owned(),
-        ExpressionType::Integer(_) => ast.to_owned(),
-        ExpressionType::Float(_) => ast.to_owned(),
-        ExpressionType::Character(_) => ast.to_owned(),
-        ExpressionType::Boolean(_) => ast.to_owned(),
-        ExpressionType::String(_) => ast.to_owned(),
+        ExpressionType::Unit |
+        ExpressionType::Integer(_) |
+        ExpressionType::Float(_) |
+        ExpressionType::Character(_) |
+        ExpressionType::Boolean(_) |
+        ExpressionType::String(_) |
+        ExpressionType::Break
+            => ast.to_owned(),
         ExpressionType::Block(exprs) => {
             debug!("eval block");
             let ctx = &ctx.with_new_scope();
@@ -91,6 +93,51 @@ pub fn eval(ctx: &Context, ast: Expression) -> Result<Expression> {
             }
             body_value
         }
+        ExpressionType::DoWhile(cond, body) => {
+            debug!("eval do while");
+            let mut body_value;
+            let ctx = &ctx.with_new_scope();
+            #[allow(clippy::while_let_loop)]
+            loop {
+                body_value = eval(ctx,body.to_owned())?;
+                match eval(ctx,cond.to_owned())?.as_ref() {
+                    ExpressionType::Boolean(b) => if !b { break; },
+                    _ => break,
+                };
+            }
+            body_value
+        }
+        ExpressionType::Loop(body) => {
+            debug!("eval loop");
+            let mut body_value;
+            let ctx = &ctx.with_new_scope();
+            #[allow(clippy::while_let_loop)]
+            loop {
+                body_value = eval(ctx,body.to_owned())?;
+                // pretty weak implementation (the whole body has to eval to break)
+                if let ExpressionType::Break = body_value.as_ref() {
+                    break
+                }
+            }
+            body_value
+        }
+        ExpressionType::For(var, iterator, body) => {
+            debug!("eval for");
+            let iterator = eval(ctx, iterator.to_owned())?;
+            let mut body_value = expression::unit();
+            let ctx = &ctx.with_new_scope();
+            ctx.add_binding(var.to_owned(), expression::unit());
+            match eval(ctx,iterator.to_owned())?.as_ref() {
+                ExpressionType::Array(arr) => {
+                    for v in arr.borrow().iter() {
+                        ctx.set_binding(var.to_owned(), v.to_owned());
+                        body_value = eval(ctx,body.to_owned())?;
+                    }
+                },
+                _ => return ast.to_error(),
+            }
+            body_value
+        }
         ExpressionType::Field(target, field) => {
             debug!("eval field: .{field}");
             let target = eval(ctx, target.to_owned())?;
@@ -129,7 +176,8 @@ pub fn eval(ctx: &Context, ast: Expression) -> Result<Expression> {
                     // indexing
                     if arg_values.len() == 1 {
                         if let ExpressionType::Integer(index) = eval(ctx, arg_values[0].to_owned())?.as_ref() {
-                            if let Some(result) = vals.borrow().get(*index as usize) {
+                            let index = (if *index >= 0 { *index } else { vals.borrow().len() as i64 + *index}) as usize;
+                            if let Some(result) = vals.borrow().get(index) {
                                 result.to_owned()
                             } else {
                                 expression::error(format!("index {index} out of bounds"))
@@ -141,7 +189,8 @@ pub fn eval(ctx: &Context, ast: Expression) -> Result<Expression> {
                     } else if arg_values.len() == 2 {
                         if let ExpressionType::Integer(index) = eval(ctx, arg_values[0].to_owned())?.as_ref() {
                             debug!("array set index {index}");
-                            if let Some(result) = vals.borrow_mut().get_mut(*index as usize) {
+                            let index = (if *index >= 0 { *index } else { vals.borrow().len() as i64 + *index}) as usize;
+                            if let Some(result) = vals.borrow_mut().get_mut(index) {
                                 *result = eval(ctx, arg_values[1].to_owned())?;
                                 error!("array set index {index} to {result:?}");
                                 result.to_owned()
@@ -152,7 +201,24 @@ pub fn eval(ctx: &Context, ast: Expression) -> Result<Expression> {
                             Err(anyhow!("index by non-integer"))?
                         }
                     } else {
-                        Err(anyhow!("array get or set index: too many arguments"))?
+                        Err(anyhow!("array get or set index: need 1 or 2 arguments"))?
+                    }
+                }
+                ExpressionType::String(s) => {
+                    // indexing
+                    if arg_values.len() == 1 {
+                        if let ExpressionType::Integer(index) = eval(ctx, arg_values[0].to_owned())?.as_ref() {
+                            let index = (if *index >= 0 { *index } else { s.len() as i64 + *index}) as usize;
+                            if let Some(result) = s.chars().nth(index) {
+                                expression::character(result)
+                            } else {
+                                expression::error(format!("index {index} out of bounds"))
+                            }
+                        } else {
+                            Err(anyhow!("index by non-integer"))?
+                        }
+                    } else {
+                        Err(anyhow!("string get index: need one argument"))?
                     }
                 }
                 ExpressionType::Closure(closure_ctx, arg_names, body) => {
