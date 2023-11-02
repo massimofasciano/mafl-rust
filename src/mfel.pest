@@ -32,7 +32,7 @@ infix_identifier = ${
     "$" ~ ( builtin | identifier )
 }
 builtin = ${
-    "@" ~ identifier
+    "@" ~ identifier_syntax
 }
 integer = @{ 
     "-"? ~ ASCII_DIGIT+ 

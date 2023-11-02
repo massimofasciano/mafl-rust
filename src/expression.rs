@@ -21,7 +21,7 @@ pub enum ExpressionType {
     Error(String),
     Variable(String),
     InfixOp(String),
-    Builtin(String),
+    BuiltinFunction(String),
     Unit,
     Block(Expressions),
     Sequence(Expressions),

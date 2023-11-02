@@ -52,7 +52,12 @@ pub fn eval(ctx: &Context, ast: Expression) -> Result<Expression> {
         ExpressionType::Variable(s) => {
             debug!("eval variable: {s}");
             if s.starts_with('@') {
-                ExpressionType::Builtin(s.strip_prefix('@').unwrap().to_owned()).into()
+                let name = s.strip_prefix('@').unwrap().to_owned();
+                if let Some(result) = builtin_var(ctx, &name) {
+                    result?
+                } else {
+                    ExpressionType::BuiltinFunction(name).into()
+                }
             } else if let Some(value) = ctx.get_binding(s) {
                 value.to_owned()
             } else {
@@ -115,10 +120,10 @@ pub fn eval(ctx: &Context, ast: Expression) -> Result<Expression> {
         ExpressionType::FunctionCall(lambda, arg_values) => {
             debug!("eval function call");
             match eval(ctx,lambda.to_owned())?.as_ref() {
-                ExpressionType::Builtin(name) => {
+                ExpressionType::BuiltinFunction(name) => {
                     let eval_args = arg_values.iter()
                         .map(|e|eval(ctx,e.to_owned())).collect::<Result<Vec<_>>>()?;
-                    builtin(ctx, name, &eval_args)?
+                    builtin_fn(ctx, name, &eval_args)?
                 }
                 ExpressionType::Array(vals) => {
                     // indexing
@@ -258,7 +263,14 @@ pub fn eval(ctx: &Context, ast: Expression) -> Result<Expression> {
     })
 }
 
-pub fn builtin(ctx: &Context, name: &str, args: &[Expression]) -> Result<Expression> {
+pub fn builtin_var(ctx: &Context, name: &str) -> Option<Result<Expression>> {
+    match name {
+        "env" => Some(ctx.get_binding("@env").ok_or(anyhow!("special @env not in context"))),
+        _ => None,
+    }
+}
+
+pub fn builtin_fn(ctx: &Context, name: &str, args: &[Expression]) -> Result<Expression> {
     match (name, args) {
         ("println", args) => { builtin::println(ctx, args) },
         ("print", args) => { builtin::print(ctx, args) },
@@ -293,7 +305,6 @@ pub fn builtin(ctx: &Context, name: &str, args: &[Expression]) -> Result<Express
         ("append", [target, new]) => builtin::append(ctx, target, new),
         ("ctx", []) => builtin::capture_context(ctx),
         ("readline", []) => builtin::read_line(ctx),
-        ("env", []) => ctx.get_binding("@env").ok_or(anyhow!("special @env not in context")),
         ("get", [container, key]) => builtin::get(ctx, container, key),
         ("set", [container, key, value]) => builtin::set(ctx, container, key, value),
         ("insert", [container, key, value]) => builtin::insert(ctx, container, key, value),

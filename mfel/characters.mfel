@@ -4,10 +4,10 @@
 @include("mfel/stdlib.mfel");
 
 let filename := "Cargo.toml";
-let args = @env() in if @len(args) < 1 {
+if @len(@env) < 1 {
     @println("******* ","defaulting to ",filename," for input"," *******");
 } else {
-    filename := args(0);
+    filename := @env(0);
 };
 
 let file := @readfile(filename);
