@@ -50,33 +50,6 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
                 val
             }
         }
-        // Expression::AssignToExpression(target, val) => {
-        //     debug!("eval assign to expression");
-        //     let val = eval(ctx,val)?;
-        //     match target.as_ref() {
-        //         Expression::Variable(id) => {
-        //             if ctx.set_binding(id.to_owned(), val.to_owned()).is_none() {
-        //                 Err(anyhow!("binding not found {id}"))?
-        //             } else {
-        //                 val
-        //             }
-        //         },
-        //         Expression::Field(target, field) => {
-        //             let target = eval(ctx, target)?;
-        //             match target {
-        //                 Expression::Closure(closure_ctx, _arg_names, _body) => {
-        //                     if closure_ctx.set_binding(field.to_owned(), val.to_owned()).is_none() {
-        //                         Err(anyhow!("field binding not found {field}"))?
-        //                     } else {
-        //                         val
-        //                     }
-        //                 }
-        //                 _ => ast.to_error()?,
-        //             }
-        //         },
-        //         _ => ast.to_error()?,
-        //     }
-        // }
         Expression::Variable(s) => {
             debug!("eval variable: {s}");
             if s.starts_with('@') {
@@ -317,6 +290,8 @@ pub fn builtin(ctx: &Context, name: &str, args: &[Expression]) -> Result<Express
         ("get", [container, key]) => builtin::get(ctx, container, key),
         ("set", [container, key, value]) => builtin::set(ctx, container, key, value),
         ("insert", [container, key, value]) => builtin::insert(ctx, container, key, value),
+        ("dict", [parent]) => builtin::dict_extend(ctx, parent),
+        ("dict", []) => builtin::dict(ctx),
         _ => Err(anyhow!("builtin {name}")),
     }
 }

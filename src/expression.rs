@@ -16,6 +16,7 @@ pub enum Expression {
     Float(f64),
     Boolean(bool),
     String(String),
+    Error(String),
     Variable(String),
     InfixOp(String),
     Builtin(String),
@@ -63,6 +64,7 @@ impl std::fmt::Display for Expression {
             Expression::Float(a) => write!(f,"{a}"),
             Expression::Integer(a) => write!(f,"{a}"),
             Expression::String(a) => write!(f,"{a}"),
+            Expression::Error(a) => write!(f,"Error: {a}"),
             Expression::Array(a) => write!(f,"{:?}",a.borrow()),
             _ => write!(f,"{:#?}",self),
         }

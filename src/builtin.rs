@@ -245,6 +245,7 @@ pub fn type_of(_: &Context, expr: &Expression) -> Result<Expression> {
         Expression::String(_) => "String",
         Expression::Boolean(_) => "Boolean",
         Expression::Array(_) => "Array",
+        Expression::Error(_) => "Error",
         Expression::Closure(_,_,_) => "Closure",
         _ => Err(anyhow!("type of {expr:?}"))?,
     }.to_owned()))
@@ -264,13 +265,15 @@ pub fn get(_ctx: &Context, container: &Expression, key: &Expression) -> Result<E
     Ok(match container {
         Expression::Array(a) => {
             match key {
-                Expression::Integer(i) => a.borrow().get(*i as usize).ok_or(anyhow!(""))?.to_owned(),
+                Expression::Integer(i) => 
+                    a.borrow().get(*i as usize).ok_or(anyhow!("index {i} out of bounds"))?.to_owned(),
                 _ => Err(anyhow!("get on array with non-integer key {key:?}"))?,
             }
         }
         Expression::Closure(c,_,_) => {
             match key {
-                Expression::String(s) => c.get_binding(s).ok_or(anyhow!("binding not found {s}"))?,
+                Expression::String(s) => 
+                    c.get_binding(s).unwrap_or(Expression::Error(format!("binding not found {s}"))),
                 _ => Err(anyhow!("get on closure with non-string key {key:?}"))?,
             }
         }
@@ -294,7 +297,9 @@ pub fn set(_ctx: &Context, container: &Expression, key: &Expression, value: &Exp
         }
         Expression::Closure(c,_,_) => {
             match key {
-                Expression::String(s) => c.set_binding(s.to_owned(), value.to_owned()).ok_or(anyhow!("binding not found {s}"))?,
+                Expression::String(s) => 
+                    c.set_binding(s.to_owned(), value.to_owned())
+                        .unwrap_or(Expression::Error(format!("binding not found {s}"))),
                 _ => Err(anyhow!("set on closure with non-string key {key:?}"))?,
             }
         }
@@ -317,3 +322,17 @@ pub fn insert(_ctx: &Context, container: &Expression, key: &Expression, value: &
     })
 }
 
+pub fn dict(_ctx: &Context) -> Result<Expression> {
+    debug!("new dict");
+    Ok(Expression::Closure(Context::new(),vec![],Box::new(Expression::Unit)))
+}
+
+pub fn dict_extend(_ctx: &Context, parent: &Expression) -> Result<Expression> {
+    debug!("extend dict");
+    Ok(match parent {
+        Expression::Closure(c,a,b) => {
+            Expression::Closure(c.with_new_scope(),a.to_owned(),b.to_owned())
+        }
+        _ => Err(anyhow!("dict_extend"))?,
+    })
+}
