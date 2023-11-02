@@ -3,7 +3,14 @@
 
 @include("mfel/stdlib.mfel");
 
-let file := @readfile("Cargo.toml");
+let filename := "Cargo.toml";
+let args = @env() in if @len(args) < 1 {
+    @println("******* ","defaulting to ",filename," for input"," *******");
+} else {
+    filename := args(0);
+};
+
+let file := @readfile(filename);
 let chars := @array(file);
 afor(staticfn(c){@print(c)},chars);
 
