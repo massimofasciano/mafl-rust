@@ -259,3 +259,61 @@ pub fn read_line(_ctx: &Context) -> Result<Expression> {
         Ok(Expression::Unit)
     }
 }
+
+pub fn get(_ctx: &Context, container: &Expression, key: &Expression) -> Result<Expression> {
+    Ok(match container {
+        Expression::Array(a) => {
+            match key {
+                Expression::Integer(i) => a.borrow().get(*i as usize).ok_or(anyhow!(""))?.to_owned(),
+                _ => Err(anyhow!("get on array with non-integer key {key:?}"))?,
+            }
+        }
+        Expression::Closure(c,_,_) => {
+            match key {
+                Expression::String(s) => c.get_binding(s).ok_or(anyhow!("binding not found {s}"))?,
+                _ => Err(anyhow!("get on closure with non-string key {key:?}"))?,
+            }
+        }
+        _ => Err(anyhow!("get {key:?}"))?,
+    })
+}
+
+pub fn set(_ctx: &Context, container: &Expression, key: &Expression, value: &Expression) -> Result<Expression> {
+    Ok(match container {
+        Expression::Array(a) => {
+            match key {
+                Expression::Integer(i) => 
+                    if let Some(result) = a.borrow_mut().get_mut(*i as usize) {
+                        *result = value.to_owned();
+                        result.to_owned()
+                    } else {
+                        Err(anyhow!("index {i} out of bounds"))?
+                    }
+                _ => Err(anyhow!("set on array with non-integer key {key:?}"))?,
+            }
+        }
+        Expression::Closure(c,_,_) => {
+            match key {
+                Expression::String(s) => c.set_binding(s.to_owned(), value.to_owned()).ok_or(anyhow!("binding not found {s}"))?,
+                _ => Err(anyhow!("set on closure with non-string key {key:?}"))?,
+            }
+        }
+        _ => Err(anyhow!("set {key:?}"))?,
+    })
+}
+
+pub fn insert(_ctx: &Context, container: &Expression, key: &Expression, value: &Expression) -> Result<Expression> {
+    Ok(match container {
+        Expression::Closure(c,_,_) => {
+            match key {
+                Expression::String(s) => {
+                    c.add_binding(s.to_owned(), value.to_owned());
+                    value.to_owned()
+                }
+                _ => Err(anyhow!("insert on closure with non-string key {key:?}"))?,
+            }
+        }
+        _ => Err(anyhow!("insert {key:?}"))?,
+    })
+}
+

@@ -7,6 +7,7 @@ FEATURES:
 
 TODO:
 - context as hashmaps (get/set)
+- add Character type and String to Array of Char
 - context inheritance syntax
 - varargs
 - general while/for loop
@@ -16,3 +17,5 @@ TODO:
 
 - ref and deref (by name ?)
 - implement return continue break
+
+- eval gets ref in and outputs owned: would be easier with owned/owned but maybe it's impossible ?

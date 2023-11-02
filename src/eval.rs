@@ -314,6 +314,9 @@ pub fn builtin(ctx: &Context, name: &str, args: &[Expression]) -> Result<Express
         ("ctx", []) => builtin::capture_context(ctx),
         ("readline", []) => builtin::read_line(ctx),
         ("env", []) => ctx.get_binding("@env").ok_or(anyhow!("special @env not in context")),
+        ("get", [container, key]) => builtin::get(ctx, container, key),
+        ("set", [container, key, value]) => builtin::set(ctx, container, key, value),
+        ("insert", [container, key, value]) => builtin::insert(ctx, container, key, value),
         _ => Err(anyhow!("builtin {name}")),
     }
 }

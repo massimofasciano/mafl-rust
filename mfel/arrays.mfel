@@ -64,4 +64,8 @@ let all_gt := function(n,arr) {
 @println("a1=",a1); 
 @println("filter >10 in a1=",afilter(function(x){x>10},a1));
 
+@println("a1[3]=",@get(a1,3)); 
+@set(a1,3,1);
+@println("a1[3]=",@get(a1,3)); 
+
 @println("******************************");

@@ -93,16 +93,6 @@ impl Context {
             None
         }
     }
-    // pub fn get_binding_context(&self, var: &str) -> Option<ContextRef> {
-    //     let scope = &self.inner;
-    //     if scope.bindings.borrow().contains_key(var) {
-    //         Some(self.to_owned())
-    //     } else if let Some(parent) = scope.parent.borrow().as_ref() {
-    //         parent.get_binding_context(var)
-    //     } else {
-    //         None
-    //     }
-    // }
 }
 
 impl Default for Context {
