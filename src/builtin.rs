@@ -255,6 +255,11 @@ pub fn slice(_ctx: &Context, container: &Expression, start: &Expression, end: &E
                 let arr = a2[*start as usize .. *end as usize].to_vec();
                 Expression::Array(Rc::new(RefCell::new(arr)))
         }
+        (Expression::String(s),
+            Expression::Integer(start), 
+            Expression::Integer(end)) => {
+                Expression::String(s[*start as usize .. *end as usize].to_owned())
+        }
         _ => Err(anyhow!("slice {container:?} {start:?} {end:?}"))?,
     })
 }

@@ -24,6 +24,6 @@ afor(staticfn(s){
 afor(staticfn(s){
     let chars := @array(s);
     if @len(chars) > 0 and chars(0) == '[' and chars(@len(chars)-1) == ']' {
-        @println("Got a new section: ",@slice(chars,1,@len(s)-1));
+        @println("Got a new section: ",@slice(s,1,@len(s)-1));
     }
 },lines);
