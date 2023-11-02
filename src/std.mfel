@@ -1,0 +1,63 @@
+###
+### this is the MFEL embedded standard library
+###
+
+@println("******* loading std *******");
+
+## array functions
+let array := capture () {
+    let map := function (f,a) {
+        let i := 0;
+        let out := @array(@len(a),());
+        while i < @len(a) {
+            out(i,f(a(i)));
+            i := i + 1;
+        }
+        out
+    };
+    let fold := function (f,acc,arr) {
+        let i := 0;
+        while i < @len(arr) {
+            acc := f(acc,arr(i));
+            i := i + 1;
+        }
+        acc
+    };
+    let sum := context (fold) in closure(arr) {
+        fold(function(x,y){x+y}, 0, arr)
+    };
+    let prod := context (fold) in closure(arr) {
+        fold(function(x,y){x*y}, 1, arr)
+    };
+    let reduce := function (f,arr) {
+        if @len(arr) < 1 {
+            ()
+        } else {
+            let acc := arr(0);
+            let i := 1;
+            while i < @len(arr) {
+                acc := f(acc,arr(i));
+                i := i + 1;
+            }
+            acc
+        }
+    };
+    let filter := function (f,arr) {
+        let i := 0;
+        let out := @array(0,());
+        while i < @len(arr) {
+            if f(arr(i)) {
+                @append(out,arr(i));
+            }
+            i := i + 1;
+        }
+        out
+    };
+    let foreach := function (f,a) {
+        let i := 0;
+        while i < @len(a) {
+            f(a(i));
+            i := i + 1;
+        };
+    };
+}

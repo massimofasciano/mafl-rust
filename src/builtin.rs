@@ -204,7 +204,7 @@ pub fn eval_string_as_source(ctx: &Context, arg: &Expression) -> Result<Expressi
     match arg.as_ref() {
         ExpressionType::String(s) => {
             debug!("evaluating string: {s}");
-            eval::eval(ctx, parse_source(s).unwrap())
+            eval::eval(ctx, parse_source(s)?)
         }
         _ => arg.to_error()
     }
@@ -304,6 +304,11 @@ pub fn include(ctx: &Context, file_expr: &Expression) -> Result<Expression> {
         }
         _ => Err(anyhow!("include {file_expr:?}"))?,
     })
+}
+
+pub fn include_str(ctx: &Context, s: &str) -> Result<Expression> {
+    debug!("include_str");
+    eval::eval(ctx, parse_source(s)?)
 }
 
 pub fn read_file(_ctx: &Context, file_expr: &Expression) -> Result<Expression> {

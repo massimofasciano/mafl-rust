@@ -341,10 +341,21 @@ pub fn eval(ctx: &Context, ast: Expression) -> Result<Expression> {
     })
 }
 
+static STD : &str = include_str!("std.mfel");
+
 pub fn builtin_var(ctx: &Context, name: &str) -> Option<Result<Expression>> {
     match name {
         "env" => Some(ctx.get_binding("@env").ok_or(anyhow!("special @env not in context"))),
         "context" => Some(builtin::capture_context(ctx)),
+        "std" => {
+            let std = Context::new();
+            let result = builtin::include_str(&std, STD);
+            if result.is_err() {
+                return Some(Err(result.err().unwrap()));
+            }
+            let closure = expression::closure(std, vec![], expression::unit());
+            Some(Ok(closure))
+        }
         _ => None,
     }
 }

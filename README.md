@@ -20,3 +20,5 @@ TODO:
 
 - ref and deref (by name ?)
 - implement return continue break
+
+- Option<Result<Expression>> vs Result<Option<..>> for builtin_var

@@ -1,0 +1,4 @@
+let std := @std;
+std.array.map(staticfn(x){x+1},[1,2,3]);
+std.array.sum([1,2,3,4,45])
+
