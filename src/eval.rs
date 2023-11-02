@@ -266,6 +266,7 @@ pub fn eval(ctx: &Context, ast: Expression) -> Result<Expression> {
 pub fn builtin_var(ctx: &Context, name: &str) -> Option<Result<Expression>> {
     match name {
         "env" => Some(ctx.get_binding("@env").ok_or(anyhow!("special @env not in context"))),
+        "context" => Some(builtin::capture_context(ctx)),
         _ => None,
     }
 }

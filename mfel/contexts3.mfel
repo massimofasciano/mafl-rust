@@ -1,0 +1,69 @@
+### @context captures the current state of all variables
+### -> the global context is now empty and has the captured context as a parent
+### -> any new bindings in the global context will not affect the
+###  captured context (this is how closures work)
+### -> any new bindings in the captured context will be visible in the
+###  global context until they are shadowed (new binding of same name)
+### get on the child/global will continue to the parent    (x)
+### set on the child/global will continue to the parent    (x := ...)
+### insert on the child/global does not affect the parent  (let x := ...)
+### insert on the parent (captured) does not affect the child/global   (@insert(c,"x",...))
+###
+
+let x := 1;
+let y := 2;
+
+@set(@context,"y",y+x);
+@set(@context,"y",@get(@context,"y")+@get(@context,"x"));
+@println("y=",@get(@context,"y"));
+@println("y=",y);
+@insert(@context,"z",3);
+@println("z=",z);
+# y=4
+# y=4
+# z=3
+@println();
+
+let c := @context; # captured to c
+@println("x=",x);
+@println("c.x=",c.x);
+# x=1
+# c.x=1
+@println();
+
+@insert(c,"x",100);
+@println("x=",x);
+@println("c.x=",c.x);
+# x=100
+# c.x=100
+@println();
+
+x := x + 1;
+@println("x=",x);
+@println("c.x=",c.x);
+# x=101
+# c.x=101
+@println();
+
+@set(c,"x",@get(c,"x") + 1);
+@println("x=",x);
+@println("c.x=",c.x);
+# x=102
+# c.x=102
+@println();
+
+let x := x + 1;
+@println("x=",x);
+@println("c.x=",c.x);
+# x=103
+# c.x=102
+@println();
+
+@insert(c,"x",10);
+@println("x=",x);
+@println("c.x=",c.x);
+# x=103
+# c.x=10
+@println();
+
+#@println(@context);
