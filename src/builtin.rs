@@ -430,3 +430,44 @@ pub fn error_from_strings(_: &Context, args: &[Expression]) -> Result<Expression
     Ok(expression::error(output))
 }
 
+pub fn get_var(ctx: &Context, key: &Expression) -> Result<Expression> {
+    debug!("get_var {key:?}");
+    Ok(match key.as_ref() {
+        ExpressionType::String(s) => 
+            ctx.get_binding(s).unwrap_or(expression::error(format!("binding not found {s}"))),
+        _ => Err(anyhow!("get on closure with non-string key {key:?}"))?,
+    })
+}
+
+pub fn assign_var(ctx: &Context, key: &Expression, value: &Expression) -> Result<Expression> {
+    debug!("set_var {key:?} {value:?}");
+    Ok(match key.as_ref() {
+        ExpressionType::String(s) => 
+            ctx.set_binding(s.to_owned(), value.to_owned())
+                .unwrap_or(expression::error(format!("binding not found {s}"))),
+        _ => Err(anyhow!("set on closure with non-string key {key:?}"))?,
+    })
+}
+
+pub fn let_var(ctx: &Context, key: &Expression, value: &Expression) -> Result<Expression> {
+    debug!("insert_var {key:?} {value:?}");
+    Ok(match key.as_ref() {
+        ExpressionType::String(s) => {
+            ctx.add_binding(s.to_owned(), value.to_owned());
+            value.to_owned()
+        }
+        _ => Err(anyhow!("insert on closure with non-string key {key:?}"))?,
+    })
+}
+
+pub fn copy(ctx: &Context, val: &Expression) -> Result<Expression> {
+    Ok(match val.as_ref() {
+        ExpressionType::Array(_) => {
+            let start = expression::integer(0);
+            let end = len(ctx, val)?; 
+            slice(ctx,val, &start, &end)?
+        }
+        _ => val.to_owned(),
+    })
+}
+

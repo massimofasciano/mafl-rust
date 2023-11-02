@@ -242,6 +242,9 @@ pub fn eval(ctx: &Context, ast: Expression) -> Result<Expression> {
         }
         ExpressionType::UnaryOpCall(op, expr) => {
             debug!("eval unary op call");
+            // if op.as_ref() == &ExpressionType::RefOp {
+            //     return builtin::ref_var(ctx,&expr.to_owned());
+            // }
             let expr = eval(ctx,expr.to_owned())?;
             match op.as_ref() {
                 ExpressionType::NegOp => builtin::neg(ctx,&expr.to_owned())?,
@@ -302,6 +305,7 @@ pub fn builtin_fn(ctx: &Context, name: &str, args: &[Expression]) -> Result<Expr
         ("array", [size, init]) => builtin::array(ctx, size, init),
         ("array", [init]) => builtin::to_array(ctx, init),
         ("slice", [container, start, end]) => builtin::slice(ctx, container, start, end),
+        ("copy", [container]) => builtin::copy(ctx, container),
         ("lines", [init]) => builtin::to_array_lines(ctx, init),
         ("append", [target, new]) => builtin::append(ctx, target, new),
         ("ctx", []) => builtin::capture_context(ctx),
@@ -311,6 +315,9 @@ pub fn builtin_fn(ctx: &Context, name: &str, args: &[Expression]) -> Result<Expr
         ("insert", [container, key, value]) => builtin::insert(ctx, container, key, value),
         ("dict", [parent]) => builtin::dict_extend(ctx, parent),
         ("dict", []) => builtin::dict(ctx),
+        ("var", [key]) => builtin::get_var(ctx, key),
+        ("assign", [key, value]) => builtin::assign_var(ctx, key, value),
+        ("let", [key, value]) => builtin::let_var(ctx, key, value),
         _ => Err(anyhow!("builtin {name}")),
     }
 }
