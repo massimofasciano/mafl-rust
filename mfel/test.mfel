@@ -1,1 +1,15 @@
-true or 1/0
+let f := staticfn (args) {
+    if @len(args) < 2 {
+        @error("need at least 2 args, got ",@len(args))
+    } else {
+        let f := args(0);
+        let x := args(1);
+        let args := @slice(args,2,@len(args));
+        [f(x),args]
+    }
+};
+let args_a := [staticfn(q){q^2},10];
+let args_b := [1,2,3,4,5];
+#f([args_a])
+f(args_a+args_b)
+

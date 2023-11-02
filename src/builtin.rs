@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 use std::io::{self, BufRead, stdout, Write};
+use std::fmt::Write as _;
 
 use crate::{expression::Expression, parse_source, eval, context::Context};
 use anyhow::{Result,anyhow};
@@ -244,6 +245,20 @@ pub fn to_array(_ctx: &Context, init: &Expression) -> Result<Expression> {
     }
 }
 
+pub fn slice(_ctx: &Context, container: &Expression, start: &Expression, end: &Expression) -> Result<Expression> {
+    Ok(match (container,start,end) {
+        (Expression::Array(a0),
+            Expression::Integer(start), 
+            Expression::Integer(end)) => {
+                let a1 = &a0.borrow();
+                let a2 = a1.as_slice();
+                let arr = a2[*start as usize .. *end as usize].to_vec();
+                Expression::Array(Rc::new(RefCell::new(arr)))
+        }
+        _ => Err(anyhow!("slice {container:?} {start:?} {end:?}"))?,
+    })
+}
+
 pub fn to_array_lines(_ctx: &Context, init: &Expression) -> Result<Expression> {
     let mut arr : Vec<Expression> = vec![];
     if let Expression::String(s) = init {
@@ -402,3 +417,11 @@ pub fn dict_extend(_ctx: &Context, parent: &Expression) -> Result<Expression> {
         _ => Err(anyhow!("dict_extend"))?,
     })
 }
+
+pub fn error(_: &Context, args: &[Expression]) -> Result<Expression> {
+    debug!("error");
+    let mut output = String::new();
+    for arg in args { write!(output,"{arg}")?; }
+    Ok(Expression::Error(output))
+}
+

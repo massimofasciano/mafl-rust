@@ -8,8 +8,8 @@ let chars := @array(file);
 afor(staticfn(c){@print(c)},chars);
 
 let lines := @lines(file);
+
 afor(staticfn(s){
-    #@println("> ",s);
     let chars := @array(s);
     if @len(chars) > 0 and chars(0) == '[' and chars(@len(chars)-1) == ']' {
         @print("Got a new section: ");
@@ -18,5 +18,12 @@ afor(staticfn(s){
             i := i + 1;
         };
         @println();
+    }
+},lines);
+
+afor(staticfn(s){
+    let chars := @array(s);
+    if @len(chars) > 0 and chars(0) == '[' and chars(@len(chars)-1) == ']' {
+        @println("Got a new section: ",@slice(chars,1,@len(s)-1));
     }
 },lines);

@@ -7,9 +7,8 @@ FEATURES:
 - Error type (detectable to catch errors)
 
 TODO:
-- Ops pre-evaluate (eager) their args: this breaks and/or
 - context inheritance syntax
-- varargs
+- varargs ?
 - general while/for loop
 - foreach and iterator (returns unit or value)
 - make builtin @id return an expression (a closure if functional) ?

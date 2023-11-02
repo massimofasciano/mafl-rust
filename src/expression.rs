@@ -67,7 +67,8 @@ impl std::fmt::Display for Expression {
             Expression::Character(a) => write!(f,"{a}"),
             Expression::String(a) => write!(f,"{a}"),
             Expression::Error(a) => write!(f,"Error: {a}"),
-            Expression::Array(a) => write!(f,"{:?}",a.borrow()),
+            Expression::Array(a) => 
+                write!(f,"[{}]",a.borrow().iter().map(|x|x.to_string()).collect::<Vec<_>>().join(",")),
             _ => write!(f,"{:#?}",self),
         }
     }
