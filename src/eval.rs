@@ -128,7 +128,7 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
                             if let Some(result) = vals.borrow().get(index as usize) {
                                 result.to_owned()
                             } else {
-                                Err(anyhow!("index {index} out of bounds"))?
+                                Expression::Error(format!("index {index} out of bounds"))
                             }
                         } else {
                             Err(anyhow!("index by non-integer"))?
@@ -142,7 +142,7 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
                                 error!("array set index {index} to {result:?}");
                                 result.to_owned()
                             } else {
-                                Err(anyhow!("index {index} out of bounds"))?
+                                Expression::Error(format!("index {index} out of bounds"))
                             }
                         } else {
                             Err(anyhow!("index by non-integer"))?
@@ -287,6 +287,7 @@ pub fn builtin(ctx: &Context, name: &str, args: &[Expression]) -> Result<Express
         ("le", [lhs, rhs]) => builtin::le(ctx, lhs, rhs),
         ("array", [size, init]) => builtin::array(ctx, size, init),
         ("array", [init]) => builtin::to_array(ctx, init),
+        ("lines", [init]) => builtin::to_array_lines(ctx, init),
         ("append", [target, new]) => builtin::append(ctx, target, new),
         ("ctx", []) => builtin::capture_context(ctx),
         ("readline", []) => builtin::read_line(ctx),

@@ -1,9 +1,0 @@
-@debugln("1\n2\t3\n4");
-@debugln('\n');
-
-@include("mfel/stdlib.mfel");
-
-let file := @readfile("Cargo.toml");
-let chars := @array(file);
-afor(staticfn(c){@print(c)},chars);
-

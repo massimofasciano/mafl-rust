@@ -216,6 +216,18 @@ pub fn to_array(_ctx: &Context, init: &Expression) -> Result<Expression> {
     }
 }
 
+pub fn to_array_lines(_ctx: &Context, init: &Expression) -> Result<Expression> {
+    let mut arr : Vec<Expression> = vec![];
+    if let Expression::String(s) = init {
+        for line in s.lines() {
+            arr.push(Expression::String(line.to_owned()));
+        }
+        Ok(Expression::Array(Rc::new(RefCell::new(arr))))
+    } else {
+        Err(anyhow!("to array lines {init:?}"))?
+    }
+}
+
 pub fn len(_: &Context, val: &Expression) -> Result<Expression> {
     Ok(match val {
         Expression::Array(a) => Expression::Integer(a.borrow().len() as i64),

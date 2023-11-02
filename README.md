@@ -7,8 +7,7 @@ FEATURES:
 - Error type (detectable to catch errors)
 
 TODO:
-- context as hashmaps (get/set)
-- add Character type and String to Array of Char
+- Ops pre-evaluate (eager) their args: this breaks and/or
 - context inheritance syntax
 - varargs
 - general while/for loop
