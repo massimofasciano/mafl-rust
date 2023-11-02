@@ -7,6 +7,7 @@ FEATURES:
 - Error type (detectable to catch errors)
 
 TODO:
+- parse std only once ??? @std("std") to bind it ??? or @use("...") ??? embed directory ?
 - implement deep copy for context (keeping structure intact)
 - context inheritance syntax
 - varargs ?

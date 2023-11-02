@@ -341,7 +341,7 @@ pub fn eval(ctx: &Context, ast: Expression) -> Result<Expression> {
     })
 }
 
-static STD : &str = include_str!("std.mfel");
+static STD_STR : &str = include_str!("std.mfel");
 
 pub fn builtin_var(ctx: &Context, name: &str) -> Option<Result<Expression>> {
     match name {
@@ -349,7 +349,7 @@ pub fn builtin_var(ctx: &Context, name: &str) -> Option<Result<Expression>> {
         "context" => Some(builtin::capture_context(ctx)),
         "std" => {
             let std = Context::new();
-            let result = builtin::include_str(&std, STD);
+            let result = builtin::include_str(&std, STD_STR);
             if result.is_err() {
                 return Some(Err(result.err().unwrap()));
             }
