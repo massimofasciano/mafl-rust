@@ -1,5 +1,5 @@
-use std::{io::stdin, env::args, rc::Rc, cell::RefCell};
-use mfel::{parse_source, eval::eval, context::Context, expression::Expression};
+use std::{io::stdin, env::args};
+use mfel::{parse_source, eval::eval, context::Context, expression::{Expression, self}};
 use anyhow::{Result, anyhow};
 
 fn main() -> Result<()> {
@@ -16,10 +16,10 @@ fn main() -> Result<()> {
     let expr = parse_source(&source)?;
     // println!("{ast:#?}");
     let ctx = Context::new();
-    let env_exprs = env_iter.map(Expression::String).collect();
-    let env_array = Expression::Array(Rc::new(RefCell::new(env_exprs)));
+    let env_exprs = env_iter.map(expression::string).collect();
+    let env_array = expression::array(env_exprs);
     ctx.add_binding("@env".to_owned(), env_array);
-    let result = eval(&ctx, &expr)?;
+    let result : Expression = eval(&ctx, expr)?;
     // println!("{result:#?}");
     println!("{result}");
     Ok(())

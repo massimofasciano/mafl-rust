@@ -1,8 +1,8 @@
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
 
 use pest::iterators::Pair;
 use anyhow::{anyhow, Result};
-use crate::{expression::{Rule, Expression}, unescape_string};
+use crate::{expression::{Rule, ExpressionType, Expression}, unescape_string};
 
 fn parse_block(parsed: Pair<Rule>) -> Result<Expression> {
     let rule = parsed.as_rule().to_owned();
@@ -13,12 +13,12 @@ fn parse_block(parsed: Pair<Rule>) -> Result<Expression> {
         })
         .collect::<Result<Vec<Expression>>>()?;
     Ok(match sequence.len() {
-        0 => Expression::Unit,
+        0 => ExpressionType::Unit.into(),
         1 => sequence[0].clone(),
         _ => match rule { 
-            Rule::block => Expression::Block(sequence),
-            Rule::block_syntax => Expression::Sequence(sequence),
-            Rule::file => Expression::Sequence(sequence),
+            Rule::block => ExpressionType::Block(sequence).into(),
+            Rule::block_syntax => ExpressionType::Sequence(sequence).into(),
+            Rule::file => ExpressionType::Sequence(sequence).into(),
             _ => Err(anyhow!("parse error block type: {rule:?}"))?,
         },
     })
@@ -35,7 +35,7 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 inner[1..].chunks_exact(2).try_fold(left, |ast, pair| -> Result<Expression> {
                     let op = parse_rule(pair[0].clone())?;
                     let right = parse_rule(pair[1].clone())?;
-                    Ok(Expression::BinOpCall(Box::new(op), Box::new(ast), Box::new(right)))
+                    Ok(ExpressionType::BinOpCall(op, ast, right).into())
                 })?
             }
             Rule::expr_post => {
@@ -44,7 +44,7 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 let expr = parse_rule(inner[0].clone())?;
                 inner[1..].iter().try_fold(expr, |ast, pair| -> Result<Expression> {
                     let op = parse_rule(pair.clone())?;
-                    Ok(Expression::UnaryOpCall(Box::new(op), Box::new(ast)))
+                    Ok(ExpressionType::UnaryOpCall(op, ast).into())
                 })?
             }
             Rule::expr_prefix => {
@@ -55,7 +55,7 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 let expr = parse_rule(rinner[0].clone())?;
                 rinner[1..].iter().try_fold(expr, |ast, pair| -> Result<Expression> {
                     let op = parse_rule(pair.clone())?;
-                    Ok(Expression::UnaryOpCall(Box::new(op), Box::new(ast)))
+                    Ok(ExpressionType::UnaryOpCall(op, ast).into())
                 })?
             }
             Rule::expr_apply_or_field => {
@@ -67,13 +67,13 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                         Rule::apply_args => {
                             let args = pair.clone().into_inner()
                                 .map(|e| (parse_rule(e.clone()))).collect::<Result<Vec<_>>>()?;
-                            Ok(Expression::FunctionCall(Box::new(ast), args))
+                            Ok(ExpressionType::FunctionCall(ast, args).into())
                         }
                         Rule::field_access => {
                             let inner : Vec<Pair<Rule>> = pair.clone().into_inner().collect();
                             assert!(inner.len() == 1);
                             let field = inner[0].as_str().to_owned();
-                            Ok(Expression::Field(Box::new(ast), field))
+                            Ok(ExpressionType::Field(ast, field).into())
                         }
                         _ => Err(anyhow!("parse error expr_apply_or_field"))
                     }
@@ -86,16 +86,16 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
                 let body = parse_rule(inner[1].clone())?;
                 match rule {
-                    Rule::staticfn => Expression::FunctionStatic(args, Box::new(body)),
-                    Rule::closure => Expression::FunctionClosure(args, Box::new(body)),
-                    Rule::function => Expression::FunctionDynamic(args, Box::new(body)),
+                    Rule::staticfn => ExpressionType::FunctionStatic(args, body).into(),
+                    Rule::closure => ExpressionType::FunctionClosure(args, body).into(),
+                    Rule::function => ExpressionType::FunctionDynamic(args, body).into(),
                     _ => Err(anyhow!("parse error function or closure"))?
                 }
             }
             Rule::array => {
-                Expression::Array(Rc::new(RefCell::new(
+                ExpressionType::Array(RefCell::new(
                     inner.iter().map(|e| parse_rule(e.to_owned())).collect::<Result<Vec<_>>>()?
-                )))
+                )).into()
             } 
             Rule::context | Rule::capture => {
                 assert!(inner.len() == 2);
@@ -103,8 +103,8 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
                 let body = parse_rule(inner[1].clone())?;
                 match rule {
-                    Rule::context => Expression::ContextSyntax(args, Box::new(body)),
-                    Rule::capture => Expression::CaptureSyntax(args, Box::new(body)),
+                    Rule::context => ExpressionType::ContextSyntax(args, body).into(),
+                    Rule::capture => ExpressionType::CaptureSyntax(args, body).into(),
                     _ => Err(anyhow!("parse error context or capture"))?
                 }
             } 
@@ -112,65 +112,65 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 assert!(inner.len() == 2 || inner.len() == 3);
                 let expr = parse_rule(inner[0].clone())?;
                 let cond = if rule == Rule::unless {
-                    Expression::UnaryOpCall(Box::new(Expression::NotOp),Box::new(expr))
+                    ExpressionType::UnaryOpCall(ExpressionType::NotOp.into(),expr).into()
                 } else {
                     expr
                 };
                 assert!(inner[1].as_rule() == Rule::block);
                 let then = parse_rule(inner[1].clone())?;
                 let r#else = if inner.len() < 3 {
-                    Expression::Unit
+                    ExpressionType::Unit.into()
                 } else {
                     parse_rule(inner[2].clone())?
                 };
-                Expression::If(Box::new(cond), Box::new(then), Box::new(r#else))
+                ExpressionType::If(cond, then, r#else).into()
             } 
             Rule::let_in => {
                 assert!(inner.len() == 3);
                 let var = inner[0].as_str().to_owned();
                 let val = parse_rule(inner[1].clone())?;
                 let body = parse_rule(inner[2].clone())?;
-                Expression::LetIn(var, Box::new(val), Box::new(body))
+                ExpressionType::LetIn(var, val, body).into()
             } 
             Rule::r#let => {
                 assert!(inner.len() == 2);
                 let var = inner[0].as_str().to_owned();
                 let val = parse_rule(inner[1].clone())?;
-                Expression::Let(var, Box::new(val))
+                ExpressionType::Let(var, val).into()
             } 
             Rule::assign => {
                 assert!(inner.len() == 2);
                 let var = inner[0].as_str().to_owned();
                 let val = parse_rule(inner[1].clone())?;
-                Expression::Assign(var, Box::new(val))
+                ExpressionType::Assign(var, val).into()
             } 
             Rule::r#while => {
                 assert!(inner.len() == 2);
                 let cond = parse_rule(inner[0].clone())?;
                 assert!(inner[1].as_rule() == Rule::block_syntax);
                 let body = parse_rule(inner[1].clone())?;
-                Expression::While(Box::new(cond), Box::new(body))
+                ExpressionType::While(cond, body).into()
             } 
             Rule::do_while => {
                 assert!(inner.len() == 2);
                 let cond = parse_rule(inner[1].clone())?;
                 assert!(inner[0].as_rule() == Rule::block_syntax);
                 let body = parse_rule(inner[0].clone())?;
-                Expression::DoWhile(Box::new(cond), Box::new(body))
+                ExpressionType::DoWhile(cond, body).into()
             } 
             Rule::r#loop => {
                 assert!(inner.len() == 1);
                 assert!(inner[0].as_rule() == Rule::block_syntax);
                 let body = parse_rule(inner[0].clone())?;
-                Expression::Loop(Box::new(body))
+                ExpressionType::Loop(body).into()
             }
             Rule::r#return => { 
                 let body = if inner.len() == 1 {
                     parse_rule(inner[0].clone())?
                 } else {
-                    Expression::Unit
+                    ExpressionType::Unit.into()
                 };
-                Expression::Return(Box::new(body)) 
+                ExpressionType::Return(body).into() 
             },
             _ => {
                 Err(anyhow!("TODO: [{:?}] {}",rule,string))?
@@ -180,42 +180,42 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
 
 pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
     Ok(match parsed.as_rule() {
-        Rule::integer => { Expression::Integer(parsed.as_str().parse()?) },
-        Rule::float => { Expression::Float(parsed.as_str().parse()?) },
-        Rule::infix_identifier => { Expression::InfixOp(parsed.as_str().to_owned()) },
-        Rule::string => { Expression::String(unescape_string(parsed.as_str())) },
+        Rule::integer => { ExpressionType::Integer(parsed.as_str().parse()?).into() },
+        Rule::float => { ExpressionType::Float(parsed.as_str().parse()?).into() },
+        Rule::infix_identifier => { ExpressionType::InfixOp(parsed.as_str().to_owned()).into() },
+        Rule::string => { ExpressionType::String(unescape_string(parsed.as_str())).into() },
         Rule::character => { 
             assert!(!parsed.as_str().is_empty());
-            Expression::Character(unescape_string(parsed.as_str()).chars().next().unwrap()) 
+            ExpressionType::Character(unescape_string(parsed.as_str()).chars().next().unwrap()).into() 
         },
-        Rule::variable => { Expression::Variable(parsed.as_str().to_owned()) },
-        Rule::unit_literal => { Expression::Unit },
-        Rule::unit_implicit => { Expression::Unit },
-        Rule::r#true => { Expression::Boolean(true) },
-        Rule::r#false => { Expression::Boolean(false) },
-        Rule::r#ref => { Expression::RefOp },
-        Rule::deref => { Expression::DeRefOp },
-        Rule::question => { Expression::QuestionOp },
-        Rule::exclam => { Expression::ExclamOp },
-        Rule::pipe => { Expression::PipeOp },
-        Rule::neg => { Expression::NegOp },
-        Rule::add => { Expression::AddOp },
-        Rule::mult => { Expression::MultOp },
-        Rule::sub => { Expression::SubOp },
-        Rule::div => { Expression::DivOp },
-        Rule::r#mod => { Expression::ModOp },
-        Rule::exp => { Expression::ExpOp },
-        Rule::or => { Expression::OrOp },
-        Rule::and => { Expression::AndOp },
-        Rule::not => { Expression::NotOp },
-        Rule::gt => { Expression::GtOp },
-        Rule::ge => { Expression::GeOp },
-        Rule::lt => { Expression::LtOp },
-        Rule::le => { Expression::LeOp },
-        Rule::ne => { Expression::NeOp },
-        Rule::eq => { Expression::EqOp },
-        Rule::r#continue => { Expression::Continue },
-        Rule::r#break => { Expression::Break },
+        Rule::variable => { ExpressionType::Variable(parsed.as_str().to_owned()).into() },
+        Rule::unit_literal => { ExpressionType::Unit.into() },
+        Rule::unit_implicit => { ExpressionType::Unit.into() },
+        Rule::r#true => { ExpressionType::Boolean(true).into() },
+        Rule::r#false => { ExpressionType::Boolean(false).into() },
+        Rule::r#ref => { ExpressionType::RefOp.into() },
+        Rule::deref => { ExpressionType::DeRefOp.into() },
+        Rule::question => { ExpressionType::QuestionOp.into() },
+        Rule::exclam => { ExpressionType::ExclamOp.into() },
+        Rule::pipe => { ExpressionType::PipeOp.into() },
+        Rule::neg => { ExpressionType::NegOp.into() },
+        Rule::add => { ExpressionType::AddOp.into() },
+        Rule::mult => { ExpressionType::MultOp.into() },
+        Rule::sub => { ExpressionType::SubOp.into() },
+        Rule::div => { ExpressionType::DivOp.into() },
+        Rule::r#mod => { ExpressionType::ModOp.into() },
+        Rule::exp => { ExpressionType::ExpOp.into() },
+        Rule::or => { ExpressionType::OrOp.into() },
+        Rule::and => { ExpressionType::AndOp.into() },
+        Rule::not => { ExpressionType::NotOp.into() },
+        Rule::gt => { ExpressionType::GtOp.into() },
+        Rule::ge => { ExpressionType::GeOp.into() },
+        Rule::lt => { ExpressionType::LtOp.into() },
+        Rule::le => { ExpressionType::LeOp.into() },
+        Rule::ne => { ExpressionType::NeOp.into() },
+        Rule::eq => { ExpressionType::EqOp.into() },
+        Rule::r#continue => { ExpressionType::Continue.into() },
+        Rule::r#break => { ExpressionType::Break.into() },
         Rule::block_syntax | Rule::block | Rule::file  => { parse_block(parsed)? },
         Rule::string_literal | Rule::char_literal => {
             // these rules can't be made silent in the grammar (as of current version)

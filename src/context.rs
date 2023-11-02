@@ -118,67 +118,64 @@ impl Default for Scope {
 
 #[cfg(test)]
 mod tests {
-    use super::{Expression,Context};
+    use crate::expression::integer;
+    use super::Context;
 
-    fn test_val(i: i64) -> Expression {
-        Expression::Integer(i)
-    }
-    
     #[test]
     fn ref_test() {
         let ctx1 = Context::new();
-        ctx1.add_binding("v1".to_owned(), test_val(1));
+        ctx1.add_binding("v1".to_owned(), integer(1));
         let ctx2 = ctx1.with_new_scope();
-        ctx2.add_binding("v2".to_owned(), test_val(2));
-        assert_eq!(ctx2.get_binding("v1"),Some(test_val(1)));
-        assert_eq!(ctx2.get_binding("v2"),Some(test_val(2)));
-        assert_eq!(ctx1.get_binding("v1"),Some(test_val(1)));
+        ctx2.add_binding("v2".to_owned(), integer(2));
+        assert_eq!(ctx2.get_binding("v1"),Some(integer(1)));
+        assert_eq!(ctx2.get_binding("v2"),Some(integer(2)));
+        assert_eq!(ctx1.get_binding("v1"),Some(integer(1)));
         assert_eq!(ctx1.get_binding("v2"),None);
-        ctx2.set_binding("v1".to_owned(),test_val(11));
-        ctx2.set_binding("v2".to_owned(),test_val(12));
-        assert_eq!(ctx2.get_binding("v1"),Some(test_val(11)));
-        assert_eq!(ctx2.get_binding("v2"),Some(test_val(12)));
-        assert_eq!(ctx1.get_binding("v1"),Some(test_val(11)));
+        ctx2.set_binding("v1".to_owned(),integer(11));
+        ctx2.set_binding("v2".to_owned(),integer(12));
+        assert_eq!(ctx2.get_binding("v1"),Some(integer(11)));
+        assert_eq!(ctx2.get_binding("v2"),Some(integer(12)));
+        assert_eq!(ctx1.get_binding("v1"),Some(integer(11)));
         assert_eq!(ctx1.get_binding("v2"),None);
 
         let ctx3 = Context::new();
-        ctx3.add_binding("v3".to_owned(), test_val(3));
-        assert_eq!(ctx3.get_binding("v3"),Some(test_val(3)));
+        ctx3.add_binding("v3".to_owned(), integer(3));
+        assert_eq!(ctx3.get_binding("v3"),Some(integer(3)));
         let ctx4 = ctx3.with_new_scope();
-        ctx4.add_binding("v4".to_owned(), test_val(4));
-        assert_eq!(ctx4.get_binding("v4"),Some(test_val(4)));
+        ctx4.add_binding("v4".to_owned(), integer(4));
+        assert_eq!(ctx4.get_binding("v4"),Some(integer(4)));
         ctx4.append(&ctx1);
 
-        assert_eq!(ctx4.get_binding("v4"),Some(test_val(4)));
-        assert_eq!(ctx4.get_binding("v3"),Some(test_val(3)));
-        assert_eq!(ctx4.get_binding("v1"),Some(test_val(11)));
+        assert_eq!(ctx4.get_binding("v4"),Some(integer(4)));
+        assert_eq!(ctx4.get_binding("v3"),Some(integer(3)));
+        assert_eq!(ctx4.get_binding("v1"),Some(integer(11)));
         assert_eq!(ctx4.get_binding("v2"),None);
-        assert_eq!(ctx2.get_binding("v1"),Some(test_val(11)));
-        assert_eq!(ctx2.get_binding("v2"),Some(test_val(12)));
-        assert_eq!(ctx1.get_binding("v1"),Some(test_val(11)));
+        assert_eq!(ctx2.get_binding("v1"),Some(integer(11)));
+        assert_eq!(ctx2.get_binding("v2"),Some(integer(12)));
+        assert_eq!(ctx1.get_binding("v1"),Some(integer(11)));
         assert_eq!(ctx1.get_binding("v2"),None);
 
-        ctx1.add_binding("v10".to_owned(), test_val(10));
-        assert_eq!(ctx1.get_binding("v10"),Some(test_val(10)));
-        assert_eq!(ctx2.get_binding("v10"),Some(test_val(10)));
-        assert_eq!(ctx3.get_binding("v10"),Some(test_val(10)));
-        assert_eq!(ctx4.get_binding("v10"),Some(test_val(10)));
+        ctx1.add_binding("v10".to_owned(), integer(10));
+        assert_eq!(ctx1.get_binding("v10"),Some(integer(10)));
+        assert_eq!(ctx2.get_binding("v10"),Some(integer(10)));
+        assert_eq!(ctx3.get_binding("v10"),Some(integer(10)));
+        assert_eq!(ctx4.get_binding("v10"),Some(integer(10)));
 
-        ctx4.set_binding("v2".to_owned(), test_val(22));
+        ctx4.set_binding("v2".to_owned(), integer(22));
         assert_eq!(ctx1.get_binding("v2"),None);
-        assert_eq!(ctx2.get_binding("v2"),Some(test_val(12)));
+        assert_eq!(ctx2.get_binding("v2"),Some(integer(12)));
         assert_eq!(ctx3.get_binding("v2"),None);
         assert_eq!(ctx4.get_binding("v2"),None);
 
         let ctx1_cap = ctx1.capture();
-        ctx1_cap.set_binding("v10".to_owned(), test_val(110));
-        ctx1.add_binding("v11".to_owned(), test_val(111));
-        ctx1_cap.add_binding("v12".to_owned(), test_val(112));
-        assert_eq!(ctx1_cap.get_binding("v10"),Some(test_val(110)));
+        ctx1_cap.set_binding("v10".to_owned(), integer(110));
+        ctx1.add_binding("v11".to_owned(), integer(111));
+        ctx1_cap.add_binding("v12".to_owned(), integer(112));
+        assert_eq!(ctx1_cap.get_binding("v10"),Some(integer(110)));
         assert_eq!(ctx1_cap.get_binding("v11"),None);
-        assert_eq!(ctx1_cap.get_binding("v12"),Some(test_val(112)));
-        assert_eq!(ctx1.get_binding("v10"),Some(test_val(110)));
-        assert_eq!(ctx1.get_binding("v11"),Some(test_val(111)));
-        assert_eq!(ctx1.get_binding("v12"),Some(test_val(112)));
+        assert_eq!(ctx1_cap.get_binding("v12"),Some(integer(112)));
+        assert_eq!(ctx1.get_binding("v10"),Some(integer(110)));
+        assert_eq!(ctx1.get_binding("v11"),Some(integer(111)));
+        assert_eq!(ctx1.get_binding("v12"),Some(integer(112)));
     }
 }

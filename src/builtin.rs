@@ -1,149 +1,149 @@
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
 use std::io::{self, BufRead, stdout, Write};
 use std::fmt::Write as _;
 
-use crate::{expression::Expression, parse_source, eval, context::Context};
+use crate::{expression::{Expression, self, unit, closure, ExpressionType}, parse_source, eval, context::Context};
 use anyhow::{Result,anyhow};
 use log::debug;
 
 pub fn pow(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
-    Ok(match (lhs, rhs) {
-        (Expression::Float(a), Expression::Float(b)) => Expression::Float(a.powf(*b)),
-        (Expression::Float(a), Expression::Integer(b)) => Expression::Float(a.powf(*b as f64)),
-        (Expression::Integer(a), Expression::Float(b)) => Expression::Float((*a as f64).powf(*b)),
-        (Expression::Integer(a), Expression::Integer(b)) => Expression::Integer(a.pow(*b as u32)),
+    Ok(match (lhs.as_ref(), rhs.as_ref()) {
+        (ExpressionType::Float(a), ExpressionType::Float(b)) => ExpressionType::Float(a.powf(*b)),
+        (ExpressionType::Float(a), ExpressionType::Integer(b)) => ExpressionType::Float(a.powf(*b as f64)),
+        (ExpressionType::Integer(a), ExpressionType::Float(b)) => ExpressionType::Float((*a as f64).powf(*b)),
+        (ExpressionType::Integer(a), ExpressionType::Integer(b)) => ExpressionType::Integer(a.pow(*b as u32)),
         _ => Err(anyhow!("pow {lhs:?} {rhs:?}"))?,
-    })
+    }.into())
 }
 
 pub fn add(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
-    Ok(match (lhs, rhs) {
-        (Expression::Float(a), Expression::Float(b)) => Expression::Float(a+b),
-        (Expression::Float(a), Expression::Integer(b)) => Expression::Float(a + (*b as f64)),
-        (Expression::Integer(a), Expression::Float(b)) => Expression::Float((*a as f64) + b),
-        (Expression::Integer(a), Expression::Integer(b)) => Expression::Integer(a+b),
-        (Expression::String(a), Expression::String(b)) => Expression::String(format!("{a}{b}")),
-        (Expression::String(a), Expression::Integer(b)) => Expression::String(format!("{a}{b}")),
-        (Expression::Integer(a), Expression::String(b)) => Expression::String(format!("{a}{b}")),
-        (Expression::String(a), Expression::Float(b)) => Expression::String(format!("{a}{b}")),
-        (Expression::Float(a), Expression::String(b)) => Expression::String(format!("{a}{b}")),
-        (Expression::Array(a), Expression::Array(b)) => 
-                Expression::Array(Rc::new(RefCell::new(
+    Ok(match (lhs.as_ref(), rhs.as_ref()) {
+        (ExpressionType::Float(a), ExpressionType::Float(b)) => ExpressionType::Float(a+b),
+        (ExpressionType::Float(a), ExpressionType::Integer(b)) => ExpressionType::Float(a + (*b as f64)),
+        (ExpressionType::Integer(a), ExpressionType::Float(b)) => ExpressionType::Float((*a as f64) + b),
+        (ExpressionType::Integer(a), ExpressionType::Integer(b)) => ExpressionType::Integer(a+b),
+        (ExpressionType::String(a), ExpressionType::String(b)) => ExpressionType::String(format!("{a}{b}")),
+        (ExpressionType::String(a), ExpressionType::Integer(b)) => ExpressionType::String(format!("{a}{b}")),
+        (ExpressionType::Integer(a), ExpressionType::String(b)) => ExpressionType::String(format!("{a}{b}")),
+        (ExpressionType::String(a), ExpressionType::Float(b)) => ExpressionType::String(format!("{a}{b}")),
+        (ExpressionType::Float(a), ExpressionType::String(b)) => ExpressionType::String(format!("{a}{b}")),
+        (ExpressionType::Array(a), ExpressionType::Array(b)) => 
+                ExpressionType::Array(RefCell::new(
                     [a.borrow().to_owned(), b.borrow().to_owned()].concat()
-                ))),
+                )),
         _ => Err(anyhow!("add {lhs:?} {rhs:?}"))?,
-        })
+        }.into())
 }
 
 pub fn sub(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
-    Ok(match (lhs, rhs) {
-        (Expression::Float(a), Expression::Float(b)) => Expression::Float(a-b),
-        (Expression::Float(a), Expression::Integer(b)) => Expression::Float(a - (*b as f64)),
-        (Expression::Integer(a), Expression::Float(b)) => Expression::Float((*a as f64) - b),
-        (Expression::Integer(a), Expression::Integer(b)) => Expression::Integer(a-b),
+    Ok(match (lhs.as_ref(), rhs.as_ref()) {
+        (ExpressionType::Float(a), ExpressionType::Float(b)) => ExpressionType::Float(a-b),
+        (ExpressionType::Float(a), ExpressionType::Integer(b)) => ExpressionType::Float(a - (*b as f64)),
+        (ExpressionType::Integer(a), ExpressionType::Float(b)) => ExpressionType::Float((*a as f64) - b),
+        (ExpressionType::Integer(a), ExpressionType::Integer(b)) => ExpressionType::Integer(a-b),
         _ => Err(anyhow!("sub {lhs:?} {rhs:?}"))?,
-    })
+    }.into())
 }
 
 pub fn mul(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
-    Ok(match (lhs, rhs) {
-        (Expression::Float(a), Expression::Float(b)) => Expression::Float(a*b),
-        (Expression::Float(a), Expression::Integer(b)) => Expression::Float(a * (*b as f64)),
-        (Expression::Integer(a), Expression::Float(b)) => Expression::Float((*a as f64) * b),
-        (Expression::Integer(a), Expression::Integer(b)) => Expression::Integer(a*b),
-        (Expression::String(a), Expression::Integer(b)) => Expression::String(a.repeat(*b as usize)),
-        (Expression::Integer(a), Expression::String(b)) => Expression::String(b.repeat(*a as usize)),
+    Ok(match (lhs.as_ref(), rhs.as_ref()) {
+        (ExpressionType::Float(a), ExpressionType::Float(b)) => ExpressionType::Float(a*b),
+        (ExpressionType::Float(a), ExpressionType::Integer(b)) => ExpressionType::Float(a * (*b as f64)),
+        (ExpressionType::Integer(a), ExpressionType::Float(b)) => ExpressionType::Float((*a as f64) * b),
+        (ExpressionType::Integer(a), ExpressionType::Integer(b)) => ExpressionType::Integer(a*b),
+        (ExpressionType::String(a), ExpressionType::Integer(b)) => ExpressionType::String(a.repeat(*b as usize)),
+        (ExpressionType::Integer(a), ExpressionType::String(b)) => ExpressionType::String(b.repeat(*a as usize)),
         _ => Err(anyhow!("mul {lhs:?} {rhs:?}"))?,
-    })
+    }.into())
 }
 
 pub fn div(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
-    Ok(match (lhs, rhs) {
-        (Expression::Float(a), Expression::Float(b)) => Expression::Float(a/b),
-        (Expression::Float(a), Expression::Integer(b)) => Expression::Float(a / (*b as f64)),
-        (Expression::Integer(a), Expression::Float(b)) => Expression::Float((*a as f64) / b),
-        (Expression::Integer(a), Expression::Integer(b)) => Expression::Integer(a/b),
+    Ok(match (lhs.as_ref(), rhs.as_ref()) {
+        (ExpressionType::Float(a), ExpressionType::Float(b)) => ExpressionType::Float(a/b),
+        (ExpressionType::Float(a), ExpressionType::Integer(b)) => ExpressionType::Float(a / (*b as f64)),
+        (ExpressionType::Integer(a), ExpressionType::Float(b)) => ExpressionType::Float((*a as f64) / b),
+        (ExpressionType::Integer(a), ExpressionType::Integer(b)) => ExpressionType::Integer(a/b),
         _ => Err(anyhow!("div {lhs:?} {rhs:?}"))?,
-    })
+    }.into())
 }
 
 pub fn modulo(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
-    Ok(match (lhs, rhs) {
-        (Expression::Integer(a), Expression::Integer(b)) => Expression::Integer(a % b),
+    Ok(match (lhs.as_ref(), rhs.as_ref()) {
+        (ExpressionType::Integer(a), ExpressionType::Integer(b)) => ExpressionType::Integer(a % b),
         _ => Err(anyhow!("mod {lhs:?} {rhs:?}"))?,
-    })
+    }.into())
 }
 
 pub fn and(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
-    Ok(match (lhs, rhs) {
-        (Expression::Boolean(a), Expression::Boolean(b)) => Expression::Boolean(*a && *b),
+    Ok(match (lhs.as_ref(), rhs.as_ref()) {
+        (ExpressionType::Boolean(a), ExpressionType::Boolean(b)) => ExpressionType::Boolean(*a && *b),
         _ => Err(anyhow!("and {lhs:?} {rhs:?}"))?,
-    })
+    }.into())
 }
 
 pub fn or(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
-    Ok(match (lhs, rhs) {
-        (Expression::Boolean(a), Expression::Boolean(b)) => Expression::Boolean(*a || *b),
+    Ok(match (lhs.as_ref(), rhs.as_ref()) {
+        (ExpressionType::Boolean(a), ExpressionType::Boolean(b)) => ExpressionType::Boolean(*a || *b),
         _ => Err(anyhow!("or {lhs:?} {rhs:?}"))?,
-    })
+    }.into())
 }
 
 pub fn and_lazy(ctx: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
-    let lhs = eval::eval(ctx,lhs)?;
-    match lhs {
-        Expression::Boolean(b) => if !b { return Ok(Expression::Boolean(false)) },
+    let lhs = eval::eval(ctx,lhs.to_owned())?;
+    match lhs.as_ref() {
+        ExpressionType::Boolean(b) => if !b { return Ok(ExpressionType::Boolean(false).into()) },
         _ => Err(anyhow!("and_lazy lhs not boolean: {lhs:?}"))?,
     };
-    let rhs = eval::eval(ctx,rhs)?;
-    match rhs {
-        Expression::Boolean(b) => if !b { return Ok(Expression::Boolean(false)) },
+    let rhs = eval::eval(ctx,rhs.to_owned())?;
+    match rhs.as_ref() {
+        ExpressionType::Boolean(b) => if !b { return Ok(ExpressionType::Boolean(false).into()) },
         _ => Err(anyhow!("and_lazy rhs not boolean: {rhs:?}"))?,
     };
-    Ok(Expression::Boolean(true))
+    Ok(ExpressionType::Boolean(true).into())
 }
 
 pub fn or_lazy(ctx: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
-    let lhs = eval::eval(ctx,lhs)?;
-    match lhs {
-        Expression::Boolean(b) => if b { return Ok(Expression::Boolean(true)) },
+    let lhs = eval::eval(ctx,lhs.to_owned())?;
+    match lhs.as_ref() {
+        ExpressionType::Boolean(b) => if *b { return Ok(ExpressionType::Boolean(true).into()) },
         _ => Err(anyhow!("or_lazy lhs not boolean: {lhs:?}"))?,
     };
-    let rhs = eval::eval(ctx,rhs)?;
-    match rhs {
-        Expression::Boolean(b) => if b { return Ok(Expression::Boolean(true)) },
+    let rhs = eval::eval(ctx,rhs.to_owned())?;
+    match rhs.as_ref() {
+        ExpressionType::Boolean(b) => if *b { return Ok(ExpressionType::Boolean(true).into()) },
         _ => Err(anyhow!("or_lazy rhs not boolean: {rhs:?}"))?,
     };
-    Ok(Expression::Boolean(false))
+    Ok(ExpressionType::Boolean(false).into())
 }
 
 pub fn gt(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
-    Ok(match (lhs, rhs) {
-        (Expression::Float(a), Expression::Float(b)) => Expression::Boolean(a>b),
-        (Expression::Integer(a), Expression::Integer(b)) => Expression::Boolean(a>b),
-        (Expression::String(a), Expression::String(b)) => Expression::Boolean(a>b),
-        (Expression::Boolean(a), Expression::Boolean(b)) => Expression::Boolean(a>b),
-        (Expression::Unit, Expression::Unit) => Expression::Boolean(false),
+    Ok(match (lhs.as_ref(), rhs.as_ref()) {
+        (ExpressionType::Float(a), ExpressionType::Float(b)) => ExpressionType::Boolean(a>b),
+        (ExpressionType::Integer(a), ExpressionType::Integer(b)) => ExpressionType::Boolean(a>b),
+        (ExpressionType::String(a), ExpressionType::String(b)) => ExpressionType::Boolean(a>b),
+        (ExpressionType::Boolean(a), ExpressionType::Boolean(b)) => ExpressionType::Boolean(a>b),
+        (ExpressionType::Unit, ExpressionType::Unit) => ExpressionType::Boolean(false),
         _ => Err(anyhow!("gt {lhs:?} {rhs:?}"))?,
-    })
+    }.into())
 }
 
 pub fn lt(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
-    Ok(match (lhs, rhs) {
-        (Expression::Float(a), Expression::Float(b)) => Expression::Boolean(a<b),
-        (Expression::Integer(a), Expression::Integer(b)) => Expression::Boolean(a<b),
-        (Expression::String(a), Expression::String(b)) => Expression::Boolean(a<b),
-        (Expression::Boolean(a), Expression::Boolean(b)) => Expression::Boolean(a<b),
-        (Expression::Unit, Expression::Unit) => Expression::Boolean(false),
+    Ok(match (lhs.as_ref(), rhs.as_ref()) {
+        (ExpressionType::Float(a), ExpressionType::Float(b)) => ExpressionType::Boolean(a<b),
+        (ExpressionType::Integer(a), ExpressionType::Integer(b)) => ExpressionType::Boolean(a<b),
+        (ExpressionType::String(a), ExpressionType::String(b)) => ExpressionType::Boolean(a<b),
+        (ExpressionType::Boolean(a), ExpressionType::Boolean(b)) => ExpressionType::Boolean(a<b),
+        (ExpressionType::Unit, ExpressionType::Unit) => ExpressionType::Boolean(false),
         _ => Err(anyhow!("lt {lhs:?} {rhs:?}"))?,
-    })
+    }.into())
 }
 
 pub fn eq(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
-    Ok(Expression::Boolean(lhs == rhs))
+    Ok(ExpressionType::Boolean(lhs == rhs).into())
 }
 
 pub fn ne(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
-    Ok(Expression::Boolean(lhs != rhs))
+    Ok(ExpressionType::Boolean(lhs != rhs).into())
 }
 
 pub fn ge(ctx: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
@@ -159,52 +159,52 @@ pub fn le(ctx: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expressio
 }
 
 pub fn neg(_: &Context, val: &Expression) -> Result<Expression> {
-    Ok(match val {
-        Expression::Float(a) => Expression::Float(-a),
-        Expression::Integer(a) => Expression::Integer(-a),
-        Expression::String(a) => Expression::String(a.chars().rev().collect::<String>()),
+    Ok(match val.as_ref() {
+        ExpressionType::Float(a) => ExpressionType::Float(-a),
+        ExpressionType::Integer(a) => ExpressionType::Integer(-a),
+        ExpressionType::String(a) => ExpressionType::String(a.chars().rev().collect::<String>()),
         _ => Err(anyhow!("neg {val:?}"))?,
-    })
+    }.into())
 }
 
 pub fn not(_: &Context, val: &Expression) -> Result<Expression> {
-    Ok(match val {
-        Expression::Boolean(b) => Expression::Boolean(! *b),
+    Ok(match val.as_ref() {
+        ExpressionType::Boolean(b) => ExpressionType::Boolean(! *b),
         _ => Err(anyhow!("not {val:?}"))?,
-    })
+    }.into())
 }
 
 pub fn print(_: &Context, args: &[Expression]) -> Result<Expression> {
     for arg in args { print!("{arg}"); }
     stdout().flush()?;
-    Ok(Expression::Unit)
+    Ok(unit())
 }
 
 pub fn println(_: &Context, args: &[Expression]) -> Result<Expression> {
     for arg in args { print!("{arg}"); }
     println!();
     stdout().flush()?;
-    Ok(Expression::Unit)
+    Ok(unit())
 }
 
 pub fn debug(_: &Context, args: &[Expression]) -> Result<Expression> {
     for arg in args { print!("{arg:?}"); }
     stdout().flush()?;
-    Ok(Expression::Unit)
+    Ok(unit())
 }
 
 pub fn debugln(_: &Context, args: &[Expression]) -> Result<Expression> {
     for arg in args { print!("{arg:#?}"); }
     println!();
     stdout().flush()?;
-    Ok(Expression::Unit)
+    Ok(unit())
 }
 
 pub fn eval_string_as_source(ctx: &Context, arg: &Expression) -> Result<Expression> {
-    match arg {
-        Expression::String(s) => {
+    match arg.as_ref() {
+        ExpressionType::String(s) => {
             debug!("evaluating string: {s}");
-            eval::eval(ctx, &parse_source(s).unwrap())
+            eval::eval(ctx, parse_source(s).unwrap())
         }
         _ => arg.to_error()
     }
@@ -212,22 +212,22 @@ pub fn eval_string_as_source(ctx: &Context, arg: &Expression) -> Result<Expressi
 
 pub fn array(ctx: &Context, size: &Expression, init: &Expression) -> Result<Expression> {
     let mut arr : Vec<Expression> = vec![];
-    if let Expression::Integer(size) = size {
+    if let ExpressionType::Integer(size) = size.as_ref() {
         let size = *size;
-        let init = &eval::eval(ctx,init)?;
+        let init = &eval::eval(ctx,init.to_owned())?;
         for i in 0..size {
-            let init = match init {
-                Expression::Closure(_, _, _) => {
-                    eval::eval(ctx, &Expression::FunctionCall(Box::new(init.to_owned()), vec![Expression::Integer(i)]))?
+            let init = match init.as_ref() {
+                ExpressionType::Closure(_, _, _) => {
+                    eval::eval(ctx, ExpressionType::FunctionCall(init.to_owned(), vec![ExpressionType::Integer(i).into()]).into())?
                 }
-                Expression::FunctionDynamic(_, _) => {
-                    eval::eval(ctx, &Expression::FunctionCall(Box::new(init.to_owned()), vec![Expression::Integer(i)]))?
+                ExpressionType::FunctionDynamic(_, _) => {
+                    eval::eval(ctx, ExpressionType::FunctionCall(init.to_owned(), vec![ExpressionType::Integer(i).into()]).into())?
                 }
                 _ => init.to_owned(),
             };
             arr.push(init);
         }
-        Ok(Expression::Array(Rc::new(RefCell::new(arr))))
+        Ok(expression::array(arr))
     } else {
         Err(anyhow!("array {size:?} {init:?}"))?
     }
@@ -235,30 +235,30 @@ pub fn array(ctx: &Context, size: &Expression, init: &Expression) -> Result<Expr
 
 pub fn to_array(_ctx: &Context, init: &Expression) -> Result<Expression> {
     let mut arr : Vec<Expression> = vec![];
-    if let Expression::String(s) = init {
+    if let ExpressionType::String(s) = init.as_ref() {
         for c in s.chars() {
-            arr.push(Expression::Character(c));
+            arr.push(ExpressionType::Character(c).into());
         }
-        Ok(Expression::Array(Rc::new(RefCell::new(arr))))
+        Ok(expression::array(arr))
     } else {
         Err(anyhow!("to array {init:?}"))?
     }
 }
 
 pub fn slice(_ctx: &Context, container: &Expression, start: &Expression, end: &Expression) -> Result<Expression> {
-    Ok(match (container,start,end) {
-        (Expression::Array(a0),
-            Expression::Integer(start), 
-            Expression::Integer(end)) => {
+    Ok(match (container.as_ref(),start.as_ref(),end.as_ref()) {
+        (ExpressionType::Array(a0),
+            ExpressionType::Integer(start), 
+            ExpressionType::Integer(end)) => {
                 let a1 = &a0.borrow();
                 let a2 = a1.as_slice();
                 let arr = a2[*start as usize .. *end as usize].to_vec();
-                Expression::Array(Rc::new(RefCell::new(arr)))
+                expression::array(arr)
         }
-        (Expression::String(s),
-            Expression::Integer(start), 
-            Expression::Integer(end)) => {
-                Expression::String(s[*start as usize .. *end as usize].to_owned())
+        (ExpressionType::String(s),
+            ExpressionType::Integer(start), 
+            ExpressionType::Integer(end)) => {
+                ExpressionType::String(s[*start as usize .. *end as usize].to_owned()).into()
         }
         _ => Err(anyhow!("slice {container:?} {start:?} {end:?}"))?,
     })
@@ -266,30 +266,30 @@ pub fn slice(_ctx: &Context, container: &Expression, start: &Expression, end: &E
 
 pub fn to_array_lines(_ctx: &Context, init: &Expression) -> Result<Expression> {
     let mut arr : Vec<Expression> = vec![];
-    if let Expression::String(s) = init {
+    if let ExpressionType::String(s) = init.as_ref() {
         for line in s.lines() {
-            arr.push(Expression::String(line.to_owned()));
+            arr.push(ExpressionType::String(line.to_owned()).into());
         }
-        Ok(Expression::Array(Rc::new(RefCell::new(arr))))
+        Ok(expression::array(arr))
     } else {
         Err(anyhow!("to array lines {init:?}"))?
     }
 }
 
 pub fn len(_: &Context, val: &Expression) -> Result<Expression> {
-    Ok(match val {
-        Expression::Array(a) => Expression::Integer(a.borrow().len() as i64),
-        Expression::String(a) => Expression::Integer(a.len() as i64),
+    Ok(match val.as_ref() {
+        ExpressionType::Array(a) => ExpressionType::Integer(a.borrow().len() as i64),
+        ExpressionType::String(a) => ExpressionType::Integer(a.len() as i64),
         _ => Err(anyhow!("len {val:?}"))?,
-    })
+    }.into())
 }
 
 pub fn append(ctx: &Context, target: &Expression, new: &Expression) -> Result<Expression> {
-    Ok(match target {
-        Expression::Array(a) => {
-            let new = eval::eval(ctx,new)?;
+    Ok(match target.as_ref() {
+        ExpressionType::Array(a) => {
+            let new = eval::eval(ctx,new.to_owned())?;
             a.borrow_mut().push(new);
-            Expression::Array(a.to_owned())
+            target.to_owned()
         }
         _ => Err(anyhow!("append {target:?} {new:?}"))?,
     })
@@ -297,10 +297,10 @@ pub fn append(ctx: &Context, target: &Expression, new: &Expression) -> Result<Ex
 
 pub fn include(ctx: &Context, file_expr: &Expression) -> Result<Expression> {
     debug!("include {file_expr:?}");
-    Ok(match file_expr {
-        Expression::String(file) => {
+    Ok(match file_expr.as_ref() {
+        ExpressionType::String(file) => {
             let source = std::fs::read_to_string(file)?;
-            eval_string_as_source(ctx, &Expression::String(source))?
+            eval_string_as_source(ctx, &ExpressionType::String(source).into())?
         }
         _ => Err(anyhow!("include {file_expr:?}"))?,
     })
@@ -308,58 +308,58 @@ pub fn include(ctx: &Context, file_expr: &Expression) -> Result<Expression> {
 
 pub fn read_file(_ctx: &Context, file_expr: &Expression) -> Result<Expression> {
     debug!("read_file {file_expr:?}");
-    Ok(match file_expr {
-        Expression::String(file) => {
+    Ok(match file_expr.as_ref() {
+        ExpressionType::String(file) => {
             let source = std::fs::read_to_string(file)?;
-            Expression::String(source)
+            ExpressionType::String(source).into()
         }
         _ => Err(anyhow!("read_file {file_expr:?}"))?,
     })
 }
 
 pub fn capture_context(ctx: &Context) -> Result<Expression> {
-    Ok(Expression::Closure(ctx.capture(),vec![],Box::new(Expression::Unit)))
+    Ok(expression::closure(ctx.capture(),vec![],unit()))
 }
 
 pub fn type_of(_: &Context, expr: &Expression) -> Result<Expression> {
     debug!("type of");
-    Ok(Expression::String(match expr {
-        Expression::Unit => "()",
-        Expression::Float(_) => "Float",
-        Expression::Integer(_) => "Integer",
-        Expression::String(_) => "String",
-        Expression::Character(_) => "Character",
-        Expression::Boolean(_) => "Boolean",
-        Expression::Array(_) => "Array",
-        Expression::Error(_) => "Error",
-        Expression::Closure(_,_,_) => "Closure",
+    Ok(ExpressionType::String(match expr.as_ref() {
+        ExpressionType::Unit => "()",
+        ExpressionType::Float(_) => "Float",
+        ExpressionType::Integer(_) => "Integer",
+        ExpressionType::String(_) => "String",
+        ExpressionType::Character(_) => "Character",
+        ExpressionType::Boolean(_) => "Boolean",
+        ExpressionType::Array(_) => "Array",
+        ExpressionType::Error(_) => "Error",
+        ExpressionType::Closure(_,_,_) => "Closure",
         _ => Err(anyhow!("type of {expr:?}"))?,
-    }.to_owned()))
+    }.to_owned()).into())
 }
 
 pub fn read_line(_ctx: &Context) -> Result<Expression> {
     let stdin = io::stdin();
     let next_line = stdin.lock().lines().next();
     if let Some(line_result) = next_line {
-        Ok(Expression::String(line_result?))
+        Ok(ExpressionType::String(line_result?).into())
     } else {
-        Ok(Expression::Unit)
+        Ok(unit())
     }
 }
 
 pub fn get(_ctx: &Context, container: &Expression, key: &Expression) -> Result<Expression> {
-    Ok(match container {
-        Expression::Array(a) => {
-            match key {
-                Expression::Integer(i) => 
+    Ok(match container.as_ref() {
+        ExpressionType::Array(a) => {
+            match key.as_ref() {
+                ExpressionType::Integer(i) => 
                     a.borrow().get(*i as usize).ok_or(anyhow!("index {i} out of bounds"))?.to_owned(),
                 _ => Err(anyhow!("get on array with non-integer key {key:?}"))?,
             }
         }
-        Expression::Closure(c,_,_) => {
-            match key {
-                Expression::String(s) => 
-                    c.get_binding(s).unwrap_or(Expression::Error(format!("binding not found {s}"))),
+        ExpressionType::Closure(c,_,_) => {
+            match key.as_ref() {
+                ExpressionType::String(s) => 
+                    c.get_binding(s).unwrap_or(expression::error(format!("binding not found {s}"))),
                 _ => Err(anyhow!("get on closure with non-string key {key:?}"))?,
             }
         }
@@ -368,10 +368,10 @@ pub fn get(_ctx: &Context, container: &Expression, key: &Expression) -> Result<E
 }
 
 pub fn set(_ctx: &Context, container: &Expression, key: &Expression, value: &Expression) -> Result<Expression> {
-    Ok(match container {
-        Expression::Array(a) => {
-            match key {
-                Expression::Integer(i) => 
+    Ok(match container.as_ref() {
+        ExpressionType::Array(a) => {
+            match key.as_ref() {
+                ExpressionType::Integer(i) => 
                     if let Some(result) = a.borrow_mut().get_mut(*i as usize) {
                         *result = value.to_owned();
                         result.to_owned()
@@ -381,11 +381,11 @@ pub fn set(_ctx: &Context, container: &Expression, key: &Expression, value: &Exp
                 _ => Err(anyhow!("set on array with non-integer key {key:?}"))?,
             }
         }
-        Expression::Closure(c,_,_) => {
-            match key {
-                Expression::String(s) => 
+        ExpressionType::Closure(c,_,_) => {
+            match key.as_ref() {
+                ExpressionType::String(s) => 
                     c.set_binding(s.to_owned(), value.to_owned())
-                        .unwrap_or(Expression::Error(format!("binding not found {s}"))),
+                        .unwrap_or(expression::error(format!("binding not found {s}"))),
                 _ => Err(anyhow!("set on closure with non-string key {key:?}"))?,
             }
         }
@@ -394,10 +394,10 @@ pub fn set(_ctx: &Context, container: &Expression, key: &Expression, value: &Exp
 }
 
 pub fn insert(_ctx: &Context, container: &Expression, key: &Expression, value: &Expression) -> Result<Expression> {
-    Ok(match container {
-        Expression::Closure(c,_,_) => {
-            match key {
-                Expression::String(s) => {
+    Ok(match container.as_ref() {
+        ExpressionType::Closure(c,_,_) => {
+            match key.as_ref() {
+                ExpressionType::String(s) => {
                     c.add_binding(s.to_owned(), value.to_owned());
                     value.to_owned()
                 }
@@ -410,23 +410,23 @@ pub fn insert(_ctx: &Context, container: &Expression, key: &Expression, value: &
 
 pub fn dict(_ctx: &Context) -> Result<Expression> {
     debug!("new dict");
-    Ok(Expression::Closure(Context::new(),vec![],Box::new(Expression::Unit)))
+    Ok(closure(Context::new(),vec![],unit()))
 }
 
 pub fn dict_extend(_ctx: &Context, parent: &Expression) -> Result<Expression> {
     debug!("extend dict");
-    Ok(match parent {
-        Expression::Closure(c,a,b) => {
-            Expression::Closure(c.with_new_scope(),a.to_owned(),b.to_owned())
+    Ok(match parent.as_ref() {
+        ExpressionType::Closure(c,a,b) => {
+            closure(c.with_new_scope(),a.to_owned(),b.to_owned())
         }
         _ => Err(anyhow!("dict_extend"))?,
     })
 }
 
-pub fn error(_: &Context, args: &[Expression]) -> Result<Expression> {
+pub fn error_from_strings(_: &Context, args: &[Expression]) -> Result<Expression> {
     debug!("error");
     let mut output = String::new();
     for arg in args { write!(output,"{arg}")?; }
-    Ok(Expression::Error(output))
+    Ok(expression::error(output))
 }
 

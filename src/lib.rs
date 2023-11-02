@@ -1,5 +1,6 @@
+use expression::Expression;
 use pest::Parser;
-use crate::expression::{MfelParser, Rule, Expression};
+use crate::expression::{MfelParser, Rule};
 use anyhow::{anyhow, Result};
 pub mod eval;
 pub mod expression;
