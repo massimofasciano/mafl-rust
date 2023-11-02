@@ -14,6 +14,7 @@ pub struct MfelParser;
 pub enum Expression {
     Integer(i64),
     Float(f64),
+    Character(char),
     Boolean(bool),
     String(String),
     Error(String),
@@ -63,6 +64,7 @@ impl std::fmt::Display for Expression {
             Expression::Boolean(a) => write!(f,"{a}"),
             Expression::Float(a) => write!(f,"{a}"),
             Expression::Integer(a) => write!(f,"{a}"),
+            Expression::Character(a) => write!(f,"{a}"),
             Expression::String(a) => write!(f,"{a}"),
             Expression::Error(a) => write!(f,"Error: {a}"),
             Expression::Array(a) => write!(f,"{:?}",a.borrow()),

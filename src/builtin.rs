@@ -158,6 +158,19 @@ pub fn println(_: &Context, args: &[Expression]) -> Result<Expression> {
     Ok(Expression::Unit)
 }
 
+pub fn debug(_: &Context, args: &[Expression]) -> Result<Expression> {
+    for arg in args { print!("{arg:?}"); }
+    stdout().flush()?;
+    Ok(Expression::Unit)
+}
+
+pub fn debugln(_: &Context, args: &[Expression]) -> Result<Expression> {
+    for arg in args { print!("{arg:#?}"); }
+    println!();
+    stdout().flush()?;
+    Ok(Expression::Unit)
+}
+
 pub fn eval_string_as_source(ctx: &Context, arg: &Expression) -> Result<Expression> {
     match arg {
         Expression::String(s) => {
@@ -243,6 +256,7 @@ pub fn type_of(_: &Context, expr: &Expression) -> Result<Expression> {
         Expression::Float(_) => "Float",
         Expression::Integer(_) => "Integer",
         Expression::String(_) => "String",
+        Expression::Character(_) => "Character",
         Expression::Boolean(_) => "Boolean",
         Expression::Array(_) => "Array",
         Expression::Error(_) => "Error",

@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use pest::iterators::Pair;
 use anyhow::{anyhow, Result};
-use crate::expression::{Rule, Expression};
+use crate::{expression::{Rule, Expression}, unescape_string};
 
 fn parse_block(parsed: Pair<Rule>) -> Result<Expression> {
     let rule = parsed.as_rule().to_owned();
@@ -144,23 +144,6 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 let val = parse_rule(inner[1].clone())?;
                 Expression::Assign(var, Box::new(val))
             } 
-            // Rule::assign => {
-            //     assert!(inner.len() >= 2);
-            //     let var = inner[0].as_str().to_owned();
-            //     if inner.len() == 2 {
-            //         let val = parse_rule(inner[1].clone())?;
-            //         Expression::AssignToExpression(Box::new(Expression::Variable(var)), Box::new(val))
-            //     } else if inner.len() == 3 {
-            //         let field_inner : Vec<Pair<Rule>> = inner[1].clone().into_inner().collect();
-            //         assert!(field_inner.len() == 1);
-            //         let field = field_inner[0].as_str().to_owned();
-            //         let val = parse_rule(inner[2].clone())?;
-            //         Expression::AssignToExpression(Box::new(Expression::Field(Box::new(Expression::Variable(var)),field)), Box::new(val))
-            //     }
-            //     else {
-            //         Err(anyhow!("error parsing assign (TODO: treat more than one field in chain)"))?
-            //     }
-            // } 
             Rule::r#while => {
                 assert!(inner.len() == 2);
                 let cond = parse_rule(inner[0].clone())?;
@@ -199,9 +182,12 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
     Ok(match parsed.as_rule() {
         Rule::integer => { Expression::Integer(parsed.as_str().parse()?) },
         Rule::float => { Expression::Float(parsed.as_str().parse()?) },
-        // Rule::identifier => { Expression::Identifier(parsed.as_str().to_owned()) },
         Rule::infix_identifier => { Expression::InfixOp(parsed.as_str().to_owned()) },
-        Rule::string => { Expression::String(parsed.as_str().to_owned()) },
+        Rule::string => { Expression::String(unescape_string(parsed.as_str())) },
+        Rule::character => { 
+            assert!(!parsed.as_str().is_empty());
+            Expression::Character(unescape_string(parsed.as_str()).chars().next().unwrap()) 
+        },
         Rule::variable => { Expression::Variable(parsed.as_str().to_owned()) },
         Rule::unit_literal => { Expression::Unit },
         Rule::unit_implicit => { Expression::Unit },
@@ -231,7 +217,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::r#continue => { Expression::Continue },
         Rule::r#break => { Expression::Break },
         Rule::block_syntax | Rule::block | Rule::file  => { parse_block(parsed)? },
-        Rule::string_literal => {
+        Rule::string_literal | Rule::char_literal => {
             // these rules can't be made silent in the grammar (as of current version)
             let inner = parsed.into_inner().next().ok_or(anyhow!("problem parsing silent rule"))?;
             parse_rule(inner)?

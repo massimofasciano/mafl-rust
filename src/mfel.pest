@@ -48,6 +48,9 @@ boolean = _{ true | false }
 true = { "true" }
 false = { "false" }
 
+char_literal = ${ "'" ~ character ~ "'"}
+character = @{ !"'" ~ ( "\\" ~ ("b" | "f" | "n" | "r" | "t") | ANY ) }
+
 string_literal = ${ "\"" ~ string ~ "\"" } // can't make this silent (in this version)
 string = @{ 
     (
@@ -178,7 +181,7 @@ expr_base = _{
     while | unless | do_while | loop |
     let | let_in | function | closure | staticfn | assign | context | capture |
     return | continue | break |
-    boolean | float | integer | string_literal | variable 
+    boolean | float | integer | string_literal | char_literal | variable 
 }
 
 // expressions that behave like blocks

@@ -1,0 +1,3 @@
+@debugln("1\n2\t3\n4");
+@debugln('\n');
+

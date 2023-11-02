@@ -14,9 +14,9 @@ pub fn parse_source(source: &str) -> Result<Expression> {
     parse::parse_rule(parsed)
 }
 
-pub fn unescape_string(text: String) -> String {
+pub fn unescape_string(sr: &str) -> String {
     // this is incomplete
-    let text = str::replace(&text, "\\n", "\n");
-    let text = str::replace(&text, "\\t", "\t");
-    str::replace(&text, "\\\"", "\"")
+    let s = str::replace(sr, "\\n", "\n");
+    let s = str::replace(&s, "\\t", "\t");
+    str::replace(&s, "\\\"", "\"")
 }

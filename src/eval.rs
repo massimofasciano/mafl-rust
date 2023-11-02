@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{unescape_string, expression::Expression, builtin, context::Context};
+use crate::{expression::Expression, builtin, context::Context};
 use anyhow::{Result,anyhow};
 use log::{debug, error};
 
@@ -9,8 +9,9 @@ pub fn eval(ctx: &Context, ast: &Expression) -> Result<Expression> {
         Expression::Unit => Expression::Unit,
         Expression::Integer(i) => Expression::Integer(*i),
         Expression::Float(f) => Expression::Float(*f),
+        Expression::Character(c) => Expression::Character(*c),
         Expression::Boolean(b) => { Expression::Boolean(*b) }
-        Expression::String(s) => Expression::String(unescape_string(s.to_string())),
+        Expression::String(s) => Expression::String(s.to_owned()),
         Expression::Block(exprs) => {
             debug!("eval block");
             let ctx = &ctx.with_new_scope();
@@ -261,6 +262,8 @@ pub fn builtin(ctx: &Context, name: &str, args: &[Expression]) -> Result<Express
     match (name, args) {
         ("println", args) => { builtin::println(ctx, args) },
         ("print", args) => { builtin::print(ctx, args) },
+        ("debugln", args) => { builtin::debugln(ctx, args) },
+        ("debug", args) => { builtin::debug(ctx, args) },
         ("eval", [arg]) => { builtin::eval_string_as_source(ctx, arg) },
         ("include", [file_expr]) => builtin::include(ctx, file_expr),
         ("readfile", [file_expr]) => builtin::read_file(ctx, file_expr),
