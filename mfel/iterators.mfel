@@ -1,0 +1,33 @@
+### in addition to working on arrays, the for loop works with iterators.
+### an iterator is a zero-argument closure that returns
+###  the unit type () when done,
+###  otherwise it returns the next value
+###
+
+# we define the range function that creates an iterator for start..end
+let range := staticfn(start,end) {
+    closure() {
+        if start < end {
+            let count := start;
+            start := start + 1;
+            count            
+        }
+        # no else clause means return unit when condition is false
+    }
+};
+
+let iter := range(3,11);
+
+@println(iter());
+@println(iter());
+@println();
+
+for x in iter {
+    @println(x);
+}
+@println();
+
+for x in range(0,10) {
+    @println(x);
+}
+@println();

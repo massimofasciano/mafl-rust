@@ -10,7 +10,7 @@ TODO:
 - implement deep copy for context (keeping structure intact)
 - context inheritance syntax
 - varargs ?
-- general while/for loop
+- iterator functions ?
 - foreach and iterator (returns unit or value)
 - @get(@context,"x") -> alias to @getvar("x") ? same for set and insert ?
 - builtin STDLIB (returns struct) ?

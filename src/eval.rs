@@ -134,6 +134,15 @@ pub fn eval(ctx: &Context, ast: Expression) -> Result<Expression> {
                         body_value = eval(ctx,body.to_owned())?;
                     }
                 },
+                ExpressionType::Closure(_,_,_) => {
+                    loop {
+                        let apply = ExpressionType::FunctionCall(iterator.to_owned(), vec![]).into();
+                        let next = eval(ctx, apply)?;
+                        if next == expression::unit() { break; }
+                        ctx.set_binding(var.to_owned(), next.to_owned());
+                        body_value = eval(ctx,body.to_owned())?;
+                    }
+                },
                 _ => return ast.to_error(),
             }
             body_value
