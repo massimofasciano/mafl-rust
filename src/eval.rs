@@ -164,15 +164,15 @@ impl Interpreter {
                 }
             }
             ExpressionType::FunctionClosure(arg_names, body) => {
-                debug!("eval function");
+                debug!("eval function closure");
                 ExpressionType::Closure(ctx.capture(), arg_names.to_owned(), body.to_owned()).into()
             }
             ExpressionType::FunctionStatic(arg_names, body) => {
-                debug!("eval function");
+                debug!("eval function static");
                 ExpressionType::Closure(Context::new(), arg_names.to_owned(), body.to_owned()).into()
             }
             ExpressionType::FunctionDynamic(_arg_names, _body) => {
-                debug!("eval dynamic function");
+                debug!("eval function dynamic");
                 ast.to_owned()
             }
             ExpressionType::FunctionCall(lambda, arg_values) => {

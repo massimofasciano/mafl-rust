@@ -10,11 +10,13 @@ pub mod context;
 pub mod builtin;
 pub mod parse;
 
-#[derive(Debug,Clone,PartialEq)]
+pub type ScopeID = usize;
+
+#[derive(Debug,Clone)]
 pub struct Interpreter {
     pub env: Expression,
     pub std: Expression,
-    pub id: RefCell<usize>,
+    pub id: RefCell<ScopeID>,
     ctx: Context,
 }
 
@@ -46,7 +48,7 @@ impl Default for Interpreter {
         Self {  
             env: expression::array(vec![]),
             std: expression::unit(),
-            id: RefCell::new(0),
+            id: RefCell::new(0 as ScopeID),
             ctx: Context::new(),
         }
     }

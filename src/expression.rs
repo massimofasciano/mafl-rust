@@ -11,7 +11,7 @@ pub type Expression = Rc<ExpressionType>;
 pub type Expressions = Vec<Expression>;
 pub type Strings = Vec<String>;
 
-#[derive(Debug,Clone,PartialEq)]
+#[derive(Debug,Clone)]
 pub enum ExpressionType {
     Integer(i64),
     Float(f64),
@@ -51,6 +51,21 @@ pub enum ExpressionType {
     Array(RefCell<Expressions>),
     Return(Expression),
     Continue, Break,
+}
+
+impl PartialEq for ExpressionType {
+    fn eq(&self, other: &Self) -> bool {
+        match (self,other) {
+            (ExpressionType::Integer(a),ExpressionType::Integer(b)) => a == b,
+            (ExpressionType::Float(a),ExpressionType::Float(b)) => a == b,
+            (ExpressionType::Character(a),ExpressionType::Character(b)) => a == b,
+            (ExpressionType::String(a),ExpressionType::String(b)) => a == b,
+            (ExpressionType::Boolean(a),ExpressionType::Boolean(b)) => a == b,
+            (ExpressionType::Unit,ExpressionType::Unit) => true,
+            (ExpressionType::Array(a),ExpressionType::Array(b)) => a == b,
+            _ => false,
+        }
+    }
 }
 
 impl ExpressionType {

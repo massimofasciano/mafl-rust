@@ -1,22 +1,26 @@
-use std::{collections::HashMap, cell::RefCell, rc::Rc, mem::swap};
-
+use std::{collections::HashMap, cell::RefCell, rc::Rc, mem::swap, fmt::Debug};
 use log::debug;
+use crate::{expression::Expression, ScopeID};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
-use crate::expression::Expression;
+static SCOPE_ID_SEQ: AtomicUsize = AtomicUsize::new(0);
 
-type ContextInner = Rc<Scope>;
-type Bindings = HashMap<String,Expression>;
-
-#[repr(transparent)]
-#[derive(Debug,Clone,PartialEq)]
-pub struct Context {
-    inner: ContextInner,
+fn next_scope_id() -> usize {
+    SCOPE_ID_SEQ.fetch_add(1, Ordering::SeqCst);
+    SCOPE_ID_SEQ.load(Ordering::SeqCst)
 }
 
-#[derive(Debug,Clone,PartialEq)]
+#[repr(transparent)]
+#[derive(Debug,Clone)]
+pub struct Context {
+    inner: Rc<Scope>,
+}
+
+#[derive(Debug,Clone)]
 struct Scope {
-    bindings: RefCell<Bindings>,
+    bindings: RefCell<HashMap<String,Expression>>,
     parent: RefCell<Option<Context>>,
+    id: ScopeID,
 }
 
 impl Context {
@@ -25,10 +29,10 @@ impl Context {
         Self{inner:Rc::new(Scope::new())}
     }
     pub fn with_new_scope(&self) -> Self {
-        debug!("new scope");
+        debug!("with new scope");
         let scope = Scope::new();
         *scope.parent.borrow_mut() = Some(self.to_owned());
-        Self{inner:Rc::new(scope)}
+        Self { inner: scope.into() }
     }
     pub fn capture(&self) -> Self {
         debug!("capture");
@@ -44,28 +48,30 @@ impl Context {
         }
         captured
     }
-    pub fn append(&self, ctx: &Self) {
-        debug!("append");
-        let mut end = self.to_owned();
-        loop {
-            let parent = end.parent();
-            if let Some(parent) = parent {
-                end = parent;
-            } else {
-                break;
-            }
-        }
-        *end.inner.parent.borrow_mut() = Some(ctx.to_owned());
-    }
-    fn parent(&self) -> Option<Self> {
-        let scope = &self.inner;
-        let parent = scope.parent.borrow();
-        if parent.is_some() {
-            Some(parent.as_ref().unwrap().to_owned())
-        } else {
-            None
-        }
-    }
+    // // don't think this is used in the interpreter 
+    // pub fn append(&self, ctx: &Self) {
+    //     debug!("append");
+    //     let mut end = self.to_owned();
+    //     loop {
+    //         let parent = end.parent();
+    //         if let Some(parent) = parent {
+    //             end = parent;
+    //         } else {
+    //             break;
+    //         }
+    //     }
+    //     *end.inner.parent.borrow_mut() = Some(ctx.to_owned());
+    // }
+    // // don't think this is used except by append
+    // fn parent(&self) -> Option<Self> {
+    //     let scope = &self.inner;
+    //     let parent = scope.parent.borrow();
+    //     if parent.is_some() {
+    //         Some(parent.as_ref().unwrap().to_owned())
+    //     } else {
+    //         None
+    //     }
+    // }
     pub fn add_binding(&self, var: String, value: Expression) -> Option<Expression> {
         debug!("add binding: {var} <- {value:?}");
         let scope = &self.inner;
@@ -97,24 +103,87 @@ impl Context {
 
 impl Default for Context {
     fn default() -> Self {
-        Self::new()
+        debug!("default");
+        Self{ inner:Scope::new().into() }
+    }
+}
+
+impl From<Scope> for Context {
+    fn from(scope: Scope) -> Self {
+        debug!("from scope");
+        Self{ inner:Rc::new(scope) }
+    }
+}
+
+impl From<Rc<Scope>> for Context {
+    fn from(rc_scope: Rc<Scope>) -> Self {
+        debug!("from scope");
+        Self{ inner: rc_scope }
     }
 }
 
 impl Scope {
     pub fn new() -> Self {
-        Self {
-            bindings: RefCell::new(HashMap::new()),
-            parent: RefCell::new(None),
-        }
+        let scope = Self::default();
+        debug!("new scope id={}",scope.id);
+        scope
     }
 }
 
 impl Default for Scope {
     fn default() -> Self {
-        Self::new()
+        let id = next_scope_id();
+        debug!("default scope id={id}");
+        Self {
+            bindings: RefCell::new(HashMap::new()),
+            parent: RefCell::new(None),
+            id,
+        }
     }
 }
+
+// impl Debug for Context {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         self.cycle_fmt(f, &mut HashSet::new())
+//     }
+// }
+
+// impl Context {
+//     fn cycle_fmt(&self, f: &mut std::fmt::Formatter<'_>, env: &mut HashSet<ScopeID>) -> std::fmt::Result {
+//         let scope = self.inner.as_ref();
+//         write!(f,"Context({}",scope.id)?;
+//         if env.contains(&scope.id) {
+//             write!(f," => ...]]")
+//         } else {
+//             env.insert(scope.id);
+//             let bindings = scope.bindings.borrow();
+//             write!(f," => {{")?;
+//             let mut iter = bindings.iter().peekable();
+//             while let Some((k,v)) = iter.next() {
+//                 write!(f,"{k:?} = ")?;
+//                 match v.as_ref() {
+//                     ExpressionType::Closure(ctx, args, body) => {
+//                         write!(f,"Closure(")?;
+//                         ctx.cycle_fmt(f, env)?;
+//                         write!(f,",{:#?}",args)?;
+//                         write!(f,",{:#?}",body)?;
+//                         write!(f,")")?;
+//                     },
+//                     _ => {
+//                         write!(f,"{v:?}")?;
+//                     },
+//                 }
+//                 if iter.peek().is_some() { write!(f,",")?; }
+//             }
+//             write!(f,"}}")?;
+//             if let Some(parent) = scope.parent.borrow().as_ref() {
+//                 write!(f,",")?; 
+//                 parent.cycle_fmt(f,env)?;
+//             }
+//             write!(f,")")
+//         }
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
@@ -138,44 +207,51 @@ mod tests {
         assert_eq!(ctx1.get_binding("v1"),Some(integer(11)));
         assert_eq!(ctx1.get_binding("v2"),None);
 
-        let ctx3 = Context::new();
-        ctx3.add_binding("v3".to_owned(), integer(3));
-        assert_eq!(ctx3.get_binding("v3"),Some(integer(3)));
-        let ctx4 = ctx3.with_new_scope();
-        ctx4.add_binding("v4".to_owned(), integer(4));
-        assert_eq!(ctx4.get_binding("v4"),Some(integer(4)));
-        ctx4.append(&ctx1);
+        // let ctx3 = Context::new();
+        // ctx3.add_binding("v3".to_owned(), integer(3));
+        // assert_eq!(ctx3.get_binding("v3"),Some(integer(3)));
 
-        assert_eq!(ctx4.get_binding("v4"),Some(integer(4)));
-        assert_eq!(ctx4.get_binding("v3"),Some(integer(3)));
-        assert_eq!(ctx4.get_binding("v1"),Some(integer(11)));
-        assert_eq!(ctx4.get_binding("v2"),None);
-        assert_eq!(ctx2.get_binding("v1"),Some(integer(11)));
-        assert_eq!(ctx2.get_binding("v2"),Some(integer(12)));
-        assert_eq!(ctx1.get_binding("v1"),Some(integer(11)));
-        assert_eq!(ctx1.get_binding("v2"),None);
+        // let ctx4 = ctx3.with_new_scope();
+        // ctx4.add_binding("v4".to_owned(), integer(4));
+        // assert_eq!(ctx4.get_binding("v4"),Some(integer(4)));
+        // ctx4.append(&ctx1);
+
+        // assert_eq!(ctx4.get_binding("v4"),Some(integer(4)));
+        // assert_eq!(ctx4.get_binding("v3"),Some(integer(3)));
+        // assert_eq!(ctx4.get_binding("v1"),Some(integer(11)));
+        // assert_eq!(ctx4.get_binding("v2"),None);
+        // assert_eq!(ctx2.get_binding("v1"),Some(integer(11)));
+        // assert_eq!(ctx2.get_binding("v2"),Some(integer(12)));
+        // assert_eq!(ctx1.get_binding("v1"),Some(integer(11)));
+        // assert_eq!(ctx1.get_binding("v2"),None);
 
         ctx1.add_binding("v10".to_owned(), integer(10));
         assert_eq!(ctx1.get_binding("v10"),Some(integer(10)));
         assert_eq!(ctx2.get_binding("v10"),Some(integer(10)));
-        assert_eq!(ctx3.get_binding("v10"),Some(integer(10)));
-        assert_eq!(ctx4.get_binding("v10"),Some(integer(10)));
+        // assert_eq!(ctx3.get_binding("v10"),Some(integer(10)));
+        // assert_eq!(ctx4.get_binding("v10"),Some(integer(10)));
 
-        ctx4.set_binding("v2".to_owned(), integer(22));
-        assert_eq!(ctx1.get_binding("v2"),None);
-        assert_eq!(ctx2.get_binding("v2"),Some(integer(12)));
-        assert_eq!(ctx3.get_binding("v2"),None);
-        assert_eq!(ctx4.get_binding("v2"),None);
+        // ctx4.set_binding("v2".to_owned(), integer(22));
+        // assert_eq!(ctx1.get_binding("v2"),None);
+        // assert_eq!(ctx2.get_binding("v2"),Some(integer(12)));
+        // assert_eq!(ctx3.get_binding("v2"),None);
+        // assert_eq!(ctx4.get_binding("v2"),None);
 
         let ctx1_cap = ctx1.capture();
         ctx1_cap.set_binding("v10".to_owned(), integer(110));
         ctx1.add_binding("v11".to_owned(), integer(111));
         ctx1_cap.add_binding("v12".to_owned(), integer(112));
         assert_eq!(ctx1_cap.get_binding("v10"),Some(integer(110)));
-        assert_eq!(ctx1_cap.get_binding("v11"),None);
+        assert_eq!(ctx1_cap.get_binding("v11"),None); // if no cycle
+        // assert_eq!(ctx1_cap.get_binding("v11"),Some(integer(111))); // if cycle
         assert_eq!(ctx1_cap.get_binding("v12"),Some(integer(112)));
         assert_eq!(ctx1.get_binding("v10"),Some(integer(110)));
         assert_eq!(ctx1.get_binding("v11"),Some(integer(111)));
         assert_eq!(ctx1.get_binding("v12"),Some(integer(112)));
+
+        // when looking for undefined (same with set_binding), this 
+        // stack overflow if using cycles and no checking
+        // assert_eq!(ctx1.get_binding("undefined"),None);
+        // assert_eq!(ctx1_cap.get_binding("undefined"),None);
     }
 }
