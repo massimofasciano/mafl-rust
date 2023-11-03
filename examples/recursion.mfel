@@ -1,8 +1,42 @@
-let fibo := function (x) {
+# dynamic function evaluates in caller's context
+let fibo1 := function (x) {
     if x < 2 {
         x
     } else {
-        fibo(x-2) + fibo(x-1)
+        fibo1(x-2) + fibo1(x-1)
     }
 };
-fibo(10)
+
+@println(fibo1(10));
+
+let fibo1copy := fibo1;
+@println(fibo1copy(10));
+let fibo1 := function (x) { 0 };
+# this will return 0 because the recursive call to fibo1 was shadowed above
+@println(fibo1copy(10));
+
+# closure captures context at definition (so it can't call itself)
+let fibo2 := closure (x) {
+    if x < 2 {
+        x
+    } else {
+        fibo2(x-2) + fibo2(x-1)
+    }
+}; 
+@bind(fibo2,"fibo2",fibo2); # inserts binding for fibo2 into the fibo2 closure (for recursion)
+# maybe implement a "with (fibo2)" trailing clause for closure ?
+# maybe traditional letrec ?
+# add def statement to combine both ?
+
+# warning: trying to print the fibo2 closure after binding
+# to itself will cause an infinite loop (referential cycle on fibo2)
+#@println(fibo2);
+
+@println(fibo2(10));
+
+let fibo2copy := fibo2;
+@println(fibo2copy(10));
+let fibo2 := function (x) { 0 };
+# this works because a closure carries it's context around
+@println(fibo2copy(10));
+
