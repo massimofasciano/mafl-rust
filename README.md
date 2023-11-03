@@ -18,3 +18,9 @@ TODO:
 - struct syntax useful or not ? we have module.
 - ast: Expression or ast: &Expression in eval ?
 
+- thunk statement (same as closure but without need to call). maybe call it lazy ?
+- function decl sugar
+- letrec and parallel rec patch closures after binding
+- f(a,*b,c) expands to f(a,b1,b2,...,bn,c) ? identifier prefix for calls
+
+

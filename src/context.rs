@@ -48,30 +48,28 @@ impl Context {
         }
         captured
     }
-    // // don't think this is used in the interpreter 
-    // pub fn append(&self, ctx: &Self) {
-    //     debug!("append");
-    //     let mut end = self.to_owned();
-    //     loop {
-    //         let parent = end.parent();
-    //         if let Some(parent) = parent {
-    //             end = parent;
-    //         } else {
-    //             break;
-    //         }
-    //     }
-    //     *end.inner.parent.borrow_mut() = Some(ctx.to_owned());
-    // }
-    // // don't think this is used except by append
-    // fn parent(&self) -> Option<Self> {
-    //     let scope = &self.inner;
-    //     let parent = scope.parent.borrow();
-    //     if parent.is_some() {
-    //         Some(parent.as_ref().unwrap().to_owned())
-    //     } else {
-    //         None
-    //     }
-    // }
+    pub fn append(&self, ctx: &Self) {
+        debug!("append");
+        let mut end = self.to_owned();
+        loop {
+            let parent = end.parent();
+            if let Some(parent) = parent {
+                end = parent;
+            } else {
+                break;
+            }
+        }
+        *end.inner.parent.borrow_mut() = Some(ctx.to_owned());
+    }
+    fn parent(&self) -> Option<Self> {
+        let scope = &self.inner;
+        let parent = scope.parent.borrow();
+        if parent.is_some() {
+            Some(parent.as_ref().unwrap().to_owned())
+        } else {
+            None
+        }
+    }
     pub fn add_binding(&self, var: String, value: Expression) -> Option<Expression> {
         debug!("add binding: {var} <- {value:?}");
         let scope = &self.inner;
@@ -98,6 +96,19 @@ impl Context {
         } else {
             None
         }
+    }
+    pub fn copy_merge(&self) -> Self {
+        debug!("copy merge");
+        let new_scope = Scope::new();
+        let scope = &self.inner;
+        new_scope.bindings.borrow_mut().extend(scope.bindings.borrow().iter().map(|(k, v)| (k.clone(), v.clone())));
+        if let Some(parent) = self.parent() {
+            let merged = parent.copy_merge();
+            let merged_bindings = merged.inner.to_owned();
+            let merged_bindings = merged_bindings.bindings.borrow();
+            new_scope.bindings.borrow_mut().extend(merged_bindings.iter().map(|(k, v)| (k.clone(), v.clone())))
+        }
+        new_scope.into()
     }
 }
 
@@ -207,51 +218,55 @@ mod tests {
         assert_eq!(ctx1.get_binding("v1"),Some(integer(11)));
         assert_eq!(ctx1.get_binding("v2"),None);
 
-        // let ctx3 = Context::new();
-        // ctx3.add_binding("v3".to_owned(), integer(3));
-        // assert_eq!(ctx3.get_binding("v3"),Some(integer(3)));
+        let ctx3 = Context::new();
+        ctx3.add_binding("v3".to_owned(), integer(3));
+        assert_eq!(ctx3.get_binding("v3"),Some(integer(3)));
 
-        // let ctx4 = ctx3.with_new_scope();
-        // ctx4.add_binding("v4".to_owned(), integer(4));
-        // assert_eq!(ctx4.get_binding("v4"),Some(integer(4)));
-        // ctx4.append(&ctx1);
+        let ctx4 = ctx3.with_new_scope();
+        ctx4.add_binding("v4".to_owned(), integer(4));
+        assert_eq!(ctx4.get_binding("v4"),Some(integer(4)));
+        ctx4.append(&ctx1);
 
-        // assert_eq!(ctx4.get_binding("v4"),Some(integer(4)));
-        // assert_eq!(ctx4.get_binding("v3"),Some(integer(3)));
-        // assert_eq!(ctx4.get_binding("v1"),Some(integer(11)));
-        // assert_eq!(ctx4.get_binding("v2"),None);
-        // assert_eq!(ctx2.get_binding("v1"),Some(integer(11)));
-        // assert_eq!(ctx2.get_binding("v2"),Some(integer(12)));
-        // assert_eq!(ctx1.get_binding("v1"),Some(integer(11)));
-        // assert_eq!(ctx1.get_binding("v2"),None);
+        assert_eq!(ctx4.get_binding("v4"),Some(integer(4)));
+        assert_eq!(ctx4.get_binding("v3"),Some(integer(3)));
+        assert_eq!(ctx4.get_binding("v1"),Some(integer(11)));
+        assert_eq!(ctx4.get_binding("v2"),None);
+        assert_eq!(ctx2.get_binding("v1"),Some(integer(11)));
+        assert_eq!(ctx2.get_binding("v2"),Some(integer(12)));
+        assert_eq!(ctx1.get_binding("v1"),Some(integer(11)));
+        assert_eq!(ctx1.get_binding("v2"),None);
 
         ctx1.add_binding("v10".to_owned(), integer(10));
         assert_eq!(ctx1.get_binding("v10"),Some(integer(10)));
         assert_eq!(ctx2.get_binding("v10"),Some(integer(10)));
-        // assert_eq!(ctx3.get_binding("v10"),Some(integer(10)));
-        // assert_eq!(ctx4.get_binding("v10"),Some(integer(10)));
+        assert_eq!(ctx3.get_binding("v10"),Some(integer(10)));
+        assert_eq!(ctx4.get_binding("v10"),Some(integer(10)));
 
-        // ctx4.set_binding("v2".to_owned(), integer(22));
-        // assert_eq!(ctx1.get_binding("v2"),None);
-        // assert_eq!(ctx2.get_binding("v2"),Some(integer(12)));
-        // assert_eq!(ctx3.get_binding("v2"),None);
-        // assert_eq!(ctx4.get_binding("v2"),None);
+        ctx4.set_binding("v2".to_owned(), integer(22));
+        assert_eq!(ctx1.get_binding("v2"),None);
+        assert_eq!(ctx2.get_binding("v2"),Some(integer(12)));
+        assert_eq!(ctx3.get_binding("v2"),None);
+        assert_eq!(ctx4.get_binding("v2"),None);
 
         let ctx1_cap = ctx1.capture();
         ctx1_cap.set_binding("v10".to_owned(), integer(110));
         ctx1.add_binding("v11".to_owned(), integer(111));
         ctx1_cap.add_binding("v12".to_owned(), integer(112));
         assert_eq!(ctx1_cap.get_binding("v10"),Some(integer(110)));
-        assert_eq!(ctx1_cap.get_binding("v11"),None); // if no cycle
-        // assert_eq!(ctx1_cap.get_binding("v11"),Some(integer(111))); // if cycle
+        assert_eq!(ctx1_cap.get_binding("v11"),None);
         assert_eq!(ctx1_cap.get_binding("v12"),Some(integer(112)));
         assert_eq!(ctx1.get_binding("v10"),Some(integer(110)));
         assert_eq!(ctx1.get_binding("v11"),Some(integer(111)));
         assert_eq!(ctx1.get_binding("v12"),Some(integer(112)));
 
-        // when looking for undefined (same with set_binding), this 
-        // stack overflow if using cycles and no checking
-        // assert_eq!(ctx1.get_binding("undefined"),None);
-        // assert_eq!(ctx1_cap.get_binding("undefined"),None);
+        let ctx4m = ctx4.copy_merge();
+        assert_eq!(ctx1.get_binding("v1"),Some(integer(11)));
+        assert_eq!(ctx4m.get_binding("v1"),Some(integer(11)));
+        ctx4.set_binding("v1".to_owned(), integer(411));
+        assert_eq!(ctx1.get_binding("v1"),Some(integer(411)));
+        assert_eq!(ctx4m.get_binding("v1"),Some(integer(11)));
+        ctx4m.set_binding("v1".to_owned(), integer(1411));
+        assert_eq!(ctx1.get_binding("v1"),Some(integer(411)));
+        assert_eq!(ctx4m.get_binding("v1"),Some(integer(1411)));
     }
 }

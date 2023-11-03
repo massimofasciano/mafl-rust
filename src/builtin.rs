@@ -472,6 +472,9 @@ pub fn copy(ctx: &Context, val: &Expression) -> Result<Expression> {
             let end = len(ctx, val)?; 
             slice(ctx,val, &start, &end)?
         }
+        ExpressionType::Closure(cctx,args,body) => {
+            expression::closure(cctx.copy_merge(), args.to_owned(), body.to_owned())   
+        }
         _ => val.to_owned(),
     })
 }

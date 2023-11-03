@@ -392,6 +392,7 @@ impl Interpreter {
             ("get", [container, key]) => builtin::get(ctx, container, key),
             ("set", [container, key, value]) => builtin::set(ctx, container, key, value),
             ("insert", [container, key, value]) => builtin::insert(ctx, container, key, value),
+            ("bind", [container, key, value]) => builtin::insert(ctx, container, key, value),
             ("dict", [parent]) => builtin::dict_extend(ctx, parent),
             ("dict", []) => builtin::dict(ctx),
             ("var", [key]) => builtin::get_var(ctx, key),

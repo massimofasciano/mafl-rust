@@ -1,4 +1,5 @@
-let z := 1000;
+let z := 30;
+
 let test := module (z) {
     let x := 10;
     let y := 20;
@@ -11,5 +12,20 @@ let test := module (z) {
     let c1 := @context;
 };
 
+let test2 := @copy(test); # only works at top level!!!
 
+@set(test,"x",2000);
+@println(test.f());
+@println(test2.f());
 @println(test.m.f());
+@println(test2.m.f());
+
+@set(test.m,"x",1000);
+@println(test.f());
+@println(test2.f());
+@println(test.m.f());
+@println(test2.m.f());
+
+@bind(test,"q",300);
+@println(test.q);
+@println(test2.q);
