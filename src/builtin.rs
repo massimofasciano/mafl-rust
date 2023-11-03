@@ -482,12 +482,15 @@ pub fn let_var(ctx: &Context, key: &Expression, value: &Expression) -> Result<Ex
     })
 }
 
+#[allow(clippy::only_used_in_recursion)]
 pub fn copy(ctx: &Context, val: &Expression) -> Result<Expression> {
     Ok(match val.as_ref() {
-        ExpressionType::Array(_) => {
-            let start = expression::integer(0);
-            let end = len(ctx, val)?; 
-            slice(ctx,val, &start, &end)?
+        ExpressionType::Array(a) => {
+
+            let ac = a.borrow().iter()
+                    .map(|e| { copy(ctx,e) })
+                    .collect::<Result<Vec<Expression>>>()?;
+            expression::array(ac)
         }
         ExpressionType::Closure(cctx,args,body) => {
             expression::closure(cctx.flatten(), args.to_owned(), body.to_owned())   

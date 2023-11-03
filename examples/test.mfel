@@ -48,3 +48,15 @@ let test2 := @copy(test); # only works at top level!!!
 @bind(test,"q",300);
 @println(test.q);
 @println(test2.q);
+
+let a := [1,2,3,[4,5,6,[7,8,9]]];
+let b := @copy(a);
+
+@println(a);
+@println(b);
+
+a(3)(0,14);
+a(3)(3)(2,18);
+
+@println(a);
+@println(b);
