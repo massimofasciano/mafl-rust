@@ -5,7 +5,7 @@
 ###
 
 # we define the range function that creates an iterator for start..end
-let range := staticfn(start,end) {
+def range(start,end) {
     closure() {
         if start < end {
             let count := start;
@@ -14,7 +14,7 @@ let range := staticfn(start,end) {
         }
         # no else clause means return unit when condition is false
     }
-};
+}
 # it is also available as @std.iter.range
 range := @std.iter.range;
 

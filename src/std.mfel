@@ -6,7 +6,7 @@
 
 ## iterators and iterator functions
 let iter := module () {
-    let range := staticfn(start,end) {
+    def range(start,end) {
         closure() {
             if start < end {
                 let count := start;
@@ -15,42 +15,42 @@ let iter := module () {
             }
             # no else clause means return unit when condition is false
         }
-    };
-    let collect := staticfn (iter) {
+    }
+    def collect(iter) {
         let out := @array(0,());
         for e in iter { @append(out,e); }
         out
-    };
-    let map := staticfn (f,iter) {
+    }
+    def map(f,iter) {
         let out := @array(0,());
         for e in iter { @append(out,f(e)); }
         out
-    };
-    let fold := staticfn (f,acc,iter) {
+    }
+    def fold(f,acc,iter) {
         for e in iter { acc := f(acc,e) }
         acc
-    };
-    let sum := context (fold) in closure(iter) {
+    }
+    def sum(iter) {
         fold(function(x,y){x+y}, 0, iter)
-    };
-    let prod := context (fold) in closure(iter) {
+    }
+    def prod(iter) {
         fold(function(x,y){x*y}, 1, iter)
-    };
-    let filter := staticfn (f,iter) {
+    }
+    def filter(f,iter) {
         let out := @array(0,());
         for e in iter {
             if f(e) { @append(out,e); }
         }
         out
-    };
-    let foreach := staticfn (f,a) {
+    }
+    def foreach(f,a) {
         for e in a { f(e) }
-    };
+    }
 };
 
 ## array functions
 let array := module () {
-    let reduce := staticfn (f,arr) {
+    def reduce(f,arr) {
         if @len(arr) < 1 {
             ()
         } else {
@@ -62,8 +62,8 @@ let array := module () {
             }
             acc
         }
-    };
-    let reverse := staticfn (arr) {
+    }
+    def reverse(arr) {
         # reverses the array in place
         let back := @len(arr)-1;
         let front := 0;
@@ -75,5 +75,5 @@ let array := module () {
             front := front + 1;
         }
         arr
-    };
+    }
 };

@@ -1,10 +1,11 @@
 ### currying/uncurrying is performed automatically
 
-let f := function (x,y,z) {
+def f(x,y,z) {
     closure (w) {
         x+y*z+w
     }
-};
+}
+
 @println(f(1,2,3,4));
 @println(f(1)(2)(3)(4));
 @println(f(1,2)(3)(4));

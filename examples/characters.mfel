@@ -1,8 +1,6 @@
 @debugln("1\n2\t3\n4");
 @debugln('\n');
 
-@include("mfel/stdlib.mfel");
-
 let filename := "Cargo.toml";
 if @len(@env) < 1 {
     @println("******* ","defaulting to ",filename," for input"," *******");
