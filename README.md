@@ -7,6 +7,7 @@ FEATURES:
 - Error type (detectable to catch errors)
 
 TODO:
+- propagate anyhow errors into the language as Error types ?
 - implement deep copy for context (keeping structure intact OR compacting)
 - context inheritance syntax
 - use statement or @use builtin to import contexts (ex: @use(@std.iter)). maybe @import ?

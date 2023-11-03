@@ -233,15 +233,32 @@ pub fn array(interpreter: &Interpreter, ctx: &Context, size: &Expression, init: 
     }
 }
 
-pub fn to_array(_ctx: &Context, init: &Expression) -> Result<Expression> {
-    let mut arr : Vec<Expression> = vec![];
-    if let ExpressionType::String(s) = init.as_ref() {
-        for c in s.chars() {
-            arr.push(ExpressionType::Character(c).into());
-        }
-        Ok(expression::array(arr))
-    } else {
-        Err(anyhow!("to array {init:?}"))?
+pub fn to_array(ctx: &Context, init: &Expression) -> Result<Expression> {
+    let mut arr = vec![];
+    match init.as_ref() {
+        ExpressionType::String(s) => {
+            for c in s.chars() {
+                arr.push(ExpressionType::Character(c).into());
+            }
+            Ok(expression::array(arr))
+        } 
+        ExpressionType::Closure(cctx, _args, _body) => {
+            // let mut arr_args = vec![];
+            // for s in args {
+            //     arr_args.push(expression::string(s.to_owned()));
+            // }
+            // arr.push(expression::array(arr_args));
+            // arr.push(body.to_owned());
+            for (s, v) in cctx.bindings() {
+                let pair = vec![expression::string(s),v];
+                arr.push(expression::array(pair));
+            }
+            Ok(expression::array(arr))
+        } 
+        ExpressionType::Array(_) => {
+            copy(ctx, init)
+        } 
+        _ => Ok(expression::error(format!("to array {init:?}")))
     }
 }
 

@@ -17,7 +17,8 @@ block_comment = @{
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
     "return" | "break" | "continue" |
-    "let" | "function" | "closure" | "staticfn" | "in" | "context" | "module" |
+    "let" | "function" | "def" | "closure" | "staticfn" | "in" | 
+    "context" | "module" |
     "true" | "false" |
     "and" | "or" | "not"
 }

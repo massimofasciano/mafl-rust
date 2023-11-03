@@ -7,10 +7,29 @@ let test := module (z) {
     let m := module (x,y,z) {
         # shadows x and y (by value)
         let f := closure() { x + y + z };
-        let c2 := @context;
+        #let c2 := @context;
     };
-    let c1 := @context;
+    #let c1 := @context;
 };
+
+def bindings(mod) {
+    let arr := @array(mod);
+    if @type(arr) == "Error" {
+        @print(mod)
+    } else {
+        @print("{ ");
+        for binding in @array(mod) {
+            let var := binding(0);
+            let val := binding(1);
+            @print(var, "=");
+            bindings(val);
+            @print(" ");
+        }
+        @print("} ");
+    }
+}
+
+bindings(test); @println();
 
 let test2 := @copy(test); # only works at top level!!!
 

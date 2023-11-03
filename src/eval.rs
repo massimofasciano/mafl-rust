@@ -165,7 +165,7 @@ impl Interpreter {
                         if let Some(value) = closure_ctx.get_binding(field) {
                             value.to_owned()
                         } else {
-                            Err(anyhow!("field binding not found {field}"))?
+                            expression::error(format!("field binding not found {field}"))
                         }
                     }
                     _ => ast.to_error()?,
