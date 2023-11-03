@@ -1,0 +1,20 @@
+# a line comment starts with # and ends with a new line
+
+@println("this code is active"); # but this is a comment
+
+(# 
+a block comment starts with a (# and ends with #)
+as you can see above, they can be nested.
+#)
+
+# note how block comments can be commented out by 
+# putting a # infront of the opening (#
+# and the closing #) is self-commenting.
+(# this is really cool when you want to activate and deactivate blocks quickly #)
+
+#(#
+@println("this code will run because the start of the block comment is commented out");
+#)
+
+@println("comments are not (# active #) inside #of strings");
+

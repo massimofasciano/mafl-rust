@@ -97,15 +97,15 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                     inner.iter().map(|e| parse_rule(e.to_owned())).collect::<Result<Vec<_>>>()?
                 )).into()
             } 
-            Rule::context | Rule::capture => {
+            Rule::context | Rule::module => {
                 assert!(inner.len() == 2);
                 assert!(inner[0].as_rule() == Rule::function_args);
                 let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
                 let body = parse_rule(inner[1].clone())?;
                 match rule {
-                    Rule::context => ExpressionType::ContextSyntax(args, body).into(),
-                    Rule::capture => ExpressionType::CaptureSyntax(args, body).into(),
-                    _ => Err(anyhow!("parse error context or capture"))?
+                    Rule::context => ExpressionType::Context(args, body).into(),
+                    Rule::module => ExpressionType::Module(args, body).into(),
+                    _ => Err(anyhow!("parse error context or module"))?
                 }
             } 
             Rule::r#if | Rule::unless => {
@@ -235,7 +235,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
         Rule::expr_mul | Rule::expr_apply_or_field | Rule::expr_post | 
         Rule::expr_prefix | Rule::expr_exp | 
-        Rule::let_in | Rule::context | Rule::capture |
+        Rule::let_in | Rule::context | Rule::module |
         Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
         Rule::assign | Rule::r#let | Rule::r#loop | Rule::r#for |
         Rule::function | Rule::closure | Rule::staticfn |

@@ -1,53 +1,40 @@
-### contexts can be manipulated as first-class objects in the language
+### modules can be manipulated as first-class objects in the language
 ###
-### a syntactical context block starts with an empty "local" context
-### and adds bindings for a list of letiables from the 
+### a module block starts with an empty "local" context
+### and adds bindings for a list of variables from the 
 ### external context ("copies" by value)
-### - syntax 1 : context (g1,...,gn) { epr1; expr2;... }
-### - syntax 2 : context (g1,...,gn) in expr
+### - syntax 1 : module (g1,...,gn) { epr1; expr2;... }
+### - syntax 2 : module (g1,...,gn) in expr
 ###
-### contexts can be used as structs or hash maps
-### field notation is supported: obj.x, obj.get_y()
-###
-### the builtin @ctx() function "captures" the current environment
-### @ctx() is equivalent to closure(){}
-###
-### a capture statement n is equivalent to a context statement but
-### it returns closure(){} automatically instead of the block value
+### modules can be manipulated as dictionaries (@get, @set, @insert)
+### field notation is supported (read-only): obj.x, obj.get_y()
 ### 
+### a "context" statement is like a "module" statement but
+### it returns the value of the last expression in the block
+### like a normal expression block, instead of capturing the
+### context and returning it as a module/dictionary
+###
 
 let y := 30;
-
-# note how block comments can be commented out by 
-# putting a # infront of the opening (#
-# and the closing #) is self-commenting
-
-#(#
-let obj := capture (y) {
-    # example with let
+let mod := module (y) {
+    # y gets captured by the module
     let x := 10;
     let get_x := closure() {x}; 
     let get_y := closure() {y};
     let set_x := closure(new_x) {x := new_x};
     let set_y := closure(new_y) {y := new_y};
 };
-#)
 
-(#
-let obj := capture (y) {
-    # same example with let .. in ..
-    let x := 10 in
-    let get_x := closure() {x} in
-    let get_y := closure() {y} in
-    let set_x := closure(new_x) {x := new_x} in
-    let set_y := closure(new_y) {y := new_y} in
-};
-#)
+@println(mod.get_x());
+@println(mod.y);
+mod.set_x(mod.x + 1);
+mod.set_y(mod.y + 5);
+@println(mod.x);
+@println(mod.get_y());
+@println(y);
+@insert(mod,"z",50); # adds z to mod from outside
+@println(mod.z);
+@println(z); # not found
+@set(mod,"x",100);
+@println(mod.get_x());
 
-@println(obj.get_x());
-@println(obj.y);
-obj.set_x(obj.x + 1);
-obj.set_y(obj.y + 5);
-@println(obj.x);
-@println(obj.get_y());
-y

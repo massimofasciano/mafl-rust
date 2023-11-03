@@ -17,7 +17,7 @@ block_comment = @{
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
     "return" | "break" | "continue" |
-    "let" | "function" | "closure" | "staticfn" | "in" | "context" | "capture" |
+    "let" | "function" | "closure" | "staticfn" | "in" | "context" | "module" |
     "true" | "false" |
     "and" | "or" | "not"
 }
@@ -80,8 +80,8 @@ context = {
     "context" ~ "(" ~ function_args ~ ")" ~ ( ("in" ~ expr) | block )
 }
 
-capture = {
-    "capture" ~ "(" ~ function_args ~ ")" ~ ( ("in" ~ expr) | block_syntax )
+module = {
+    "module" ~ "(" ~ function_args ~ ")" ~ ( ("in" ~ expr) | block_syntax )
 }
 
 if = {
@@ -183,7 +183,7 @@ expr_base = _{
     array |
     block | if | 
     while | unless | do_while | loop | for |
-    let | let_in | function | closure | staticfn | assign | context | capture |
+    let | let_in | function | closure | staticfn | assign | context | module |
     return | continue | break |
     boolean | float | integer | string_literal | char_literal | variable 
 }

@@ -5,7 +5,7 @@
 ###
 
 ## iterators and iterator functions
-let iter := capture () {
+let iter := module () {
     let range := staticfn(start,end) {
         closure() {
             if start < end {
@@ -49,7 +49,7 @@ let iter := capture () {
 };
 
 ## array functions
-let array := capture () {
+let array := module () {
     let reduce := staticfn (f,arr) {
         if @len(arr) < 1 {
             ()

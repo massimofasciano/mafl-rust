@@ -65,7 +65,8 @@ impl Interpreter {
                 } else if let Some(value) = ctx.get_binding(s) {
                     value.to_owned()
                 } else {
-                    Err(anyhow!("binding not found {s}"))?
+                    expression::error(format!("binding not found {s}"))
+                    // Err(anyhow!("binding not found {s}"))?
                 }
             }
             ExpressionType::If(cond, then, r#else) => {
@@ -259,7 +260,7 @@ impl Interpreter {
                     _ => ast.to_error()?
                 }
             }
-            ExpressionType::ContextSyntax(arg_names, body) => {
+            ExpressionType::Context(arg_names, body) => {
                 debug!("eval context: {arg_names:?}");
                 let local_ctx = Context::new();
                 for name in arg_names {
@@ -269,8 +270,8 @@ impl Interpreter {
                 }
                 self.eval(&local_ctx, body.to_owned())?
             }
-            ExpressionType::CaptureSyntax(arg_names, body) => {
-                debug!("eval capture: {arg_names:?}");
+            ExpressionType::Module(arg_names, body) => {
+                debug!("eval module: {arg_names:?}");
                 let local_ctx = Context::new();
                 for name in arg_names {
                     if let Some(val) = ctx.get_binding(name) { 

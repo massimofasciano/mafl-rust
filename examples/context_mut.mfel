@@ -1,15 +1,3 @@
-### @context captures the current state of all variables
-### -> the global context is now empty and has the captured context as a parent
-### -> any new bindings in the global context will not affect the
-###  captured context (this is how closures work)
-### -> any new bindings in the captured context will be visible in the
-###  global context until they are shadowed (new binding of same name)
-### get on the child/global will continue to the parent    (x)
-### set on the child/global will continue to the parent    (x := ...)
-### insert on the child/global does not affect the parent  (let x := ...)
-### insert on the parent (captured) does not affect the child/global   (@insert(c,"x",...))
-###
-
 ### direct execution context manipulation
 ### @var("x") is equivalent to x
 ### @assign("x",10) is equivalent to x := 10
