@@ -97,16 +97,21 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                     inner.iter().map(|e| parse_rule(e.to_owned())).collect::<Result<Vec<_>>>()?
                 )).into()
             } 
-            Rule::context | Rule::module => {
+            Rule::context => {
                 assert!(inner.len() == 2);
                 assert!(inner[0].as_rule() == Rule::function_args);
                 let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
                 let body = parse_rule(inner[1].clone())?;
-                match rule {
-                    Rule::context => ExpressionType::Context(args, body).into(),
-                    Rule::module => ExpressionType::Module(args, body).into(),
-                    _ => Err(anyhow!("parse error context or module"))?
-                }
+                ExpressionType::Context(args, body).into()
+            } 
+            Rule::module => {
+                assert!(inner.len() == 3);
+                let var = inner[0].as_str().to_owned();
+                assert!(inner[1].as_rule() == Rule::function_args);
+                assert!(inner[2].as_rule() == Rule::block_syntax);
+                let args : Vec<_> = inner[1].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
+                let body = parse_rule(inner[2].clone())?;
+                ExpressionType::Module(var, args, body).into()
             } 
             Rule::r#if | Rule::unless => {
                 assert!(inner.len() == 2 || inner.len() == 3);

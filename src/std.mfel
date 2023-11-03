@@ -5,7 +5,8 @@
 ###
 
 ## iterators and iterator functions
-let iter := module () {
+module iter () {
+
     def range(start,end) {
         closure() {
             if start < end {
@@ -46,10 +47,11 @@ let iter := module () {
     def foreach(f,a) {
         for e in a { f(e) }
     }
-};
+}
 
 ## array functions
-let array := module () {
+module array () {
+
     def reduce(f,arr) {
         if @len(arr) < 1 {
             ()
@@ -76,4 +78,5 @@ let array := module () {
         }
         arr
     }
-};
+}
+

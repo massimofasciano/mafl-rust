@@ -3,27 +3,21 @@
 ### a module block starts with an empty "local" context
 ### and adds bindings for a list of variables from the 
 ### external context ("copies" by value)
-### - syntax 1 : module (g1,...,gn) { epr1; expr2;... }
-### - syntax 2 : module (g1,...,gn) in expr
 ###
 ### modules can be manipulated as dictionaries (@get, @set, @insert)
 ### field notation is supported (read-only): obj.x, obj.get_y()
+### they can be used like "objects" or "packages" in other languages
 ### 
-### a "context" statement is like a "module" statement but
-### it returns the value of the last expression in the block
-### like a normal expression block, instead of capturing the
-### context and returning it as a module/dictionary
-###
 
 let y := 30;
-let mod := module (y) {
+module mod (y) {
     # y gets captured by the module
     let x := 10;
     let get_x := closure() {x}; 
     let get_y := closure() {y};
     let set_x := closure(new_x) {x := new_x};
     let set_y := closure(new_y) {y := new_y};
-};
+}
 
 @println(mod.get_x());
 @println(mod.y);

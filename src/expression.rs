@@ -43,7 +43,7 @@ pub enum ExpressionType {
     AssignToExpression(Expression,Expression),
     Loop(Expression),
     Context(Strings,Expression),
-    Module(Strings,Expression),
+    Module(String,Strings,Expression),
     Def(String,Strings,Expression),
     FunctionStatic(Strings,Expression),
     FunctionDynamic(Strings,Expression),

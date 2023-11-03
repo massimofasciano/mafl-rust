@@ -1,16 +1,16 @@
 let z := 30;
 
-let test := module (z) {
+module test (z) {
     let x := 10;
     let y := 20;
     let f := closure() { x + y };
-    let m := module (x,y,z) {
+    module m (x,y,z) {
         # shadows x and y (by value)
         let f := closure() { x + y + z };
         #let c2 := @context;
-    };
+    }
     #let c1 := @context;
-};
+}
 
 def bindings(mod) {
     let arr := @array(mod);

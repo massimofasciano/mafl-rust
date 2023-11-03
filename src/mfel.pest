@@ -86,7 +86,7 @@ context = {
 }
 
 module = {
-    "module" ~ "(" ~ function_args ~ ")" ~ ( ("in" ~ expr) | block_syntax )
+    "module" ~ identifier ~ "(" ~ function_args ~ ")" ~ block_syntax
 }
 
 if = {
@@ -194,7 +194,7 @@ expr_base = _{
 }
 
 // expressions that behave like blocks
-expr_block = _{ block | if | while | unless | loop | for | def }
+expr_block = _{ block | if | while | unless | loop | for | def | module }
 
 semicolons = _{ ";" ~ semicolons | ";" }
 unit_implicit = { "" }

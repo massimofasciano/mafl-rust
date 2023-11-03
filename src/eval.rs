@@ -277,7 +277,7 @@ impl Interpreter {
                 }
                 self.eval(&local_ctx, body.to_owned())?
             }
-            ExpressionType::Module(arg_names, body) => {
+            ExpressionType::Module(modname, arg_names, body) => {
                 debug!("eval module: {arg_names:?}");
                 let local_ctx = Context::new();
                 for name in arg_names {
@@ -285,8 +285,10 @@ impl Interpreter {
                         local_ctx.add_binding(name.to_owned(), val.to_owned()); 
                     }
                 }
-                self.eval(&local_ctx, body.to_owned())?;
-                builtin::capture_context(&local_ctx)?
+                let val = self.eval(&local_ctx, body.to_owned())?;
+                let captured = builtin::capture_context(&local_ctx)?;
+                ctx.add_binding(modname.to_owned(), captured);
+                val
             }
             ExpressionType::BinOpCall(op, left, right) => {
                 debug!("eval bin op call");
