@@ -7,19 +7,12 @@ FEATURES:
 - Error type (detectable to catch errors)
 
 TODO:
-- parse std only once ??? @std("std") to bind it ??? or @use("...") ??? embed directory ?
-- implement deep copy for context (keeping structure intact)
+- implement deep copy for context (keeping structure intact OR compacting)
 - context inheritance syntax
-- varargs ?
-- iterator functions ?
-- foreach and iterator (returns unit or value)
-- @get(@context,"x") -> alias to @getvar("x") ? same for set and insert ?
-- builtin STDLIB (returns struct) ?
+- use statement or @use builtin to import contexts (ex: @use(@std.iter)). maybe @import ?
 - use MFEL Error type where needed instead of Rust errors
-- builtin::F should take &[Expression] and eval should use a function table
 - names of function types: function, staticfn, closure ?  lambda for closure ? closed for staticfn ?
-
 - ref and deref (by name ?)
 - implement return continue break
-
 - Option<Result<Expression>> vs Result<Option<..>> for builtin_var
+- struct syntax useful or not ? we have module.
