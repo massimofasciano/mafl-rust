@@ -97,26 +97,19 @@ impl Context {
             None
         }
     }
-    pub fn copy_merge(&self) -> Self {
+    pub fn flatten(&self) -> Self {
         debug!("copy merge");
-        let new_scope = Scope::new();
-        let scope = &self.inner;
-        new_scope.bindings.borrow_mut().extend(scope.bindings.borrow().iter().map(|(k, v)| (k.clone(), v.clone())));
-        if let Some(parent) = self.parent() {
-            let merged = parent.copy_merge();
-            let merged_bindings = merged.inner.to_owned();
-            let merged_bindings = merged_bindings.bindings.borrow();
-            new_scope.bindings.borrow_mut().extend(merged_bindings.iter().map(|(k, v)| (k.clone(), v.clone())))
-        }
-        new_scope.into()
+        let scope = Scope::new();
+        *scope.bindings.borrow_mut() = self.bindings();
+        scope.into()
     }
     pub fn bindings(&self) -> HashMap<String,Expression> {
         debug!("bindings");
         let mut bindings = HashMap::new();
         let mut current = self.to_owned();
-        let kv = current.inner.bindings.borrow().to_owned();
-        bindings.extend(kv);
         loop {
+            let kv = current.inner.bindings.borrow().to_owned();
+            bindings.extend(kv);
             let parent = current.parent();
             if let Some(parent) = parent {
                 current = parent;
@@ -275,7 +268,7 @@ mod tests {
         assert_eq!(ctx1.get_binding("v11"),Some(integer(111)));
         assert_eq!(ctx1.get_binding("v12"),Some(integer(112)));
 
-        let ctx4m = ctx4.copy_merge();
+        let ctx4m = ctx4.flatten();
         assert_eq!(ctx1.get_binding("v1"),Some(integer(11)));
         assert_eq!(ctx4m.get_binding("v1"),Some(integer(11)));
         ctx4.set_binding("v1".to_owned(), integer(411));
