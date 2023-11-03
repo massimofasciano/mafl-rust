@@ -44,6 +44,14 @@ impl Interpreter {
                 ctx.add_binding(id.to_owned(), val.to_owned());
                 val
             }
+            ExpressionType::Def(fname, arg_names, body) => {
+                debug!("eval function definition {fname} {arg_names:?}");
+                let cctx = ctx.capture();
+                let val : Expression = ExpressionType::Closure(cctx.to_owned(), arg_names.to_owned(), body.to_owned()).into();
+                cctx.add_binding(fname.to_owned(), val.to_owned());
+                ctx.add_binding(fname.to_owned(), val.to_owned());
+                val
+            }
             ExpressionType::Assign(id, val) => {
                 debug!("eval assign to identifier: {id}");
                 let val = self.eval(ctx,val.to_owned())?;

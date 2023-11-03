@@ -110,6 +110,22 @@ impl Context {
         }
         new_scope.into()
     }
+    pub fn bindings(&self) -> HashMap<String,Expression> {
+        debug!("bindings");
+        let mut bindings = HashMap::new();
+        let mut current = self.to_owned();
+        let kv = current.inner.bindings.borrow().to_owned();
+        bindings.extend(kv);
+        loop {
+            let parent = current.parent();
+            if let Some(parent) = parent {
+                current = parent;
+            } else {
+                break;
+            }
+        }
+        bindings
+    }
 }
 
 impl Default for Context {

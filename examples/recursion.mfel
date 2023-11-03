@@ -15,6 +15,8 @@ let fibo1 := function (x) { 0 };
 # this will return 0 because the recursive call to fibo1 was shadowed above
 @println(fibo1copy(10));
 
+@println("**************************************************");
+
 # closure captures context at definition (so it can't call itself)
 let fibo2 := closure (x) {
     if x < 2 {
@@ -24,12 +26,11 @@ let fibo2 := closure (x) {
     }
 }; 
 @bind(fibo2,"fibo2",fibo2); # inserts binding for fibo2 into the fibo2 closure (for recursion)
-# maybe implement a "with (fibo2)" trailing clause for closure ?
-# maybe traditional letrec ?
-# add def statement to combine both ?
 
 # warning: trying to print the fibo2 closure after binding
-# to itself will cause an infinite loop (referential cycle on fibo2)
+# to itself will cause an infinite loop (referential cycle on fibo2).
+# TODO: a patched version of print removes all of the values from the bindings
+#  until we implement a cycle-aware print.
 #@println(fibo2);
 
 @println(fibo2(10));
@@ -39,4 +40,26 @@ let fibo2copy := fibo2;
 let fibo2 := function (x) { 0 };
 # this works because a closure carries it's context around
 @println(fibo2copy(10));
+
+@println("**************************************************");
+
+# this creates a closure with a circular reference to it's own name
+# it's syntactic sugar for the let + bind used for fibo2 above
+def fibo3(x) {
+    if x < 2 {
+        x
+    } else {
+        fibo3(x-2) + fibo3(x-1)
+    }
+}
+
+@println(fibo3(10));
+
+let fibo3copy := fibo3;
+@println(fibo3copy(10));
+let fibo3 := function (x) { 0 };
+# this works because a closure carries it's context around
+@println(fibo3copy(10));
+
+@println("**************************************************");
 
