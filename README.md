@@ -16,3 +16,5 @@ TODO:
 - implement return continue break
 - Option<Result<Expression>> vs Result<Option<..>> for builtin_var
 - struct syntax useful or not ? we have module.
+- ast: Expression or ast: &Expression in eval ?
+

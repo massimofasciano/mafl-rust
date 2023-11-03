@@ -17,7 +17,7 @@ impl Interpreter {
             ExpressionType::Block(exprs) => {
                 debug!("eval block");
                 let ctx = &ctx.with_new_scope();
-                let mut block_value = ExpressionType::Unit.into();
+                let mut block_value = expression::unit();
                 for expr in exprs {
                     block_value = self.eval(ctx,expr.to_owned())?;
                 }
@@ -25,7 +25,7 @@ impl Interpreter {
             }
             ExpressionType::Sequence(exprs) => {
                 debug!("eval sequence");
-                let mut seq_value = ExpressionType::Unit.into();
+                let mut seq_value = expression::unit();
                 for expr in exprs {
                     seq_value = self.eval(ctx,expr.to_owned())?;
                 }
@@ -66,7 +66,6 @@ impl Interpreter {
                     value.to_owned()
                 } else {
                     expression::error(format!("binding not found {s}"))
-                    // Err(anyhow!("binding not found {s}"))?
                 }
             }
             ExpressionType::If(cond, then, r#else) => {
@@ -81,7 +80,7 @@ impl Interpreter {
             }
             ExpressionType::While(cond, body) => {
                 debug!("eval while");
-                let mut body_value = ExpressionType::Unit.into();
+                let mut body_value = expression::unit();
                 let ctx = &ctx.with_new_scope();
                 #[allow(clippy::while_let_loop)]
                 loop {
