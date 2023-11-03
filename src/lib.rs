@@ -1,3 +1,5 @@
+use std::{cell::RefCell, env::Args};
+use context::Context;
 use expression::Expression;
 use pest::Parser;
 use crate::expression::{MfelParser, Rule};
@@ -7,6 +9,48 @@ pub mod expression;
 pub mod context;
 pub mod builtin;
 pub mod parse;
+
+#[derive(Debug,Clone,PartialEq)]
+pub struct Interpreter {
+    pub env: Expression,
+    pub std: Expression,
+    pub id: RefCell<usize>,
+    ctx: Context,
+}
+
+static _STD_STR : &str = include_str!("std.mfel");
+
+impl Interpreter {
+    pub fn new(env: Args) -> Result<Self> {
+        let ctx = Context::new();
+        let env = env.map(expression::string).collect();
+        let env = expression::array(env);
+        let mut interpreter = Self {
+            env, ctx, 
+            ..Default::default()
+        };
+        let ctx = Context::new();
+        builtin::include_str(&interpreter, &ctx, _STD_STR)?;
+        interpreter.std = expression::closure(ctx, vec![], expression::unit());
+        Ok(interpreter)
+    }
+    pub fn run(&self, source: &str) -> Result<Expression>{
+        let expr = parse_source(source)?;
+        // println!("{ast:#?}");
+        self.eval(&self.ctx,expr)
+    }
+}
+
+impl Default for Interpreter {
+    fn default() -> Self {
+        Self {  
+            env: expression::array(vec![]),
+            std: expression::unit(),
+            id: RefCell::new(0),
+            ctx: Context::new(),
+        }
+    }
+}
 
 pub fn parse_source(source: &str) -> Result<Expression> {
     let parsed = MfelParser::parse(Rule::file, source)?

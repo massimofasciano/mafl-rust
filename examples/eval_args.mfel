@@ -7,7 +7,7 @@
 ###  [15,[2,4,[1,1],(),false,[1,2,3,4]]]
 ###
 
-@include("mfel/stdlib.mfel");
+let map := @std.array.map;
 
 let f := staticfn (args) {
     if @len(args) < 2 {
@@ -19,5 +19,5 @@ let f := staticfn (args) {
         [f(x),args]
     }
 };
-f(let eval = staticfn(str) {@eval(str)} in amap(eval,@env))
+f(let eval = staticfn(str) {@eval(str)} in map(eval,@env))
 

@@ -1,4 +1,18 @@
-let std := @std;
-std.array.map(staticfn(x){x+1},[1,2,3]);
-std.array.sum([1,2,3,4,45])
+let range := @std.iter.range;
+let map := @std.iter.map;
+let sum := @std.iter.sum;
+let collect := @std.iter.collect;
+
+let f := staticfn(x){x*10};
+map(f,[1,2,3]);
+sum([1,2,3,4,45]);
+
+map(f,range(5,13));
+collect(range(3,7));
+
+let a := [1,2,3,4,5,6,7];
+@print(@std.array.reverse(a));
+a
+
+
 

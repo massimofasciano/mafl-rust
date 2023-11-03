@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::io::{self, BufRead, stdout, Write};
 use std::fmt::Write as _;
 
-use crate::{expression::{Expression, self, unit, closure, ExpressionType}, parse_source, eval, context::Context};
+use crate::{expression::{Expression, self, unit, closure, ExpressionType}, parse_source, context::Context, Interpreter};
 use anyhow::{Result,anyhow};
 use log::debug;
 
@@ -88,13 +88,13 @@ pub fn or(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression>
     }.into())
 }
 
-pub fn and_lazy(ctx: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
-    let lhs = eval::eval(ctx,lhs.to_owned())?;
+pub fn and_lazy(interpreter: &Interpreter, ctx: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+    let lhs = interpreter.eval(ctx,lhs.to_owned())?;
     match lhs.as_ref() {
         ExpressionType::Boolean(b) => if !b { return Ok(ExpressionType::Boolean(false).into()) },
         _ => Err(anyhow!("and_lazy lhs not boolean: {lhs:?}"))?,
     };
-    let rhs = eval::eval(ctx,rhs.to_owned())?;
+    let rhs = interpreter.eval(ctx,rhs.to_owned())?;
     match rhs.as_ref() {
         ExpressionType::Boolean(b) => if !b { return Ok(ExpressionType::Boolean(false).into()) },
         _ => Err(anyhow!("and_lazy rhs not boolean: {rhs:?}"))?,
@@ -102,13 +102,13 @@ pub fn and_lazy(ctx: &Context, lhs: &Expression, rhs: &Expression) -> Result<Exp
     Ok(ExpressionType::Boolean(true).into())
 }
 
-pub fn or_lazy(ctx: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
-    let lhs = eval::eval(ctx,lhs.to_owned())?;
+pub fn or_lazy(interpreter: &Interpreter, ctx: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+    let lhs = interpreter.eval(ctx,lhs.to_owned())?;
     match lhs.as_ref() {
         ExpressionType::Boolean(b) => if *b { return Ok(ExpressionType::Boolean(true).into()) },
         _ => Err(anyhow!("or_lazy lhs not boolean: {lhs:?}"))?,
     };
-    let rhs = eval::eval(ctx,rhs.to_owned())?;
+    let rhs = interpreter.eval(ctx,rhs.to_owned())?;
     match rhs.as_ref() {
         ExpressionType::Boolean(b) => if *b { return Ok(ExpressionType::Boolean(true).into()) },
         _ => Err(anyhow!("or_lazy rhs not boolean: {rhs:?}"))?,
@@ -200,28 +200,28 @@ pub fn debugln(_: &Context, args: &[Expression]) -> Result<Expression> {
     Ok(unit())
 }
 
-pub fn eval_string_as_source(ctx: &Context, arg: &Expression) -> Result<Expression> {
+pub fn eval_string_as_source(interpreter: &Interpreter, ctx: &Context, arg: &Expression) -> Result<Expression> {
     match arg.as_ref() {
         ExpressionType::String(s) => {
             debug!("evaluating string: {s}");
-            eval::eval(ctx, parse_source(s)?)
+            interpreter.eval(ctx, parse_source(s)?)
         }
         _ => arg.to_error()
     }
 }
 
-pub fn array(ctx: &Context, size: &Expression, init: &Expression) -> Result<Expression> {
+pub fn array(interpreter: &Interpreter, ctx: &Context, size: &Expression, init: &Expression) -> Result<Expression> {
     let mut arr : Vec<Expression> = vec![];
     if let ExpressionType::Integer(size) = size.as_ref() {
         let size = *size;
-        let init = &eval::eval(ctx,init.to_owned())?;
+        let init = &interpreter.eval(ctx,init.to_owned())?;
         for i in 0..size {
             let init = match init.as_ref() {
                 ExpressionType::Closure(_, _, _) => {
-                    eval::eval(ctx, ExpressionType::FunctionCall(init.to_owned(), vec![ExpressionType::Integer(i).into()]).into())?
+                    interpreter.eval(ctx, ExpressionType::FunctionCall(init.to_owned(), vec![ExpressionType::Integer(i).into()]).into())?
                 }
                 ExpressionType::FunctionDynamic(_, _) => {
-                    eval::eval(ctx, ExpressionType::FunctionCall(init.to_owned(), vec![ExpressionType::Integer(i).into()]).into())?
+                    interpreter.eval(ctx, ExpressionType::FunctionCall(init.to_owned(), vec![ExpressionType::Integer(i).into()]).into())?
                 }
                 _ => init.to_owned(),
             };
@@ -284,10 +284,10 @@ pub fn len(_: &Context, val: &Expression) -> Result<Expression> {
     }.into())
 }
 
-pub fn append(ctx: &Context, target: &Expression, new: &Expression) -> Result<Expression> {
+pub fn append(interpreter: &Interpreter, ctx: &Context, target: &Expression, new: &Expression) -> Result<Expression> {
     Ok(match target.as_ref() {
         ExpressionType::Array(a) => {
-            let new = eval::eval(ctx,new.to_owned())?;
+            let new = interpreter.eval(ctx,new.to_owned())?;
             a.borrow_mut().push(new);
             target.to_owned()
         }
@@ -295,20 +295,20 @@ pub fn append(ctx: &Context, target: &Expression, new: &Expression) -> Result<Ex
     })
 }
 
-pub fn include(ctx: &Context, file_expr: &Expression) -> Result<Expression> {
+pub fn include(interpreter: &Interpreter, ctx: &Context, file_expr: &Expression) -> Result<Expression> {
     debug!("include {file_expr:?}");
     Ok(match file_expr.as_ref() {
         ExpressionType::String(file) => {
             let source = std::fs::read_to_string(file)?;
-            eval_string_as_source(ctx, &ExpressionType::String(source).into())?
+            eval_string_as_source(interpreter, ctx, &ExpressionType::String(source).into())?
         }
         _ => Err(anyhow!("include {file_expr:?}"))?,
     })
 }
 
-pub fn include_str(ctx: &Context, s: &str) -> Result<Expression> {
+pub fn include_str(interpreter: &Interpreter, ctx: &Context, s: &str) -> Result<Expression> {
     debug!("include_str");
-    eval::eval(ctx, parse_source(s)?)
+    interpreter.eval(ctx, parse_source(s)?)
 }
 
 pub fn read_file(_ctx: &Context, file_expr: &Expression) -> Result<Expression> {
