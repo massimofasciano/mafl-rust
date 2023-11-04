@@ -30,7 +30,7 @@ identifier_syntax = @{
 identifier = @{ !reserved ~ identifier_syntax | reserved ~ identifier_syntax }
 
 infix_identifier = ${
-    "$" ~ ( builtin | identifier )
+    "`" ~ ( builtin | identifier ) ~ "`"
 }
 builtin = ${
     "@" ~ identifier_syntax

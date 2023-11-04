@@ -303,12 +303,8 @@ impl Interpreter {
                 let right = self.eval(ctx,right.to_owned())?;
                 match op {
                     ExpressionType::InfixOp(fname) => {
-                        if fname.starts_with('$') {
-                            let fvar = ExpressionType::Variable(fname.strip_prefix('$').unwrap().to_owned()).into();
-                            self.eval(ctx,ExpressionType::FunctionCall(fvar, vec![left,right]).into())?
-                        } else {
-                            Err(anyhow!("infix op bad prefix: {fname}"))?
-                        }
+                        let fvar = ExpressionType::Variable(fname.to_owned()).into();
+                        self.eval(ctx,ExpressionType::FunctionCall(fvar, vec![left,right]).into())?
                     },
                     ExpressionType::PipeOp => self.eval(ctx,ExpressionType::FunctionCall(right, vec![left]).into())?,
                     // Expression::AndOp => builtin::and(ctx,&left,&right)?,

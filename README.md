@@ -33,4 +33,7 @@ TODO:
 
 - implement xor_nn in MFEL
 
+- backquote infix x `add` y
+- nil vs ()
+
 
