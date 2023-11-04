@@ -14,16 +14,15 @@ module iter () {
                 start := start + 1;
                 count            
             }
-            # no else clause means return unit when condition is false
         }
     }
     def collect(iter) {
-        let out := @array(0,());
+        let out := @array(0,nil);
         for e in iter { @append(out,e); }
         out
     }
     def map(f,iter) {
-        let out := @array(0,());
+        let out := @array(0,nil);
         for e in iter { @append(out,f(e)); }
         out
     }
@@ -38,7 +37,7 @@ module iter () {
         fold(function(x,y){x*y}, 1, iter)
     }
     def filter(f,iter) {
-        let out := @array(0,());
+        let out := @array(0,nil);
         for e in iter {
             if f(e) { @append(out,e); }
         }
@@ -53,8 +52,8 @@ module iter () {
 module array () {
 
     def reduce(f,arr) {
-        if @len(arr) < 1 {
-            ()
+        if @len(arr) < 1 { 
+            @error("reduce called on empty array")
         } else {
             let acc := arr(0);
             let i := 1;

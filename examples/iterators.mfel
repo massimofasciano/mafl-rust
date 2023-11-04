@@ -1,6 +1,6 @@
 ### in addition to working on arrays, the for loop works with iterators.
 ### an iterator is a zero-argument closure that returns
-###  the unit type () when done,
+###  the unit type "nil" when done,
 ###  otherwise it returns the next value
 ###
 
@@ -12,7 +12,7 @@ def range(start,end) {
             start := start + 1;
             count            
         }
-        # no else clause means return unit when condition is false
+        # no else clause means return nil when condition is false
     }
 }
 # it is also available as @std.iter.range

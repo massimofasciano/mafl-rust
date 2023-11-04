@@ -19,7 +19,7 @@ reserved = _{
     "return" | "break" | "continue" |
     "let" | "function" | "def" | "closure" | "staticfn" | "in" | 
     "context" | "module" |
-    "true" | "false" |
+    "true" | "false" | "nil" |
     "and" | "or" | "not"
 }
 
@@ -44,7 +44,7 @@ float = @{
     ("." ~ ASCII_DIGIT+)? ~
     (^"e" ~ ("+" | "-")? ~ ASCII_DIGIT+)?
 }
-unit_literal = @{ "()" }
+unit_literal = @{ "nil" }
 boolean = _{ true | false }
 true = { "true" }
 false = { "false" }

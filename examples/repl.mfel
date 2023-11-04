@@ -1,7 +1,7 @@
 @print("MFEL> ");
-let line = () in 
-let result = () in
-while (line := @readline()) != () {
+let line = nil in 
+let result = nil in
+while (line := @readline()) != nil {
     @println(@eval(line));
     @print("MFEL> ");
 };

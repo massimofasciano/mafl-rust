@@ -98,7 +98,7 @@ impl ExpressionType {
 impl std::fmt::Display for ExpressionType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ExpressionType::Unit => write!(f,"()"),
+            ExpressionType::Unit => write!(f,"nil"),
             ExpressionType::Boolean(a) => write!(f,"{a}"),
             ExpressionType::Float(a) => write!(f,"{a}"),
             ExpressionType::Integer(a) => write!(f,"{a}"),

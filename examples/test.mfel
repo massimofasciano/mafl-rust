@@ -63,4 +63,5 @@ a(3)(3)(2,18);
 
 def plus(x,y) { x + y }
 
-4 `plus` 6
+4 `plus` 6;
+

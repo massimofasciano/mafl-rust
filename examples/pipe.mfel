@@ -1,10 +1,10 @@
 def f(x) {
-    if x == () {
-        ()
+    if x == nil {
+        nil
     } 
     else {
         if x > 5 {
-            ()
+            nil
         } else {
             x+1
         }
