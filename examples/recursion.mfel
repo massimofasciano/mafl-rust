@@ -1,5 +1,5 @@
 # dynamic function evaluates in caller's context
-let fibo1 := function (x) {
+let fibo1 := dynfn (x) {
     if x < 2 {
         x
     } else {
@@ -11,23 +11,23 @@ let fibo1 := function (x) {
 
 let fibo1copy := fibo1;
 @println(fibo1copy(10));
-let fibo1 := function (x) { 0 };
+let fibo1 := lambda (x) { 0 };
 # this will return 0 because the recursive call to fibo1 was shadowed above
 @println(fibo1copy(10));
 
 @println("**************************************************");
 
-# closure captures context at definition (so it can't call itself)
-let fibo2 := closure (x) {
+# lambda captures context at definition (so it can't call itself)
+let fibo2 := lambda (x) {
     if x < 2 {
         x
     } else {
         fibo2(x-2) + fibo2(x-1)
     }
 }; 
-@bind(fibo2,"fibo2",fibo2); # inserts binding for fibo2 into the fibo2 closure (for recursion)
+@bind(fibo2,"fibo2",fibo2); # inserts binding for fibo2 into the fibo2 lambda (for recursion)
 
-# warning: trying to print the fibo2 closure after binding
+# warning: trying to print the fibo2 lambda after binding
 # to itself will cause an infinite loop (referential cycle on fibo2).
 # TODO: a patched version of print removes all of the values from the bindings
 #  until we implement a cycle-aware print.
@@ -37,13 +37,13 @@ let fibo2 := closure (x) {
 
 let fibo2copy := fibo2;
 @println(fibo2copy(10));
-let fibo2 := function (x) { 0 };
-# this works because a closure carries it's context around
+let fibo2 := lambda (x) { 0 };
+# this works because a lambda carries it's context around
 @println(fibo2copy(10));
 
 @println("**************************************************");
 
-# this creates a closure with a circular reference to it's own name
+# this creates a lambda with a circular reference to it's own name
 # it's syntactic sugar for the let + bind used for fibo2 above
 def fibo3(x) {
     if x < 2 {
@@ -57,8 +57,8 @@ def fibo3(x) {
 
 let fibo3copy := fibo3;
 @println(fibo3copy(10));
-let fibo3 := function (x) { 0 };
-# this works because a closure carries it's context around
+let fibo3 := lambda (x) { 0 };
+# this works because a lambda carries it's context around
 @println(fibo3copy(10));
 
 @println("**************************************************");

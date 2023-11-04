@@ -24,7 +24,7 @@ let a1 := [1,2,3,4];
 let a2 := @array(10,4);
 @println("a2=",a2);
 
-let a3 := @array(10, function(x) { 
+let a3 := @array(10, lambda(x) { 
     if x < 5 { 
         (x + 1) * 10 
     } else { 
@@ -43,29 +43,29 @@ a1(2,a1_2_3); # a1[2]=a1_2_3
 a1(0,100); # mutate a1 index 0
 @println("a1=",a1); 
 
-@println("map (*100) a1=",map(function(x){x*100},a1));
+@println("map (*100) a1=",map(lambda(x){x*100},a1));
 @println("sum(a1)=",sum(a1));
 @println("prod(a1)=",prod(a1));
 # test if all elements are greater than n (using fold)
-let all_gt := function(n,arr) { 
+def all_gt(n,arr) { 
     afold(
-        function(x,y){x and y},
+        lambda(x,y){x and y},
         true,
-        map(closure(x){x > n},arr)
+        map(lambda(x){x > n},arr)
     )
-};
+}
 # test if all elements are greater than n (using filter)
-let all_gt := function(n,arr) { 
-    let filtered := filter(closure(x){x > n},arr);
+def all_gt(n,arr) { 
+    let filtered := filter(lambda(x){x > n},arr);
     @len(filtered) == @len(arr)
-};
+}
 @println("all_gt_0(a1)=",all_gt(0,a1));
 @println("all_gt_5(a1)=",all_gt(5,a1));
-@println("chain_div([9,3,4])=",reduce(function(x,y){x*1.0/y},[9,3,4]));
+@println("chain_div([9,3,4])=",reduce(lambda(x,y){x*1.0/y},[9,3,4]));
 
 @append(a1,42);
 @println("a1=",a1); 
-@println("filter >10 in a1=",filter(function(x){x>10},a1));
+@println("filter >10 in a1=",filter(lambda(x){x>10},a1));
 
 @println("a1[3]=",@get(a1,3)); 
 @set(a1,3,1);

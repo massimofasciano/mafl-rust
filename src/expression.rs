@@ -45,10 +45,10 @@ pub enum ExpressionType {
     Context(Strings,Expression),
     Module(String,Strings,Expression),
     Def(String,Strings,Expression),
-    FunctionStatic(Strings,Expression),
-    FunctionDynamic(Strings,Expression),
-    FunctionClosure(Strings,Expression),
-    ClosureDisplay(Strings,Strings,Expression),
+    StaticFn(Strings,Expression),
+    DynFn(Strings,Expression),
+    Lambda(Strings,Expression),
+    PrintableClosure(Strings,Strings,Expression),
     Closure(Context,Strings,Expression),
     Array(RefCell<Expressions>),
     Return(Expression),
@@ -110,7 +110,7 @@ impl std::fmt::Display for ExpressionType {
             ExpressionType::Closure(ctx, args, body) => {
                 // remove context values until we can print cycles... 
                 let keys : Vec<String> = ctx.bindings().into_keys().collect();
-                write!(f,"{}",ExpressionType::ClosureDisplay(keys,args.to_owned(),body.to_owned()))
+                write!(f,"{}",ExpressionType::PrintableClosure(keys,args.to_owned(),body.to_owned()))
             }
             _ => write!(f,"{:#?}",self),
         }

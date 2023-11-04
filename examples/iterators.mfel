@@ -1,11 +1,11 @@
 ### in addition to working on arrays, the for loop works with iterators.
-### an iterator is a zero-argument closure that returns nil when done,
+### an iterator is a zero-argument function that returns nil when done,
 ###  otherwise it returns the next value
 ###
 
 # we define the range function that creates an iterator for start..end
 def range(start,end) {
-    closure() {
+    lambda() {
         if start < end {
             let count := start;
             start := start + 1;

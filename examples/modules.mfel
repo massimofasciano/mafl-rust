@@ -13,10 +13,10 @@ let y := 30;
 module mod (y) {
     # y gets captured by the module
     let x := 10;
-    let get_x := closure() {x}; 
-    let get_y := closure() {y};
-    let set_x := closure(new_x) {x := new_x};
-    let set_y := closure(new_y) {y := new_y};
+    let get_x := lambda() {x}; 
+    let get_y := lambda() {y};
+    let set_x := lambda(new_x) {x := new_x};
+    let set_y := lambda(new_y) {y := new_y};
 }
 
 @println(mod.get_x());

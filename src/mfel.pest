@@ -66,11 +66,11 @@ array = { "[" ~ (expr ~ ("," ~ expr)*)? ~ "]"}
 function_args = { (identifier ~ ("," ~ identifier)*)? }
 
 function = {
-    "function" ~ "(" ~ function_args ~ ")" ~ block
+    "dynfn" ~ "(" ~ function_args ~ ")" ~ block
 }
 
 closure = {
-    "closure" ~ "(" ~ function_args ~ ")" ~ block
+    "lambda" ~ "(" ~ function_args ~ ")" ~ block
 }
 
 staticfn = {

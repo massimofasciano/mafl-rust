@@ -1,7 +1,7 @@
 ### @context captures the current state of all variables
 ### -> the global context is now empty and has the captured context as a parent
 ### -> any new bindings in the global context will not affect the
-###  captured context (this is how closures work)
+###  captured context (this is how lambdas work)
 ### -> any new bindings in the captured context will be visible in the
 ###  global context until they are shadowed (new binding of same name)
 ### get on the child/global will continue to the parent    (x)

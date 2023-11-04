@@ -33,6 +33,5 @@ TODO:
 
 - implement xor_nn in MFEL
 
-- nil vs ()
 
 

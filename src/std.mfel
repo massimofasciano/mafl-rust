@@ -8,7 +8,7 @@
 module iter () {
 
     def range(start,end) {
-        closure() {
+        lambda() {
             if start < end {
                 let count := start;
                 start := start + 1;
@@ -31,10 +31,10 @@ module iter () {
         acc
     }
     def sum(iter) {
-        fold(function(x,y){x+y}, 0, iter)
+        fold(lambda(x,y){x+y}, 0, iter)
     }
     def prod(iter) {
-        fold(function(x,y){x*y}, 1, iter)
+        fold(lambda(x,y){x*y}, 1, iter)
     }
     def filter(f,iter) {
         let out := @array(0,nil);

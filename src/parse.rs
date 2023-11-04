@@ -86,9 +86,9 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
                 let body = parse_rule(inner[1].clone())?;
                 match rule {
-                    Rule::staticfn => ExpressionType::FunctionStatic(args, body).into(),
-                    Rule::closure => ExpressionType::FunctionClosure(args, body).into(),
-                    Rule::function => ExpressionType::FunctionDynamic(args, body).into(),
+                    Rule::staticfn => ExpressionType::StaticFn(args, body).into(),
+                    Rule::closure => ExpressionType::Lambda(args, body).into(),
+                    Rule::function => ExpressionType::DynFn(args, body).into(),
                     _ => Err(anyhow!("parse error function or closure"))?
                 }
             }

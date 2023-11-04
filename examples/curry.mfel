@@ -1,7 +1,7 @@
 ### currying/uncurrying is performed automatically
 
 def f(x,y,z) {
-    closure (w) {
+    lambda (w) {
         x+y*z+w
     }
 }
