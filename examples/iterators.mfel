@@ -1,6 +1,5 @@
 ### in addition to working on arrays, the for loop works with iterators.
-### an iterator is a zero-argument closure that returns
-###  the unit type "nil" when done,
+### an iterator is a zero-argument closure that returns nil when done,
 ###  otherwise it returns the next value
 ###
 

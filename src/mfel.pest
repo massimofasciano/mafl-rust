@@ -44,7 +44,7 @@ float = @{
     ("." ~ ASCII_DIGIT+)? ~
     (^"e" ~ ("+" | "-")? ~ ASCII_DIGIT+)?
 }
-unit_literal = @{ "nil" }
+nil_literal = @{ "nil" }
 boolean = _{ true | false }
 true = { "true" }
 false = { "false" }
@@ -184,7 +184,7 @@ expr_post = { expr_apply_or_field ~ (question|exclam)* }
 expr_apply_or_field = { expr_prefix ~ (apply_args | field_access)* }
 expr_prefix = { (not|neg|ref|deref)* ~ expr_base }
 expr_base = _{
-    "(" ~ expr ~ ")" | unit_literal |
+    "(" ~ expr ~ ")" | nil_literal |
     array |
     block | if | 
     while | unless | do_while | loop | for |
@@ -197,15 +197,15 @@ expr_base = _{
 expr_block = _{ block | if | while | unless | loop | for | def | module }
 
 semicolons = _{ ";" ~ semicolons | ";" }
-unit_implicit = { "" }
+nil_implicit = { "" }
 // sequence = expressions separated by semicolon(s)
 // expressions that behave like blocks don't need the semicolon
-// if trailing semicolon, implicit unit value is added
+// if trailing semicolon, implicit nil value is added
 sequence = _{ sequence_nonempty | sequence_empty }
 sequence_nonempty = _{
     expr_block ~ sequence_nonempty | expr ~ semicolons ~ sequence | expr
 }
-sequence_empty = _{ unit_implicit }
+sequence_empty = _{ nil_implicit }
 
 // a program file is a sequence of expressions
 file = {

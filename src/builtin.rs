@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::io::{self, BufRead, stdout, Write};
 use std::fmt::Write as _;
 
-use crate::{expression::{Expression, self, unit, closure, ExpressionType}, parse_source, context::Context, Interpreter};
+use crate::{expression::{Expression, self, nil, closure, ExpressionType}, parse_source, context::Context, Interpreter};
 use anyhow::{Result,anyhow};
 use log::debug;
 
@@ -122,7 +122,7 @@ pub fn gt(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression>
         (ExpressionType::Integer(a), ExpressionType::Integer(b)) => ExpressionType::Boolean(a>b),
         (ExpressionType::String(a), ExpressionType::String(b)) => ExpressionType::Boolean(a>b),
         (ExpressionType::Boolean(a), ExpressionType::Boolean(b)) => ExpressionType::Boolean(a>b),
-        (ExpressionType::Unit, ExpressionType::Unit) => ExpressionType::Boolean(false),
+        (ExpressionType::Nil, ExpressionType::Nil) => ExpressionType::Boolean(false),
         _ => Err(anyhow!("gt {lhs:?} {rhs:?}"))?,
     }.into())
 }
@@ -133,7 +133,7 @@ pub fn lt(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression>
         (ExpressionType::Integer(a), ExpressionType::Integer(b)) => ExpressionType::Boolean(a<b),
         (ExpressionType::String(a), ExpressionType::String(b)) => ExpressionType::Boolean(a<b),
         (ExpressionType::Boolean(a), ExpressionType::Boolean(b)) => ExpressionType::Boolean(a<b),
-        (ExpressionType::Unit, ExpressionType::Unit) => ExpressionType::Boolean(false),
+        (ExpressionType::Nil, ExpressionType::Nil) => ExpressionType::Boolean(false),
         _ => Err(anyhow!("lt {lhs:?} {rhs:?}"))?,
     }.into())
 }
@@ -177,27 +177,27 @@ pub fn not(_: &Context, val: &Expression) -> Result<Expression> {
 pub fn print(_: &Context, args: &[Expression]) -> Result<Expression> {
     for arg in args { print!("{arg}"); }
     stdout().flush()?;
-    Ok(unit())
+    Ok(nil())
 }
 
 pub fn println(_: &Context, args: &[Expression]) -> Result<Expression> {
     for arg in args { print!("{arg}"); }
     println!();
     stdout().flush()?;
-    Ok(unit())
+    Ok(nil())
 }
 
 pub fn debug(_: &Context, args: &[Expression]) -> Result<Expression> {
     for arg in args { print!("{arg:?}"); }
     stdout().flush()?;
-    Ok(unit())
+    Ok(nil())
 }
 
 pub fn debugln(_: &Context, args: &[Expression]) -> Result<Expression> {
     for arg in args { print!("{arg:#?}"); }
     println!();
     stdout().flush()?;
-    Ok(unit())
+    Ok(nil())
 }
 
 pub fn eval_string_as_source(interpreter: &Interpreter, ctx: &Context, arg: &Expression) -> Result<Expression> {
@@ -340,13 +340,13 @@ pub fn read_file(_ctx: &Context, file_expr: &Expression) -> Result<Expression> {
 }
 
 pub fn capture_context(ctx: &Context) -> Result<Expression> {
-    Ok(expression::closure(ctx.capture(),vec![],unit()))
+    Ok(expression::closure(ctx.capture(),vec![],nil()))
 }
 
 pub fn type_of(_: &Context, expr: &Expression) -> Result<Expression> {
     debug!("type of");
     Ok(ExpressionType::String(match expr.as_ref() {
-        ExpressionType::Unit => "()",
+        ExpressionType::Nil => "()",
         ExpressionType::Float(_) => "Float",
         ExpressionType::Integer(_) => "Integer",
         ExpressionType::String(_) => "String",
@@ -365,7 +365,7 @@ pub fn read_line(_ctx: &Context) -> Result<Expression> {
     if let Some(line_result) = next_line {
         Ok(ExpressionType::String(line_result?).into())
     } else {
-        Ok(unit())
+        Ok(nil())
     }
 }
 
@@ -432,7 +432,7 @@ pub fn insert(_ctx: &Context, container: &Expression, key: &Expression, value: &
 
 pub fn dict(_ctx: &Context) -> Result<Expression> {
     debug!("new dict");
-    Ok(closure(Context::new(),vec![],unit()))
+    Ok(closure(Context::new(),vec![],nil()))
 }
 
 pub fn dict_extend(_ctx: &Context, parent: &Expression) -> Result<Expression> {

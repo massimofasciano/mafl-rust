@@ -22,7 +22,7 @@ pub enum ExpressionType {
     Variable(String),
     InfixOp(String),
     BuiltinFunction(String),
-    Unit,
+    Nil,
     Block(Expressions),
     Sequence(Expressions),
     FunctionCall(Expression,Expressions),
@@ -63,7 +63,7 @@ impl PartialEq for ExpressionType {
             (ExpressionType::Character(a),ExpressionType::Character(b)) => a == b,
             (ExpressionType::String(a),ExpressionType::String(b)) => a == b,
             (ExpressionType::Boolean(a),ExpressionType::Boolean(b)) => a == b,
-            (ExpressionType::Unit,ExpressionType::Unit) => true,
+            (ExpressionType::Nil,ExpressionType::Nil) => true,
             (ExpressionType::Array(a),ExpressionType::Array(b)) => a == b,
             (ExpressionType::GtOp,ExpressionType::GtOp) => true,
             (ExpressionType::GeOp,ExpressionType::GeOp) => true,
@@ -98,7 +98,7 @@ impl ExpressionType {
 impl std::fmt::Display for ExpressionType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ExpressionType::Unit => write!(f,"nil"),
+            ExpressionType::Nil => write!(f,"nil"),
             ExpressionType::Boolean(a) => write!(f,"{a}"),
             ExpressionType::Float(a) => write!(f,"{a}"),
             ExpressionType::Integer(a) => write!(f,"{a}"),
@@ -141,8 +141,8 @@ pub fn string(s: String) -> Expression {
     ExpressionType::String(s).into()
 }
 
-pub fn unit() -> Expression {
-    ExpressionType::Unit.into()
+pub fn nil() -> Expression {
+    ExpressionType::Nil.into()
 }
 
 pub fn closure(ctx: Context, args: Strings, body: Expression) -> Expression {

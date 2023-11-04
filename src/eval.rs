@@ -6,7 +6,7 @@ impl Interpreter {
 
     pub fn eval(&self, ctx: &Context, ast: Expression) -> Result<Expression> {
         Ok(match ast.as_ref() {
-            ExpressionType::Unit |
+            ExpressionType::Nil |
             ExpressionType::Integer(_) |
             ExpressionType::Float(_) |
             ExpressionType::Character(_) |
@@ -17,7 +17,7 @@ impl Interpreter {
             ExpressionType::Block(exprs) => {
                 debug!("eval block");
                 let ctx = &ctx.with_new_scope();
-                let mut block_value = expression::unit();
+                let mut block_value = expression::nil();
                 for expr in exprs {
                     block_value = self.eval(ctx,expr.to_owned())?;
                 }
@@ -25,7 +25,7 @@ impl Interpreter {
             }
             ExpressionType::Sequence(exprs) => {
                 debug!("eval sequence");
-                let mut seq_value = expression::unit();
+                let mut seq_value = expression::nil();
                 for expr in exprs {
                     seq_value = self.eval(ctx,expr.to_owned())?;
                 }
@@ -88,7 +88,7 @@ impl Interpreter {
             }
             ExpressionType::While(cond, body) => {
                 debug!("eval while");
-                let mut body_value = expression::unit();
+                let mut body_value = expression::nil();
                 let ctx = &ctx.with_new_scope();
                 #[allow(clippy::while_let_loop)]
                 loop {
@@ -134,9 +134,9 @@ impl Interpreter {
             ExpressionType::For(var, iterator, body) => {
                 debug!("eval for");
                 let iterator = self.eval(ctx, iterator.to_owned())?;
-                let mut body_value = expression::unit();
+                let mut body_value = expression::nil();
                 let ctx = &ctx.with_new_scope();
-                ctx.add_binding(var.to_owned(), expression::unit());
+                ctx.add_binding(var.to_owned(), expression::nil());
                 match self.eval(ctx,iterator.to_owned())?.as_ref() {
                     ExpressionType::Array(arr) => {
                         for v in arr.borrow().iter() {
@@ -148,7 +148,7 @@ impl Interpreter {
                         loop {
                             let apply = ExpressionType::FunctionCall(iterator.to_owned(), vec![]).into();
                             let next = self.eval(ctx, apply)?;
-                            if next == expression::unit() { break; }
+                            if next == expression::nil() { break; }
                             ctx.set_binding(var.to_owned(), next.to_owned());
                             body_value = self.eval(ctx,body.to_owned())?;
                         }

@@ -33,7 +33,7 @@ impl Interpreter {
         };
         let ctx = Context::new();
         builtin::include_str(&interpreter, &ctx, _STD_STR)?;
-        interpreter.std = expression::closure(ctx, vec![], expression::unit());
+        interpreter.std = expression::closure(ctx, vec![], expression::nil());
         Ok(interpreter)
     }
     pub fn run(&self, source: &str) -> Result<Expression>{
@@ -47,7 +47,7 @@ impl Default for Interpreter {
     fn default() -> Self {
         Self {  
             env: expression::array(vec![]),
-            std: expression::unit(),
+            std: expression::nil(),
             id: RefCell::new(0 as ScopeID),
             ctx: Context::new(),
         }

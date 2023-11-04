@@ -13,7 +13,7 @@ fn parse_block(parsed: Pair<Rule>) -> Result<Expression> {
         })
         .collect::<Result<Vec<Expression>>>()?;
     Ok(match sequence.len() {
-        0 => ExpressionType::Unit.into(),
+        0 => ExpressionType::Nil.into(),
         1 => sequence[0].clone(),
         _ => match rule { 
             Rule::block => ExpressionType::Block(sequence).into(),
@@ -124,7 +124,7 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 assert!(inner[1].as_rule() == Rule::block);
                 let then = parse_rule(inner[1].clone())?;
                 let r#else = if inner.len() < 3 {
-                    ExpressionType::Unit.into()
+                    ExpressionType::Nil.into()
                 } else {
                     parse_rule(inner[2].clone())?
                 };
@@ -191,7 +191,7 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 let body = if inner.len() == 1 {
                     parse_rule(inner[0].clone())?
                 } else {
-                    ExpressionType::Unit.into()
+                    ExpressionType::Nil.into()
                 };
                 ExpressionType::Return(body).into() 
             },
@@ -216,8 +216,8 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
             ExpressionType::Character(unescape_string(parsed.as_str()).chars().next().unwrap()).into() 
         },
         Rule::variable => { ExpressionType::Variable(parsed.as_str().to_owned()).into() },
-        Rule::unit_literal => { ExpressionType::Unit.into() },
-        Rule::unit_implicit => { ExpressionType::Unit.into() },
+        Rule::nil_literal => { ExpressionType::Nil.into() },
+        Rule::nil_implicit => { ExpressionType::Nil.into() },
         Rule::r#true => { ExpressionType::Boolean(true).into() },
         Rule::r#false => { ExpressionType::Boolean(false).into() },
         Rule::r#ref => { ExpressionType::RefOp.into() },
