@@ -1,6 +1,6 @@
 use crate::{expression::{ExpressionType, Expression, self}, builtin, context::Context, Interpreter};
 use anyhow::{Result,anyhow};
-use log::{debug, error};
+use log::debug;
 
 impl Interpreter {
 

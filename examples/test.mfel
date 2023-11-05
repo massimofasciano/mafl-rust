@@ -31,7 +31,7 @@ def bindings(mod) {
 
 bindings(test); @println();
 
-let test2 := @copy(test); # only works at top level!!!
+let test2 := @copy(test);
 
 #@println(test,test2);
 

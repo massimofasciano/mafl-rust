@@ -1,7 +1,10 @@
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::io::{self, BufRead, stdout, Write};
 use std::fmt::Write as _;
+use std::rc::Rc;
 
+use crate::context::MemCell;
 use crate::{expression::{Expression, self, nil, closure, ExpressionType}, parse_source, context::Context, Interpreter};
 use anyhow::{Result,anyhow};
 use log::debug;
@@ -487,7 +490,13 @@ pub fn copy(ctx: &Context, val: &Expression) -> Result<Expression> {
             expression::array(ac)
         }
         ExpressionType::Closure(cctx,args,body) => {
-            expression::closure(cctx.flatten_clone(), args.to_owned(), body.to_owned())   
+            // single level copy
+            // expression::closure(cctx.flatten_clone(), args.to_owned(), body.to_owned())   
+            // recursive copy
+            let copyrec = cctx.bindings_cloned().into_iter().map(|(k,v)| {
+                (k, MemCell::new_ref(copy(ctx, &v.get()).unwrap()))
+            }).collect::<HashMap<String,Rc<MemCell>>>();
+            expression::closure(cctx.with_bindings(copyrec), args.to_owned(), body.to_owned())   
         }
         _ => val.to_owned(),
     })

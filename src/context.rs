@@ -187,6 +187,12 @@ impl Context {
         debug!("bindings cloned");
         self.bindings_ref().into_iter().map(| (k, rc) | { (k, rc.duplicate_ref()) }).collect()
     }
+    pub fn with_bindings(&self, bindings: HashMap<String,Rc<MemCell>>) -> Self {
+        debug!("with bindings");
+        let scope = Scope::new();
+        *scope.bindings.borrow_mut() = bindings;
+        scope.into()
+    }
 }
 
 impl Default for Context {
