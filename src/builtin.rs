@@ -223,9 +223,6 @@ pub fn array(interpreter: &Interpreter, ctx: &Context, size: &Expression, init: 
                 ExpressionType::Closure(_, _, _) => {
                     interpreter.eval(ctx, ExpressionType::FunctionCall(init.to_owned(), vec![ExpressionType::Integer(i).into()]).into())?
                 }
-                ExpressionType::DynFn(_, _) => {
-                    interpreter.eval(ctx, ExpressionType::FunctionCall(init.to_owned(), vec![ExpressionType::Integer(i).into()]).into())?
-                }
                 _ => init.to_owned(),
             };
             arr.push(init);

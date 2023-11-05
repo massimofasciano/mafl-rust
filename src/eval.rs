@@ -205,14 +205,6 @@ impl Interpreter {
                 debug!("eval function closure");
                 ExpressionType::Closure(ctx.capture(), arg_names.to_owned(), body.to_owned()).into()
             }
-            ExpressionType::StaticFn(arg_names, body) => {
-                debug!("eval function static");
-                ExpressionType::Closure(Context::new(), arg_names.to_owned(), body.to_owned()).into()
-            }
-            ExpressionType::DynFn(_arg_names, _body) => {
-                debug!("eval function dynamic");
-                ast.to_owned()
-            }
             ExpressionType::FunctionCall(lambda, arg_values) => {
                 debug!("eval function call");
                 match self.eval(ctx,lambda.to_owned())?.as_ref() {
@@ -295,12 +287,6 @@ impl Interpreter {
                         } else {
                             self.eval(&function_ctx,body.to_owned())?
                         }
-                    },
-                    ExpressionType::DynFn(arg_names, body) => {
-                        // a dynamic function is applied in the global context
-                        // so we create a closure at application time and apply it
-                        let closure = expression::closure(ctx.to_owned(), arg_names.to_owned(), body.to_owned());
-                        self.eval(ctx, ExpressionType::FunctionCall(closure, arg_values.to_owned()).into())?
                     },
                     _ => ast.to_error()?
                 }

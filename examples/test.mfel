@@ -12,7 +12,7 @@ module test (z) {
     #let c1 := @context;
 }
 
-def bindings(mod) {
+function bindings(mod) {
     let arr := @array(mod);
     if @type(arr) == "Error" {
         @print(mod)
@@ -85,14 +85,10 @@ r := r + 100;
 let q = &c in q := q + 1;
 @println(v," ",c," ",r);
 
-def reftest(r) {
-    if @type(r) == "Ref" {
-        r := *r + 1;
-    } else {
-        r := r + 1;
-    }
+let reftest := function (r) {
+    r := r + 1;
     @println("inside: ",r);
-}
+};
 
 reftest(v);
 @println("outside: ",v);
@@ -109,3 +105,5 @@ let y := 10000;
 let zzz := 1;
 
 @println(dynclo(10));
+
+

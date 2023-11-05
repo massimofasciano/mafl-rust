@@ -65,20 +65,12 @@ array = { "[" ~ (expr ~ ("," ~ expr)*)? ~ "]"}
 
 function_args = { (identifier ~ ("," ~ identifier)*)? }
 
-function = {
-    "dynfn" ~ "(" ~ function_args ~ ")" ~ block
-}
-
 closure = {
-    "lambda" ~ "(" ~ function_args ~ ")" ~ block
-}
-
-staticfn = {
-    "staticfn" ~ "(" ~ function_args ~ ")" ~ block
+    ( "lambda" | "function" ) ~ "(" ~ function_args ~ ")" ~ block
 }
 
 def = {
-    "def" ~ identifier ~ "(" ~ function_args ~ ")" ~ block
+    ( "def" | "function" ) ~ identifier ~ "(" ~ function_args ~ ")" ~ block
 }
 
 context = {
@@ -188,7 +180,7 @@ expr_base = _{
     array |
     block | if | 
     while | unless | do_while | loop | for |
-    let | let_in | def | function | closure | staticfn | assign | context | module |
+    let | let_in | def | closure | assign | context | module |
     return | continue | break |
     boolean | float | integer | string_literal | char_literal | variable 
 }

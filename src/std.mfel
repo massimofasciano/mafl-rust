@@ -7,7 +7,7 @@
 ## iterators and iterator functions
 module iter () {
 
-    def range(start,end) {
+    function range(start,end) {
         lambda() {
             if start < end {
                 let count := start;
@@ -16,34 +16,34 @@ module iter () {
             }
         }
     }
-    def collect(iter) {
+    function collect(iter) {
         let out := @array(0,nil);
         for e in iter { @append(out,e); }
         out
     }
-    def map(f,iter) {
+    function map(f,iter) {
         let out := @array(0,nil);
         for e in iter { @append(out,f(e)); }
         out
     }
-    def fold(f,acc,iter) {
+    function fold(f,acc,iter) {
         for e in iter { acc := f(acc,e) }
         acc
     }
-    def sum(iter) {
+    function sum(iter) {
         fold(lambda(x,y){x+y}, 0, iter)
     }
-    def prod(iter) {
+    function prod(iter) {
         fold(lambda(x,y){x*y}, 1, iter)
     }
-    def filter(f,iter) {
+    function filter(f,iter) {
         let out := @array(0,nil);
         for e in iter {
             if f(e) { @append(out,e); }
         }
         out
     }
-    def foreach(f,a) {
+    function foreach(f,a) {
         for e in a { f(e) }
     }
 }
@@ -51,7 +51,7 @@ module iter () {
 ## array functions
 module array () {
 
-    def reduce(f,arr) {
+    function reduce(f,arr) {
         if @len(arr) < 1 { 
             @error("reduce called on empty array")
         } else {
@@ -64,7 +64,7 @@ module array () {
             acc
         }
     }
-    def reverse(arr) {
+    function reverse(arr) {
         # reverses the array in place
         let back := @len(arr)-1;
         let front := 0;

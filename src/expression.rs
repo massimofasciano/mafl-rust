@@ -45,8 +45,6 @@ pub enum ExpressionType {
     Context(Strings,Expression),
     Module(String,Strings,Expression),
     Def(String,Strings,Expression),
-    StaticFn(Strings,Expression),
-    DynFn(Strings,Expression),
     Lambda(Strings,Expression),
     PrintableClosure(Strings,Strings,Expression),
     Closure(Context,Strings,Expression),
