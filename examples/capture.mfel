@@ -1,70 +1,73 @@
-### !!!!!! this example must be adjusted for the new capture behavior and Memcells !!!!!
-
-### @context captures the current state of all variables
-### -> the global context is now empty and has the captured context as a parent
-### -> any new bindings in the global context will not affect the
-###  captured context (this is how lambdas work)
-### -> any new bindings in the captured context will be visible in the
-###  global context until they are shadowed (new binding of same name)
-### get on the child/global will continue to the parent    (x)
-### set on the child/global will continue to the parent    (x := ...)
-### insert on the child/global does not affect the parent  (let x := ...)
-### insert on the parent (captured) does not affect the child/global   (@insert(c,"x",...))
-###
+### @context captures the current state of all variables by reference
+### (this is what happens internally when a lambda is defined)
+### the captured context inherits the global one
 
 let x := 1;
 let y := 2;
 
+@println("test 1");
 @set(@context,"y",y+x);
 @set(@context,"y",@get(@context,"y")+@get(@context,"x"));
+# y is changed because the capture is by reference
 @println("y=",@get(@context,"y"));
+# y=4
 @println("y=",y);
+# y=4
 @insert(@context,"z",3);
 @println("z=",z);
-# y=4
-# y=4
-# z=3
+# z not found (it was inserted in the captured context that is gone now)
 @println();
 
+@println("test 2");
 let c := @context; # captured to c
 @println("x=",x);
-@println("c.x=",c.x);
 # x=1
+@println("c.x=",c.x);
 # c.x=1
 @println();
 
+@println("test 3");
 @insert(c,"x",100);
+# this x shadows the old one only inside c
 @println("x=",x);
+# x=1
 @println("c.x=",c.x);
-# x=100
 # c.x=100
 @println();
 
+@println("test 4");
+# the global x is changed but the one inside x has been shadowed above
 x := x + 1;
 @println("x=",x);
+# x=2
 @println("c.x=",c.x);
-# x=101
+# c.x=100
+@println();
+
+@println("test 5");
+# the x inside c is incremented
+@set(c,"x",@get(c,"x") + 1);
+@println("x=",x);
+# x=2
+@println("c.x=",c.x);
 # c.x=101
 @println();
 
-@set(c,"x",@get(c,"x") + 1);
-@println("x=",x);
-@println("c.x=",c.x);
-# x=102
-# c.x=102
-@println();
-
+@println("test 6");
+# the global x is shadowed
 let x := x + 1;
 @println("x=",x);
+# x=3
 @println("c.x=",c.x);
-# x=103
-# c.x=102
+# c.x=101
 @println();
 
+@println("test 7");
+# x is shadowed again inside c
 @insert(c,"x",10);
 @println("x=",x);
+# x=3
 @println("c.x=",c.x);
-# x=103
 # c.x=10
 @println();
 
