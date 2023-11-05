@@ -35,14 +35,29 @@ impl Interpreter {
                 debug!("eval let {id} in");
                 let val = self.eval(ctx,val.to_owned())?;
                 let ctx = &ctx.with_new_scope();
-                ctx.add_binding(id.to_owned(), val.to_owned());
+                match val.as_ref() {
+                    ExpressionType::Ref(rc) => {
+                        ctx.add_binding_ref(id.to_owned(), rc.to_owned());
+                    }
+                    _ => {
+                        ctx.add_binding(id.to_owned(), val.to_owned());
+                    }
+                }
                 self.eval(ctx,expr.to_owned())?
             }
             ExpressionType::Let(id, val) => {
                 debug!("eval var declaration: {id}");
                 let val = self.eval(ctx,val.to_owned())?;
-                ctx.add_binding(id.to_owned(), val.to_owned());
-                val
+                match val.as_ref() {
+                    ExpressionType::Ref(rc) => {
+                        ctx.add_binding_ref(id.to_owned(), rc.to_owned());
+                        val
+                    }
+                    _ => {
+                        ctx.add_binding(id.to_owned(), val.to_owned());
+                        val
+                    }
+                }
             }
             ExpressionType::Def(fname, arg_names, body) => {
                 debug!("eval function definition {fname} {arg_names:?}");
@@ -55,10 +70,21 @@ impl Interpreter {
             ExpressionType::Assign(id, val) => {
                 debug!("eval assign to identifier: {id}");
                 let val = self.eval(ctx,val.to_owned())?;
-                if ctx.set_binding(id.to_owned(), val.to_owned()).is_none() {
-                    Err(anyhow!("binding not found {id}"))?
-                } else {
-                    val
+                match val.as_ref() {
+                    ExpressionType::Ref(rc) => {
+                        if ctx.set_binding_ref(id.to_owned(), rc.to_owned()).is_none() {
+                            Err(anyhow!("binding not found {id}"))?
+                        } else {
+                            val
+                        }
+                    }
+                    _ => {
+                        if ctx.set_binding(id.to_owned(), val.to_owned()).is_none() {
+                            Err(anyhow!("binding not found {id}"))?
+                        } else {
+                            val
+                        }
+                    }
                 }
             }
             ExpressionType::Variable(s) => {
@@ -326,9 +352,9 @@ impl Interpreter {
             }
             ExpressionType::UnaryOpCall(op, expr) => {
                 debug!("eval unary op call");
-                // if op.as_ref() == &ExpressionType::RefOp {
-                //     return builtin::ref_var(ctx,&expr.to_owned());
-                // }
+                if op.as_ref() == &ExpressionType::RefOp {
+                    return builtin::ref_var(ctx,&expr.to_owned());
+                }
                 let expr = self.eval(ctx,expr.to_owned())?;
                 match op.as_ref() {
                     ExpressionType::NegOp => builtin::neg(ctx,&expr.to_owned())?,

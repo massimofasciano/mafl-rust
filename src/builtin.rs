@@ -502,3 +502,17 @@ pub fn copy(ctx: &Context, val: &Expression) -> Result<Expression> {
     })
 }
 
+pub fn ref_var(ctx: &Context, var: &Expression) -> Result<Expression> {
+    debug!("ref_var {var}");
+    Ok(match var.as_ref() {
+        ExpressionType::Variable(s) => {
+            if let Some(rc) = ctx.get_binding_ref(s) {
+                ExpressionType::Ref(rc).into()
+            } else {
+                expression::error(format!("binding not found {s}"))
+            }
+        }
+        _ => Err(anyhow!("ref on non-variable {var}"))?,
+    })
+}
+

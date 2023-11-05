@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 use anyhow::{anyhow, Result};
 use pest_derive::Parser;
-use crate::context::Context;
+use crate::context::{Context, MemCell};
 
 #[derive(Parser)]
 #[grammar = "mfel.pest"]
@@ -52,6 +52,8 @@ pub enum ExpressionType {
     Closure(Context,Strings,Expression),
     Array(RefCell<Expressions>),
     Return(Expression),
+    RefSyntax(String),
+    Ref(Rc<MemCell>),
     Continue, Break,
 }
 

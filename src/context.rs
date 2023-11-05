@@ -133,13 +133,29 @@ impl Context {
         let scope = &self.inner;
         scope.bindings.borrow_mut().insert(var, MemCell::new_ref(value)).map(|old| old.get())
     }
+    pub fn add_binding_ref(&self, var: String, value: Rc<MemCell>) -> Option<Rc<MemCell>> {
+        debug!("add binding ref: {var} <- {}",value.get());
+        let scope = &self.inner;
+        scope.bindings.borrow_mut().insert(var, value)
+    }
     pub fn get_binding(&self, var: &str) -> Option<Expression> {
         debug!("get binding: {var}");
         let scope = &self.inner;
-        if let Some(cell) = scope.bindings.borrow().get(var) {
-            Some(cell.get())
+        if let Some(rc) = scope.bindings.borrow().get(var) {
+            Some(rc.get())
         } else if let Some(parent) = scope.parent.borrow().as_ref() {
             parent.get_binding(var)
+        } else {
+            None
+        }
+    }
+    pub fn get_binding_ref(&self, var: &str) -> Option<Rc<MemCell>> {
+        debug!("get binding ref: {var}");
+        let scope = &self.inner;
+        if let Some(rc) = scope.bindings.borrow().get(var) {
+            Some(rc.to_owned())
+        } else if let Some(parent) = scope.parent.borrow().as_ref() {
+            parent.get_binding_ref(var)
         } else {
             None
         }
@@ -147,10 +163,21 @@ impl Context {
     pub fn set_binding(&self, var: String, value: Expression) -> Option<Expression> {
         debug!("set binding: {var} <- {value}");
         let scope = &self.inner;
-        if let Some(cell) = scope.bindings.borrow().get(&var) {
-            Some(cell.set(value))
+        if let Some(rc) = scope.bindings.borrow().get(&var) {
+            Some(rc.set(value))
         } else if scope.parent.borrow().is_some() {
             scope.parent.borrow().as_ref().unwrap().set_binding(var,value)
+        } else {
+            None
+        }
+    }
+    pub fn set_binding_ref(&self, var: String, value: Rc<MemCell>) -> Option<Rc<MemCell>> {
+        debug!("set binding ref: {var} <- {}",value.get());
+        let scope = &self.inner;
+        if scope.bindings.borrow().contains_key(&var) {
+            scope.bindings.borrow_mut().insert(var, value)
+        } else if scope.parent.borrow().is_some() {
+            scope.parent.borrow().as_ref().unwrap().set_binding_ref(var,value)
         } else {
             None
         }
