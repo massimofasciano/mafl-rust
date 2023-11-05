@@ -31,6 +31,10 @@ impl Interpreter {
                 }
                 seq_value
             }
+            ExpressionType::Ref(rc) => {
+                debug!("eval ref");
+                rc.get()
+            }
             ExpressionType::LetIn(id, val, expr) => {
                 debug!("eval let {id} in");
                 let val = self.eval(ctx,val.to_owned())?;
@@ -271,13 +275,13 @@ impl Interpreter {
                         let function_ctx = closure_ctx.with_new_scope();
                         for (name,value) in arg_names.iter().zip(arg_values) {
                             // function_ctx.add_binding(name.to_owned(), self.eval(ctx,value.to_owned())?);
-                            let val = self.eval(ctx,value.to_owned())?;
-                            match val.as_ref() {
+                            let value = self.eval(ctx,value.to_owned())?;
+                            match value.as_ref() {
                                 ExpressionType::Ref(rc) => {
                                     function_ctx.add_binding_ref(name.to_owned(), rc.to_owned());
                                 }
                                 _ => {
-                                    function_ctx.add_binding(name.to_owned(), val.to_owned());
+                                    function_ctx.add_binding(name.to_owned(), value.to_owned());
                                 }
                             }
                         }
@@ -342,8 +346,6 @@ impl Interpreter {
                         self.eval(ctx,ExpressionType::FunctionCall(fvar, vec![left,right]).into())?
                     },
                     ExpressionType::PipeOp => self.eval(ctx,ExpressionType::FunctionCall(right, vec![left]).into())?,
-                    // Expression::AndOp => builtin::and(ctx,&left,&right)?,
-                    // Expression::OrOp => builtin::or(ctx,&left,&right)?,
                     ExpressionType::AddOp => builtin::add(ctx,&left,&right)?,
                     ExpressionType::SubOp => builtin::sub(ctx,&left,&right)?,
                     ExpressionType::MultOp => builtin::mul(ctx,&left,&right)?,
@@ -368,6 +370,7 @@ impl Interpreter {
                 match op.as_ref() {
                     ExpressionType::NegOp => builtin::neg(ctx,&expr.to_owned())?,
                     ExpressionType::NotOp => builtin::not(ctx,&expr.to_owned())?,
+                    ExpressionType::DeRefOp => self.eval(ctx,expr.to_owned())?,
                     _ => ast.to_error()?,
                 }
             }

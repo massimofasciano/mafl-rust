@@ -52,7 +52,6 @@ pub enum ExpressionType {
     Closure(Context,Strings,Expression),
     Array(RefCell<Expressions>),
     Return(Expression),
-    RefSyntax(String),
     Ref(Rc<MemCell>),
     Continue, Break,
 }

@@ -352,6 +352,7 @@ pub fn type_of(_: &Context, expr: &Expression) -> Result<Expression> {
         ExpressionType::Array(_) => "Array",
         ExpressionType::Error(_) => "Error",
         ExpressionType::Closure(_,_,_) => "Closure",
+        ExpressionType::Ref(_) => "Ref",
         _ => Err(anyhow!("type of {expr:?}"))?,
     }.to_owned()).into())
 }

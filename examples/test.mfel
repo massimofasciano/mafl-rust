@@ -86,11 +86,15 @@ let q = &c in q := q + 1;
 @println(v," ",c," ",r);
 
 def reftest(r) {
-    r := r + 1;
-    @println(r);
+    if @type(r) == "Ref" {
+        r := *r + 1;
+    } else {
+        r := r + 1;
+    }
+    @println("inside: ",r);
 }
 
 reftest(v);
-@println(v);
+@println("outside: ",v);
 reftest(&v);
-@println(v);
+@println("outside: ",v);
