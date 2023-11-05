@@ -514,3 +514,22 @@ pub fn ref_var(ctx: &Context, var: &Expression) -> Result<Expression> {
     })
 }
 
+pub fn test_msg(_: &Context, msg: &Expression, left: &Expression, right: &Expression) -> Result<Expression> {
+    if left == right {
+        println!("test success: {msg} = {right}");
+    } else {
+        println!("test failure {msg}: {left} != {right}");
+    }
+    stdout().flush()?;
+    Ok(nil())
+}
+
+pub fn test(_: &Context, left: &Expression, right: &Expression) -> Result<Expression> {
+    if left == right {
+        println!("test success: {right}");
+    } else {
+        println!("test failure: {left} != {right}");
+    }
+    stdout().flush()?;
+    Ok(nil())
+}

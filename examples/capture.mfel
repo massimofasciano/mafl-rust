@@ -9,66 +9,52 @@ let y := 2;
 @set(@context,"y",y+x);
 @set(@context,"y",@get(@context,"y")+@get(@context,"x"));
 # y is changed because the capture is by reference
-@println("y=",@get(@context,"y"));
-# y=4
-@println("y=",y);
-# y=4
+@test("y",@get(@context,"y"),4);
+@test("y",y,4);
 @insert(@context,"z",3);
-@println("z=",z);
+@test("z",z,@error("binding not found z"));
 # z not found (it was inserted in the captured context that is gone now)
 @println();
 
 @println("test 2");
 let c := @context; # captured to c
-@println("x=",x);
-# x=1
-@println("c.x=",c.x);
-# c.x=1
+@test("x",x,1);
+@test("c.x",c.x,1);
 @println();
 
 @println("test 3");
 @insert(c,"x",100);
 # this x shadows the old one only inside c
-@println("x=",x);
-# x=1
-@println("c.x=",c.x);
-# c.x=100
+@test("x",x,1);
+@test("c.x",c.x,100);
 @println();
 
 @println("test 4");
 # the global x is changed but the one inside x has been shadowed above
 x := x + 1;
-@println("x=",x);
-# x=2
-@println("c.x=",c.x);
-# c.x=100
+@test("x",x,2);
+@test("c.x",c.x,100);
 @println();
 
 @println("test 5");
 # the x inside c is incremented
 @set(c,"x",@get(c,"x") + 1);
-@println("x=",x);
-# x=2
-@println("c.x=",c.x);
-# c.x=101
+@test("x",x,2);
+@test("c.x",c.x,101);
 @println();
 
 @println("test 6");
 # the global x is shadowed
 let x := x + 1;
-@println("x=",x);
-# x=3
-@println("c.x=",c.x);
-# c.x=101
+@test("x",x,3);
+@test("c.x",c.x,101);
 @println();
 
 @println("test 7");
 # x is shadowed again inside c
 @insert(c,"x",10);
-@println("x=",x);
-# x=3
-@println("c.x=",c.x);
-# c.x=10
+@test("x",x,3);
+@test("c.x",c.x,10);
 @println();
 
 #@println(@context);
