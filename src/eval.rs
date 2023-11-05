@@ -384,6 +384,7 @@ impl Interpreter {
 
     pub fn builtin_fn(&self, ctx: &Context, name: &str, args: &[Expression]) -> Result<Expression> {
         match (name, args) {
+            ("call", [callable, args]) => { builtin::call(self, ctx, callable, args) },
             ("println", args) => { builtin::println(ctx, args) },
             ("print", args) => { builtin::print(ctx, args) },
             ("debugln", args) => { builtin::debugln(ctx, args) },
@@ -393,6 +394,8 @@ impl Interpreter {
             ("include", [file_expr]) => builtin::include(self, ctx, file_expr),
             ("readfile", [file_expr]) => builtin::read_file(ctx, file_expr),
             ("pow", [lhs, rhs]) => builtin::pow(ctx, lhs, rhs),
+            ("exp", [val]) => builtin::exp(ctx, val),
+            ("log", [val]) => builtin::log(ctx, val),
             ("add", [lhs, rhs]) => builtin::add(ctx, lhs, rhs),
             ("sub", [lhs, rhs]) => builtin::sub(ctx, lhs, rhs),
             ("mul", [lhs, rhs]) => builtin::mul(ctx, lhs, rhs),

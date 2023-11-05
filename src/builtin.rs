@@ -20,6 +20,22 @@ pub fn pow(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression
     }.into())
 }
 
+pub fn exp(_: &Context, val: &Expression) -> Result<Expression> {
+    Ok(match val.as_ref() {
+        ExpressionType::Float(a) => ExpressionType::Float(a.exp()),
+        ExpressionType::Integer(a) => ExpressionType::Float((*a as f64).exp()),
+        _ => Err(anyhow!("exp {val:?}"))?,
+    }.into())
+}
+
+pub fn log(_: &Context, val: &Expression) -> Result<Expression> {
+    Ok(match val.as_ref() {
+        ExpressionType::Float(a) => ExpressionType::Float(a.ln()),
+        ExpressionType::Integer(a) => ExpressionType::Float((*a as f64).ln()),
+        _ => Err(anyhow!("log {val:?}"))?,
+    }.into())
+}
+
 pub fn add(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
         (ExpressionType::Float(a), ExpressionType::Float(b)) => ExpressionType::Float(a+b),
@@ -552,4 +568,13 @@ pub fn sleep(_: &Context, seconds: &Expression) -> Result<Expression> {
     Ok(seconds.to_owned())
 }
 
+pub fn call(interpreter: &Interpreter, ctx: &Context, callable: &Expression, args: &Expression) -> Result<Expression> {
+    match args.as_ref() {
+        ExpressionType::Array(args_vec) => {
+            let args_copy = args_vec.clone().into_inner();
+            interpreter.eval(ctx, ExpressionType::FunctionCall(callable.to_owned(), args_copy).into())
+        }
+        _ => Err(anyhow!("call {callable:?} {args:?}"))?
+    }
+}
 
