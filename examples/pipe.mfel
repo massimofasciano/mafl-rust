@@ -1,4 +1,4 @@
-def f(x) {
+function f(x) {
     if x == nil {
         nil
     } 

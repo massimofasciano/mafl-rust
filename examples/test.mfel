@@ -65,7 +65,7 @@ a(3)(3)(2,18);
 @println(a);
 @println(b);
 
-def plus(x,y) { x + y }
+function plus(x,y) { x + y }
 @println(4 `plus` 6);
 
 let v := 200;
@@ -97,7 +97,7 @@ reftest(&v);
 
 let x := 100000;
 let y := 100;
-def dynclo(x) {
+function dynclo(x) {
     x + y + zzz
 }
 

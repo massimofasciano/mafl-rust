@@ -1,6 +1,6 @@
 ### currying/uncurrying is performed automatically
 
-def f(x,y,z) {
+function f(x,y,z) {
     lambda (w) {
         x+y*z+w
     }

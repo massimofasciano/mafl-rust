@@ -52,7 +52,7 @@ let fibo2 := lambda (x) { 0 };
 
 # this creates a lambda with a circular reference to it's own name
 # it's syntactic sugar for the let + bind used for fibo2 above
-def fibo3(x) {
+function fibo3(x) {
     if x < 2 {
         x
     } else {

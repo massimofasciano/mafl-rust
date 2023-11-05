@@ -4,7 +4,7 @@
 ###
 
 # we define the range function that creates an iterator for start..end
-def range(start,end) {
+function range(start,end) {
     lambda() {
         if start < end {
             let count := start;

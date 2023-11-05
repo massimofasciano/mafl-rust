@@ -9,7 +9,7 @@
 
 let map := @std.iter.map;
 
-def f(args) {
+function f(args) {
     if @len(args) < 2 {
         @error("need at least 2 args, got ",@len(args))
     } else {
