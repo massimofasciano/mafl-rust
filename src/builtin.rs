@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::io::{self, BufRead, stdout, Write};
 use std::fmt::Write as _;
 use std::rc::Rc;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::context::MemCell;
 use crate::{expression::{Expression, self, nil, closure, ExpressionType}, parse_source, context::Context, Interpreter};
@@ -524,3 +525,11 @@ pub fn test(interpreter: &Interpreter, ctx: &Context, source: &Expression, expec
     stdout().flush()?;
     Ok(nil())
 }
+
+pub fn now(_: &Context) -> Result<Expression> {
+    debug!("now");
+    let now = SystemTime::now().duration_since(UNIX_EPOCH)?;
+    Ok(expression::float(now.as_nanos() as f64 * 10e-9))
+}
+
+

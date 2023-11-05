@@ -22,7 +22,7 @@ let y := 2;
 
 @println();
 
-#@println(@context);
+#@println(@context());
 
 {
     @assign("z",4);
@@ -33,7 +33,7 @@ let y := 2;
     @println("z=",z);
     # z=5
 
-    #@println(@context);
+    #@println(@context());
 }
 
 @println("z=",z);

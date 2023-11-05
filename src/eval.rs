@@ -376,7 +376,6 @@ impl Interpreter {
     pub fn builtin_var(&self, ctx: &Context, name: &str) -> Option<Result<Expression>> {
         match name {
             "env" => Some(Ok(self.env.to_owned())),
-            "context" => Some(builtin::capture_context(ctx)),
             "std" => { Some(Ok(self.std.to_owned())) }
             _ => None,
         }
@@ -416,7 +415,6 @@ impl Interpreter {
             ("copy", [container]) => builtin::copy(ctx, container),
             ("lines", [init]) => builtin::to_array_lines(ctx, init),
             ("append", [target, new]) => builtin::append(self, ctx, target, new),
-            ("ctx", []) => builtin::capture_context(ctx),
             ("readline", []) => builtin::read_line(ctx),
             ("get", [container, key]) => builtin::get(ctx, container, key),
             ("set", [container, key, value]) => builtin::set(ctx, container, key, value),
@@ -428,6 +426,8 @@ impl Interpreter {
             ("assign", [key, value]) => builtin::assign_var(ctx, key, value),
             ("let", [key, value]) => builtin::let_var(ctx, key, value),
             ("test", [source, expected]) => builtin::test(self, ctx, source, expected),
+            ("now", []) => builtin::now(ctx),
+            ("context", []) => builtin::capture_context(ctx),
             _ => Err(anyhow!("builtin {name}")),
         }
     }

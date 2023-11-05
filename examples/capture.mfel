@@ -1,4 +1,4 @@
-### @context captures the current state of all variables by reference
+### @context() captures the current state of all variables by reference
 ### (this is what happens internally when a lambda is defined)
 ### the captured context inherits the global one
 
@@ -6,18 +6,18 @@ let x := 1;
 let y := 2;
 
 @println("test 1");
-@set(@context,"y",y+x);
-@set(@context,"y",@get(@context,"y")+@get(@context,"x"));
+@set(@context(),"y",y+x);
+@set(@context(),"y",@get(@context(),"y")+@get(@context(),"x"));
 # y is changed because the capture is by reference
-@test("@get(@context,\"y\")",4);
+@test("@get(@context(),\"y\")",4);
 @test("y",4);
-@insert(@context,"z",3);
+@insert(@context(),"z",3);
 @test("z",@error("binding not found z"));
 # z not found (it was inserted in the captured context that is gone now)
 @println();
 
 @println("test 2");
-let c := @context; # captured to c
+let c := @context(); # captured to c
 @test("x",1);
 @test("c.x",1);
 @println();
@@ -57,4 +57,4 @@ let x := x + 1;
 @test("c.x",10);
 @println();
 
-#@println(@context);
+#@println(@context());

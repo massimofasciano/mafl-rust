@@ -7,9 +7,9 @@ module test (z) {
     module m (x,y,z) {
         # shadows x and y (by value)
         let f := lambda() { x + y + z };
-        #let c2 := @context;
+        #let c2 := @context();
     }
-    #let c1 := @context;
+    #let c1 := @context();
 }
 
 function bindings(mod) {
@@ -106,4 +106,4 @@ let zzz := 1;
 
 @println(dynclo(10));
 
-
+@now()
