@@ -243,14 +243,8 @@ pub fn to_array(ctx: &Context, init: &Expression) -> Result<Expression> {
             Ok(expression::array(arr))
         } 
         ExpressionType::Closure(cctx, _args, _body) => {
-            // let mut arr_args = vec![];
-            // for s in args {
-            //     arr_args.push(expression::string(s.to_owned()));
-            // }
-            // arr.push(expression::array(arr_args));
-            // arr.push(body.to_owned());
-            for (s, v) in cctx.bindings() {
-                let pair = vec![expression::string(s),v];
+            for (s, cell) in cctx.bindings_ref() {
+                let pair = vec![expression::string(s),cell.get()];
                 arr.push(expression::array(pair));
             }
             Ok(expression::array(arr))
@@ -493,7 +487,7 @@ pub fn copy(ctx: &Context, val: &Expression) -> Result<Expression> {
             expression::array(ac)
         }
         ExpressionType::Closure(cctx,args,body) => {
-            expression::closure(cctx.flatten(), args.to_owned(), body.to_owned())   
+            expression::closure(cctx.flatten_clone(), args.to_owned(), body.to_owned())   
         }
         _ => val.to_owned(),
     })

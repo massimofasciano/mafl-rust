@@ -1,13 +1,67 @@
-use std::{collections::HashMap, cell::RefCell, rc::Rc, mem::swap, fmt::Debug};
+use std::{collections::HashMap, cell::RefCell, rc::Rc};
 use log::debug;
-use crate::{expression::Expression, ScopeID};
+use crate::expression::Expression;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+pub type ScopeID = usize;
 static SCOPE_ID_SEQ: AtomicUsize = AtomicUsize::new(0);
-
-fn next_scope_id() -> usize {
+fn next_scope_id() -> ScopeID {
     SCOPE_ID_SEQ.fetch_add(1, Ordering::SeqCst);
     SCOPE_ID_SEQ.load(Ordering::SeqCst)
+}
+
+pub type MemID = usize;
+static MEM_ID_SEQ: AtomicUsize = AtomicUsize::new(0);
+fn next_mem_id() -> MemID {
+    MEM_ID_SEQ.fetch_add(1, Ordering::SeqCst);
+    MEM_ID_SEQ.load(Ordering::SeqCst)
+}
+
+#[derive(Debug)]
+pub struct MemCell {
+    inner: RefCell<Expression>,
+    id : MemID,
+}
+
+impl MemCell {
+    pub fn new(e : Expression) -> Self {
+        let new = Self {
+            inner: RefCell::new(e),
+            id : next_mem_id(),
+        };
+        debug!("new cell id={}",new.id); 
+        new
+    }
+    pub fn new_ref(e : Expression) -> Rc<Self> {
+        Rc::new(Self::new(e))
+    }
+    pub fn get(&self) -> Expression {
+        self.inner.borrow().to_owned()
+    }
+    pub fn set(&self, e: Expression) -> Expression {
+        let old = self.get();
+        *self.inner.borrow_mut() = e;
+        old
+    }
+    fn duplicate(&self) -> Self {
+        debug!("duplicating cell id={}", self.id);
+        Self::new(self.get())
+    }
+    fn duplicate_ref(&self) -> Rc<Self> {
+        Rc::new(self.duplicate())
+    }
+}
+
+impl Clone for MemCell {
+    fn clone(&self) -> Self {
+        self.duplicate()
+    }
+}
+
+impl Drop for MemCell {
+    fn drop(&mut self) {
+        debug!("dropping cell id={}", self.id);
+    }
 }
 
 #[repr(transparent)]
@@ -18,7 +72,7 @@ pub struct Context {
 
 #[derive(Debug,Clone)]
 struct Scope {
-    bindings: RefCell<HashMap<String,Expression>>,
+    bindings: RefCell<HashMap<String,Rc<MemCell>>>,
     parent: RefCell<Option<Context>>,
     id: ScopeID,
 }
@@ -36,18 +90,22 @@ impl Context {
     }
     pub fn capture(&self) -> Self {
         debug!("capture");
-        let captured = Context::new();
-        {   // we swap old and new in a block to contain the mut borrows
-            let new_bindings = &mut *captured.inner.bindings.borrow_mut();
-            let new_parent = &mut *captured.inner.parent.borrow_mut();
-            let old_bindings = &mut *self.inner.bindings.borrow_mut();
-            let old_parent = &mut *self.inner.parent.borrow_mut();
-            swap(old_bindings,new_bindings);
-            swap(old_parent,new_parent);
-            *old_parent = Some(captured.to_owned());
-        }
-        captured
+        self.flatten_ref()
     }
+    // pub fn capture(&self) -> Self {
+    //     debug!("capture");
+    //     let captured = Context::new();
+    //     {   // we swap old and new in a block to contain the mut borrows
+    //         let new_bindings = &mut *captured.inner.bindings.borrow_mut();
+    //         let new_parent = &mut *captured.inner.parent.borrow_mut();
+    //         let old_bindings = &mut *self.inner.bindings.borrow_mut();
+    //         let old_parent = &mut *self.inner.parent.borrow_mut();
+    //         swap(old_bindings,new_bindings);
+    //         swap(old_parent,new_parent);
+    //         *old_parent = Some(captured.to_owned());
+    //     }
+    //     captured
+    // }
     pub fn append(&self, ctx: &Self) {
         debug!("append");
         let mut end = self.to_owned();
@@ -71,15 +129,15 @@ impl Context {
         }
     }
     pub fn add_binding(&self, var: String, value: Expression) -> Option<Expression> {
-        debug!("add binding: {var} <- {value:?}");
+        debug!("add binding: {var} <- {value}");
         let scope = &self.inner;
-        scope.bindings.borrow_mut().insert(var, value)
+        scope.bindings.borrow_mut().insert(var, MemCell::new_ref(value)).map(|old| old.get())
     }
     pub fn get_binding(&self, var: &str) -> Option<Expression> {
         debug!("get binding: {var}");
         let scope = &self.inner;
-        if let Some(value) = scope.bindings.borrow().get(var) {
-            Some(value.to_owned())
+        if let Some(cell) = scope.bindings.borrow().get(var) {
+            Some(cell.get())
         } else if let Some(parent) = scope.parent.borrow().as_ref() {
             parent.get_binding(var)
         } else {
@@ -87,23 +145,23 @@ impl Context {
         }
     }
     pub fn set_binding(&self, var: String, value: Expression) -> Option<Expression> {
-        debug!("set binding: {var} <- {value:?}");
+        debug!("set binding: {var} <- {value}");
         let scope = &self.inner;
-        if scope.bindings.borrow().contains_key(&var) {
-            scope.bindings.borrow_mut().insert(var, value)
+        if let Some(cell) = scope.bindings.borrow().get(&var) {
+            Some(cell.set(value))
         } else if scope.parent.borrow().is_some() {
             scope.parent.borrow().as_ref().unwrap().set_binding(var,value)
         } else {
             None
         }
     }
-    pub fn flatten(&self) -> Self {
+    pub fn flatten_ref(&self) -> Self {
         debug!("copy merge");
         let scope = Scope::new();
-        *scope.bindings.borrow_mut() = self.bindings();
+        *scope.bindings.borrow_mut() = self.bindings_ref();
         scope.into()
     }
-    pub fn bindings(&self) -> HashMap<String,Expression> {
+    pub fn bindings_ref(&self) -> HashMap<String,Rc<MemCell>> {
         debug!("bindings");
         let mut bindings = HashMap::new();
         let mut current = self.to_owned();
@@ -118,6 +176,16 @@ impl Context {
             }
         }
         bindings
+    }
+    pub fn flatten_clone(&self) -> Self {
+        debug!("copy merge");
+        let scope = Scope::new();
+        *scope.bindings.borrow_mut() = self.bindings_cloned();
+        scope.into()
+    }
+    pub fn bindings_cloned(&self) -> HashMap<String,Rc<MemCell>> {
+        debug!("bindings cloned");
+        self.bindings_ref().into_iter().map(| (k, rc) | { (k, rc.duplicate_ref()) }).collect()
     }
 }
 
@@ -266,9 +334,12 @@ mod tests {
         assert_eq!(ctx1_cap.get_binding("v12"),Some(integer(112)));
         assert_eq!(ctx1.get_binding("v10"),Some(integer(110)));
         assert_eq!(ctx1.get_binding("v11"),Some(integer(111)));
-        assert_eq!(ctx1.get_binding("v12"),Some(integer(112)));
+        // old capture behavior before Memcells
+        // assert_eq!(ctx1.get_binding("v12"),Some(integer(112))); 
+        // new capture behavior with Memcells+flatten_ref
+        assert_eq!(ctx1.get_binding("v12"),None);
 
-        let ctx4m = ctx4.flatten();
+        let ctx4m = ctx4.flatten_clone();
         assert_eq!(ctx1.get_binding("v1"),Some(integer(11)));
         assert_eq!(ctx4m.get_binding("v1"),Some(integer(11)));
         ctx4.set_binding("v1".to_owned(), integer(411));
@@ -277,5 +348,15 @@ mod tests {
         ctx4m.set_binding("v1".to_owned(), integer(1411));
         assert_eq!(ctx1.get_binding("v1"),Some(integer(411)));
         assert_eq!(ctx4m.get_binding("v1"),Some(integer(1411)));
+
+        let ctx4r = ctx4.flatten_ref();
+        assert_eq!(ctx1.get_binding("v1"),Some(integer(411)));
+        assert_eq!(ctx4r.get_binding("v1"),Some(integer(411)));
+        ctx4.set_binding("v1".to_owned(), integer(2411));
+        assert_eq!(ctx1.get_binding("v1"),Some(integer(2411)));
+        assert_eq!(ctx4r.get_binding("v1"),Some(integer(2411)));
+        ctx4r.set_binding("v1".to_owned(), integer(3411));
+        assert_eq!(ctx1.get_binding("v1"),Some(integer(3411)));
+        assert_eq!(ctx4r.get_binding("v1"),Some(integer(3411)));
     }
 }

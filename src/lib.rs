@@ -1,4 +1,4 @@
-use std::{cell::RefCell, env::Args};
+use std::env::Args;
 use context::Context;
 use expression::Expression;
 use pest::Parser;
@@ -10,13 +10,10 @@ pub mod context;
 pub mod builtin;
 pub mod parse;
 
-pub type ScopeID = usize;
-
 #[derive(Debug,Clone)]
 pub struct Interpreter {
     pub env: Expression,
     pub std: Expression,
-    pub id: RefCell<ScopeID>,
     ctx: Context,
 }
 
@@ -48,7 +45,6 @@ impl Default for Interpreter {
         Self {  
             env: expression::array(vec![]),
             std: expression::nil(),
-            id: RefCell::new(0 as ScopeID),
             ctx: Context::new(),
         }
     }

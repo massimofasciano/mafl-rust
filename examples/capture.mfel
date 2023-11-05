@@ -1,3 +1,5 @@
+### !!!!!! this example must be adjusted for the new capture behavior and Memcells !!!!!
+
 ### @context captures the current state of all variables
 ### -> the global context is now empty and has the captured context as a parent
 ### -> any new bindings in the global context will not affect the

@@ -11,7 +11,7 @@
 
 let y := 30;
 module mod (y) {
-    # y gets captured by the module
+    # y gets shadowed by the module
     let x := 10;
     let get_x := lambda() {x}; 
     let get_y := lambda() {y};

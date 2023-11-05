@@ -33,7 +33,11 @@ bindings(test); @println();
 
 let test2 := @copy(test); # only works at top level!!!
 
+#@println(test,test2);
+
 @set(test,"x",2000);
+@println(test.x);
+@println(test2.x);
 @println(test.f());
 @println(test2.f());
 @println(test.m.f());
@@ -63,5 +67,5 @@ a(3)(3)(2,18);
 
 def plus(x,y) { x + y }
 
-4 `plus` 6;
+4 `plus` 6
 
