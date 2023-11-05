@@ -270,7 +270,16 @@ impl Interpreter {
                     ExpressionType::Closure(closure_ctx, arg_names, body) => {
                         let function_ctx = closure_ctx.with_new_scope();
                         for (name,value) in arg_names.iter().zip(arg_values) {
-                            function_ctx.add_binding(name.to_owned(), self.eval(ctx,value.to_owned())?);
+                            // function_ctx.add_binding(name.to_owned(), self.eval(ctx,value.to_owned())?);
+                            let val = self.eval(ctx,value.to_owned())?;
+                            match val.as_ref() {
+                                ExpressionType::Ref(rc) => {
+                                    function_ctx.add_binding_ref(name.to_owned(), rc.to_owned());
+                                }
+                                _ => {
+                                    function_ctx.add_binding(name.to_owned(), val.to_owned());
+                                }
+                            }
                         }
                         #[allow(clippy::comparison_chain)]
                         if arg_names.len() > arg_values.len() {
