@@ -44,7 +44,7 @@ pub enum ExpressionType {
     Loop(Expression),
     Context(Strings,Expression),
     Module(String,Strings,Expression),
-    Def(String,Strings,Expression),
+    Defun(String,Strings,Expression),
     Lambda(Strings,Expression),
     PrintableClosure(Strings,Strings,Expression),
     Closure(Context,Strings,Expression),

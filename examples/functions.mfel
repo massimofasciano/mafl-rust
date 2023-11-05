@@ -1,0 +1,31 @@
+### a lambda is a nameless function
+### it captures references to bindings in the definition context
+
+# syntax 1
+let l1 := lambda (x) { x + 1 };
+
+# syntax 2
+let l2 := function (x) { x + 1 };
+
+### note that "let" is not self-delimiting so it needs a semicolon
+###  when used as a statement
+
+
+### a function definition is a syntactic shortcut for
+###  assigning a lambda to a variable
+### 2 important differences:
+###  - no semicolon necessary (self-delimiting)
+###  - it binds its name to the lambda (for safe recursion
+###    without depending on external context at call site)
+
+# syntax 1
+def f1 (x) { x + 1 }
+
+# syntax 2
+function f2 (x) { x + 1 }
+
+@println(l1(0));
+@println(l2(0));
+@println(f1(0));
+@println(f2(0));
+

@@ -17,7 +17,7 @@ block_comment = @{
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
     "return" | "break" | "continue" |
-    "let" | "function" | "def" | "closure" | "staticfn" | "in" | 
+    "let" | "function" | "def" | "in" | 
     "context" | "module" |
     "true" | "false" | "nil" |
     "and" | "or" | "not"
@@ -69,7 +69,7 @@ closure = {
     ( "lambda" | "function" ) ~ "(" ~ function_args ~ ")" ~ block
 }
 
-def = {
+defun = {
     ( "def" | "function" ) ~ identifier ~ "(" ~ function_args ~ ")" ~ block
 }
 
@@ -180,13 +180,13 @@ expr_base = _{
     array |
     block | if | 
     while | unless | do_while | loop | for |
-    let | let_in | def | closure | assign | context | module |
+    let | let_in | defun | closure | assign | context | module |
     return | continue | break |
     boolean | float | integer | string_literal | char_literal | variable 
 }
 
 // expressions that behave like blocks
-expr_block = _{ block | if | while | unless | loop | for | def | module }
+expr_block = _{ block | if | while | unless | loop | for | defun | module }
 
 semicolons = _{ ";" ~ semicolons | ";" }
 nil_implicit = { "" }

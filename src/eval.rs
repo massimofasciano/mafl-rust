@@ -63,7 +63,7 @@ impl Interpreter {
                     }
                 }
             }
-            ExpressionType::Def(fname, arg_names, body) => {
+            ExpressionType::Defun(fname, arg_names, body) => {
                 debug!("eval function definition {fname} {arg_names:?}");
                 let cctx = ctx.capture();
                 let val : Expression = ExpressionType::Closure(cctx.to_owned(), arg_names.to_owned(), body.to_owned()).into();
