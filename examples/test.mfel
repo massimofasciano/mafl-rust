@@ -114,3 +114,4 @@ for i in [1,2,3,4,5] {
 let args := @array(0,nil);
 @append(args,10);
 @println(@call(dynclo,args));
+

@@ -1,0 +1,109 @@
+function sigmoid(x) {
+    1.0/(1.0+@exp(-x))
+}
+
+module model (sigmoid) {
+    let w_x1_h1 := 0;
+    let w_x1_h2 := 0;
+    let w_x2_h1 := 0;
+    let w_x2_h2 := 0;
+    let w_b1_h1 := 0;
+    let w_b1_h2 := 0;
+    let w_h1_out := 0;
+    let w_h2_out := 0;
+    let w_b2_out := 0;
+
+    function forward(x1, x2) {
+        let h1 := sigmoid(x1 * w_x1_h1 + x2 * w_x2_h1 + w_b1_h1);
+        let h2 := sigmoid(x1 * w_x1_h2 + x2 * w_x2_h2 + w_b1_h2);
+        let out := sigmoid(h1 * w_h1_out + h2 * w_h2_out + w_b2_out);
+        [h1,h2,out]
+    }
+    function backward(out, x1, x2, y, h1, h2, learning_rate) {
+        let grad_out := out * (1.0 - out) * (y - out);
+        let grad_h1 := h1 * (1.0 - h1) * w_h1_out * grad_out;
+        let grad_h2 := h2 * (1.0 - h2) * w_h2_out * grad_out;
+        let grad_out_lr := learning_rate * grad_out;
+        let grad_h1_lr := learning_rate * grad_h1;
+        let grad_h2_lr := learning_rate * grad_h2;
+        w_x1_h1 := w_x1_h1 + grad_h1_lr * x1;
+        w_x1_h2 := w_x1_h2 + grad_h2_lr * x1;
+        w_x2_h1 := w_x2_h1 + grad_h1_lr * x2;
+        w_x2_h2 := w_x2_h2 + grad_h2_lr * x2;
+        w_b1_h1 := w_b1_h1 + grad_h1_lr;
+        w_b1_h2 := w_b1_h2 + grad_h2_lr;
+        w_h1_out := w_h1_out + grad_out_lr * h1;
+        w_h2_out := w_h2_out + grad_out_lr * h2;
+        w_b2_out := w_b2_out + grad_out_lr;
+        let diff := y - out;
+        let loss := 0.5*diff*diff;
+        loss
+    }
+    function init(w_x1_h1_a, w_x1_h2_a, w_x2_h1_a, w_x2_h2_a, w_b1_h1_a, w_b1_h2_a, w_h1_out_a, w_h2_out_a, w_b2_out_a) {
+        w_x1_h1 := w_x1_h1_a;
+        w_x1_h2 := w_x1_h2_a;
+        w_x2_h1 := w_x2_h1_a;
+        w_x2_h2 := w_x2_h2_a;
+        w_b1_h1 := w_b1_h1_a;
+        w_b1_h2 := w_b1_h2_a;
+        w_h1_out := w_h1_out_a;
+        w_h2_out := w_h2_out_a;
+        w_b2_out := w_b2_out_a;
+    }
+}
+
+#let epochs := 100000000;
+let epochs := 1000000;
+let learning_rate := 0.1;
+let target_loss := 0.0000001;
+
+let trace_steps := epochs // 10;
+
+model.init(0.5,0.9,0.4,1.0,-0.8,0.1,-1.2,1.1,-0.3);
+
+let data := [
+        [1.0,1.0,0.0],
+        [1.0,0.0,1.0],
+        [0.0,1.0,1.0],
+        [0.0,0.0,0.0]
+];
+
+let max_loss := nil;
+let epoch := 0;
+
+while epoch < epochs and (max_loss == nil or max_loss >= target_loss) {
+    if epoch % trace_steps == 0 {
+        @println("Epoch ",epoch);
+    }
+    max_loss := 0.0;
+    for row in data {
+        let x1 := row(0);
+        let x2 := row(1);
+        let y := row(2);
+        let back := model.forward(x1,x2);
+        let h1 := back(0);
+        let h2 := back(1);
+        let out := back(2);
+        let loss := model.backward(out, x1, x2, y, h1, h2, learning_rate);
+        if loss > max_loss {
+            max_loss := loss;
+        }
+        if epoch % trace_steps == 0 {
+            @println("Out(",x1,",",x2,") = ",out,", Expected = ",y,", Loss = ",loss,"");
+        }
+    }
+    epoch := epoch + 1;
+    max_loss
+}
+
+(#
+
+1000000 epochs 
+MFEL : 61s
+
+74908544/100000000 epochs
+Python 3.11 (standard cpython interpreter) Linux: 6m18s (378s)
+
+around 12x slower than the Python interpreter...
+
+#)

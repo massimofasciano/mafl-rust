@@ -108,11 +108,11 @@ impl std::fmt::Display for ExpressionType {
             ExpressionType::Error(a) => write!(f,"Error: {a}"),
             ExpressionType::Array(a) => 
                 write!(f,"[{}]",a.borrow().iter().map(|x|x.to_string()).collect::<Vec<_>>().join(",")),
-            // ExpressionType::Closure(ctx, args, body) => {
-            //     // remove context values until we can print cycles... 
-            //     let keys : Vec<String> = ctx.bindings_ref().into_keys().collect();
-            //     write!(f,"{}",ExpressionType::PrintableClosure(keys,args.to_owned(),body.to_owned()))
-            // }
+            ExpressionType::Closure(ctx, args, body) => {
+                // remove context values until we can print cycles... 
+                let keys : Vec<String> = ctx.bindings_ref().into_keys().collect();
+                write!(f,"{}",ExpressionType::PrintableClosure(keys,args.to_owned(),body.to_owned()))
+            }
             _ => write!(f,"{:#?}",self),
         }
     }

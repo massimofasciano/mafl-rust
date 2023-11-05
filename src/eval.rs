@@ -317,10 +317,10 @@ impl Interpreter {
             ExpressionType::BinOpCall(op, left, right) => {
                 debug!("eval bin op call");
                 let op = op.as_ref();
-                if op == &ExpressionType::AndOp {
+                if let ExpressionType::AndOp = op {
                     return builtin::and_lazy(self,ctx,left,right);
                 }
-                if op == &ExpressionType::OrOp {
+                if let ExpressionType::OrOp = op {
                     return builtin::or_lazy(self,ctx,left,right);
                 }
                 let left = self.eval(ctx,left.to_owned())?;
@@ -349,7 +349,7 @@ impl Interpreter {
             }
             ExpressionType::UnaryOpCall(op, expr) => {
                 debug!("eval unary op call");
-                if op.as_ref() == &ExpressionType::RefOp {
+                if let ExpressionType::RefOp = op.as_ref() {
                     return builtin::ref_var(ctx,&expr.to_owned());
                 }
                 let expr = self.eval(ctx,expr.to_owned())?;
