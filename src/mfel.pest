@@ -147,7 +147,8 @@ deref = @{ "*" }
 add = @{ "+" }
 sub = @{ "-" }
 mult = @{ "*" ~ !"*" }
-div = @{ "/" }
+div = @{ "/" ~ !"/" }
+intdiv = @{ "//" }
 mod = @{ "mod" | "%" }
 ge = @{ ">=" }
 le = @{ "<=" }
@@ -170,7 +171,7 @@ expr_and = { expr_eq ~ (and ~ expr_eq)* }
 expr_eq = { expr_rel ~ ((eq|ne) ~ expr_rel)* }
 expr_rel = { expr_add ~ ((ge|le|gt|lt) ~ expr_add)* }
 expr_add = { expr_mul ~ ((add|sub) ~ expr_mul)* }
-expr_mul = { expr_exp ~ ((mult|div|mod) ~ expr_exp)* }
+expr_mul = { expr_exp ~ ((mult|div|intdiv|mod) ~ expr_exp)* }
 expr_exp = { expr_post ~ (exp ~ expr_post)* }
 expr_post = { expr_apply_or_field ~ (question|exclam)* }
 expr_apply_or_field = { expr_prefix ~ (apply_args | field_access)* }

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::io::{self, BufRead, stdout, Write};
 use std::fmt::Write as _;
 use std::rc::Rc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH, Duration};
 
 use crate::context::MemCell;
 use crate::{expression::{Expression, self, nil, closure, ExpressionType}, parse_source, context::Context, Interpreter};
@@ -63,12 +63,22 @@ pub fn mul(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression
 
 pub fn div(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
-        (ExpressionType::Float(a), ExpressionType::Float(b)) => ExpressionType::Float(a/b),
-        (ExpressionType::Float(a), ExpressionType::Integer(b)) => ExpressionType::Float(a / (*b as f64)),
-        (ExpressionType::Integer(a), ExpressionType::Float(b)) => ExpressionType::Float((*a as f64) / b),
-        (ExpressionType::Integer(a), ExpressionType::Integer(b)) => ExpressionType::Integer(a/b),
-        _ => Err(anyhow!("div {lhs:?} {rhs:?}"))?,
-    }.into())
+        (_, ExpressionType::Float(b)) if b == &0.0 => expression::error("division by 0.0".to_string()),
+        (_, ExpressionType::Integer(0)) => expression::error("division by 0".to_string()),
+        (ExpressionType::Float(a), ExpressionType::Float(b)) => ExpressionType::Float(a/b).into(),
+        (ExpressionType::Float(a), ExpressionType::Integer(b)) => ExpressionType::Float(a / (*b as f64)).into(),
+        (ExpressionType::Integer(a), ExpressionType::Float(b)) => ExpressionType::Float((*a as f64) / b).into(),
+        (ExpressionType::Integer(a), ExpressionType::Integer(b)) => ExpressionType::Float((*a as f64) / (*b as f64)).into(),
+        _ => expression::error("div requires 2 integers or floats".to_string()),
+    })
+}
+
+pub fn intdiv(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+    Ok(match (lhs.as_ref(), rhs.as_ref()) {
+        (_, ExpressionType::Integer(0)) => expression::error("division by 0".to_string()),
+        (ExpressionType::Integer(a), ExpressionType::Integer(b)) => ExpressionType::Integer(a/b).into(),
+        _ => expression::error("intdiv requires 2 integers".to_string()),
+    })
 }
 
 pub fn modulo(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
@@ -529,7 +539,17 @@ pub fn test(interpreter: &Interpreter, ctx: &Context, source: &Expression, expec
 pub fn now(_: &Context) -> Result<Expression> {
     debug!("now");
     let now = SystemTime::now().duration_since(UNIX_EPOCH)?;
-    Ok(expression::float(now.as_nanos() as f64 * 10e-9))
+    Ok(expression::float(now.as_secs_f64()))
+}
+
+pub fn sleep(_: &Context, seconds: &Expression) -> Result<Expression> {
+    debug!("sleep {seconds}");
+    match seconds.as_ref() {
+        ExpressionType::Float(secs) if secs > &0.0 => std::thread::sleep(Duration::from_secs_f64(*secs)),
+        ExpressionType::Integer(secs) if secs > &0 => std::thread::sleep(Duration::from_secs(*secs as u64)),
+        _ => Err(anyhow!("sleep argument must be non-negative number {seconds}"))?,
+    };
+    Ok(seconds.to_owned())
 }
 
 

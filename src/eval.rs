@@ -335,6 +335,7 @@ impl Interpreter {
                     ExpressionType::SubOp => builtin::sub(ctx,&left,&right)?,
                     ExpressionType::MultOp => builtin::mul(ctx,&left,&right)?,
                     ExpressionType::DivOp => builtin::div(ctx,&left,&right)?,
+                    ExpressionType::IntDivOp => builtin::intdiv(ctx,&left,&right)?,
                     ExpressionType::ModOp => builtin::modulo(ctx,&left,&right)?,
                     ExpressionType::ExpOp => builtin::pow(ctx, &left, &right)?,
                     ExpressionType::GtOp => builtin::gt(ctx, &left, &right)?,
@@ -373,7 +374,7 @@ impl Interpreter {
         })
     }
 
-    pub fn builtin_var(&self, ctx: &Context, name: &str) -> Option<Result<Expression>> {
+    pub fn builtin_var(&self, _: &Context, name: &str) -> Option<Result<Expression>> {
         match name {
             "env" => Some(Ok(self.env.to_owned())),
             "std" => { Some(Ok(self.std.to_owned())) }
@@ -396,6 +397,7 @@ impl Interpreter {
             ("sub", [lhs, rhs]) => builtin::sub(ctx, lhs, rhs),
             ("mul", [lhs, rhs]) => builtin::mul(ctx, lhs, rhs),
             ("div", [lhs, rhs]) => builtin::div(ctx, lhs, rhs),
+            ("intdiv", [lhs, rhs]) => builtin::intdiv(ctx, lhs, rhs),
             ("mod", [lhs, rhs]) => builtin::modulo(ctx, lhs, rhs),
             ("neg", [val]) => builtin::neg(ctx, val),
             ("not", [val]) => builtin::not(ctx, val),
@@ -427,6 +429,7 @@ impl Interpreter {
             ("let", [key, value]) => builtin::let_var(ctx, key, value),
             ("test", [source, expected]) => builtin::test(self, ctx, source, expected),
             ("now", []) => builtin::now(ctx),
+            ("sleep", [seconds]) => builtin::sleep(ctx, seconds),
             ("context", []) => builtin::capture_context(ctx),
             _ => Err(anyhow!("builtin {name}")),
         }

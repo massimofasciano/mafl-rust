@@ -225,6 +225,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::mult => { ExpressionType::MultOp.into() },
         Rule::sub => { ExpressionType::SubOp.into() },
         Rule::div => { ExpressionType::DivOp.into() },
+        Rule::intdiv => { ExpressionType::IntDivOp.into() },
         Rule::r#mod => { ExpressionType::ModOp.into() },
         Rule::exp => { ExpressionType::ExpOp.into() },
         Rule::or => { ExpressionType::OrOp.into() },
