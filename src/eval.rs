@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{expression::{ExpressionType, Expression, self}, builtin, context::Context, Interpreter};
 use anyhow::{Result,anyhow};
 use log::{debug, error};
@@ -5,6 +7,8 @@ use log::{debug, error};
 impl Interpreter {
 
     pub fn eval(&self, ctx: &Context, ast: Expression) -> Result<Expression> {
+        // let open_vars = Self::open_vars(ast.clone());
+        // println!("{open_vars:?}"); println!();
         Ok(match ast.as_ref() {
             ExpressionType::Nil |
             ExpressionType::Integer(_) |
@@ -405,6 +409,73 @@ impl Interpreter {
             ("assign", [key, value]) => builtin::assign_var(ctx, key, value),
             ("let", [key, value]) => builtin::let_var(ctx, key, value),
             _ => Err(anyhow!("builtin {name}")),
+        }
+    }
+
+    fn open_vars(syntax: Expression) -> HashSet<String> {
+
+        // the let x := val; statement is hard to analyze. we need to convert it at parse time or
+        // pass a list of bound variables going down into recursion in open_vars...
+
+        use ExpressionType::*;
+        match syntax.as_ref() {
+            Integer(_) | Float(_) | Character(_) | Boolean(_) |  String(_) |  Error(_) |  InfixOp(_) |
+            BuiltinFunction(_) |  Nil | AddOp | MultOp | SubOp | DivOp | ExpOp | ModOp | NotOp | AndOp | OrOp | PipeOp |
+            GtOp | GeOp | LtOp | LeOp | NeOp | EqOp | NegOp | RefOp | DeRefOp | QuestionOp | ExclamOp | Continue | Break |
+            Field(_,_) | Array(_) => HashSet::new(),
+
+            Variable(s) => HashSet::from([s.to_owned()]),
+
+            Block(expressions) | Sequence(expressions) => {
+                let mut open = HashSet::new();
+                for e in expressions {
+                    open.extend(Self::open_vars(e.clone()));
+                }
+                open
+            }
+            Let(_,expression) | Assign(_,expression) |
+            Loop(expression) |  Context(_,expression) |
+            Module(_,_,expression) | Return(expression) |
+            UnaryOpCall(_,expression) => 
+                Self::open_vars(expression.clone()),
+
+            Def(fname,args,expression) => {
+                let mut open = Self::open_vars(expression.clone());
+                open.remove(fname);
+                for a in args { open.remove(a); };
+                open
+            }            
+            StaticFn(args,expression) | DynFn(args,expression) |
+            Lambda(args,expression) => {
+                let mut open = Self::open_vars(expression.clone());
+                for a in args { open.remove(a); };
+                open
+            }            
+
+            For(x,expression,expression2) |
+            LetIn(x,expression,expression2) => {
+                let mut open = Self::open_vars(expression.clone());
+                open.extend(Self::open_vars(expression2.clone()));
+                open.remove(x);
+                open
+            },
+
+            BinOpCall(_,expression,expression2) |
+            While(expression,expression2) |
+            DoWhile(expression,expression2)  => {
+                let mut open = Self::open_vars(expression.clone());
+                open.extend(Self::open_vars(expression2.clone()));
+                open
+            },
+
+            If(expression,expression2,expression3) => {
+                let mut open = Self::open_vars(expression.clone());
+                open.extend(Self::open_vars(expression2.clone()));
+                open.extend(Self::open_vars(expression3.clone()));
+                open
+            }
+
+            _ => HashSet::new(),
         }
     }
 
