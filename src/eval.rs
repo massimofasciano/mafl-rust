@@ -427,8 +427,7 @@ impl Interpreter {
             ("var", [key]) => builtin::get_var(ctx, key),
             ("assign", [key, value]) => builtin::assign_var(ctx, key, value),
             ("let", [key, value]) => builtin::let_var(ctx, key, value),
-            ("test", [msg, left, right]) => builtin::test_msg(ctx, msg, left, right),
-            ("test", [left, right]) => builtin::test(ctx, left, right),
+            ("test", [source, expected]) => builtin::test(self, ctx, source, expected),
             _ => Err(anyhow!("builtin {name}")),
         }
     }

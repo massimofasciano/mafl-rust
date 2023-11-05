@@ -514,21 +514,12 @@ pub fn ref_var(ctx: &Context, var: &Expression) -> Result<Expression> {
     })
 }
 
-pub fn test_msg(_: &Context, msg: &Expression, left: &Expression, right: &Expression) -> Result<Expression> {
-    if left == right {
-        println!("test success: {msg} = {right}");
+pub fn test(interpreter: &Interpreter, ctx: &Context, source: &Expression, expected: &Expression) -> Result<Expression> {
+    let result = eval_string_as_source(interpreter, ctx, source)?;
+    if &result == expected {
+        println!("# test success: {source} = {expected}");
     } else {
-        println!("test failure {msg}: {left} != {right}");
-    }
-    stdout().flush()?;
-    Ok(nil())
-}
-
-pub fn test(_: &Context, left: &Expression, right: &Expression) -> Result<Expression> {
-    if left == right {
-        println!("test success: {right}");
-    } else {
-        println!("test failure: {left} != {right}");
+        println!("# test failure: {source} != {expected}");
     }
     stdout().flush()?;
     Ok(nil())
