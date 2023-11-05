@@ -82,9 +82,16 @@ impl Context {
         debug!("new");
         Self{inner:Rc::new(Scope::new())}
     }
-    pub fn with_new_scope(&self) -> Self {
+    pub fn with_new_context(&self) -> Self {
         debug!("with new scope");
         let scope = Scope::new();
+        *scope.parent.borrow_mut() = Some(self.to_owned());
+        Self { inner: scope.into() }
+    }
+    pub fn with_context(&self, ctx: Context) -> Self {
+        debug!("with context");
+        let scope = Scope::new();
+        *scope.bindings.borrow_mut() = ctx.bindings_ref();
         *scope.parent.borrow_mut() = Some(self.to_owned());
         Self { inner: scope.into() }
     }
@@ -315,7 +322,7 @@ mod tests {
     fn ref_test() {
         let ctx1 = Context::new();
         ctx1.add_binding("v1".to_owned(), integer(1));
-        let ctx2 = ctx1.with_new_scope();
+        let ctx2 = ctx1.with_new_context();
         ctx2.add_binding("v2".to_owned(), integer(2));
         assert_eq!(ctx2.get_binding("v1"),Some(integer(1)));
         assert_eq!(ctx2.get_binding("v2"),Some(integer(2)));
@@ -332,7 +339,7 @@ mod tests {
         ctx3.add_binding("v3".to_owned(), integer(3));
         assert_eq!(ctx3.get_binding("v3"),Some(integer(3)));
 
-        let ctx4 = ctx3.with_new_scope();
+        let ctx4 = ctx3.with_new_context();
         ctx4.add_binding("v4".to_owned(), integer(4));
         assert_eq!(ctx4.get_binding("v4"),Some(integer(4)));
         ctx4.append(&ctx1);

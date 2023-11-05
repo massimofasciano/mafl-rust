@@ -98,3 +98,14 @@ reftest(v);
 @println("outside: ",v);
 reftest(&v);
 @println("outside: ",v);
+
+let x := 100000;
+let y := 100;
+def dynclo(x) {
+    x + y + zzz
+}
+
+let y := 10000;
+let zzz := 1;
+
+@println(dynclo(10));

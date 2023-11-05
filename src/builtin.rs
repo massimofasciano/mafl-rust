@@ -437,7 +437,7 @@ pub fn dict_extend(_ctx: &Context, parent: &Expression) -> Result<Expression> {
     debug!("extend dict");
     Ok(match parent.as_ref() {
         ExpressionType::Closure(c,a,b) => {
-            closure(c.with_new_scope(),a.to_owned(),b.to_owned())
+            closure(c.with_new_context(),a.to_owned(),b.to_owned())
         }
         _ => Err(anyhow!("dict_extend"))?,
     })

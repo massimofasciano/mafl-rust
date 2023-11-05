@@ -16,7 +16,7 @@ impl Interpreter {
                 => ast.to_owned(),
             ExpressionType::Block(exprs) => {
                 debug!("eval block");
-                let ctx = &ctx.with_new_scope();
+                let ctx = &ctx.with_new_context();
                 let mut block_value = expression::nil();
                 for expr in exprs {
                     block_value = self.eval(ctx,expr.to_owned())?;
@@ -38,7 +38,7 @@ impl Interpreter {
             ExpressionType::LetIn(id, val, expr) => {
                 debug!("eval let {id} in");
                 let val = self.eval(ctx,val.to_owned())?;
-                let ctx = &ctx.with_new_scope();
+                let ctx = &ctx.with_new_context();
                 match val.as_ref() {
                     ExpressionType::Ref(rc) => {
                         ctx.add_binding_ref(id.to_owned(), rc.to_owned());
@@ -119,7 +119,7 @@ impl Interpreter {
             ExpressionType::While(cond, body) => {
                 debug!("eval while");
                 let mut body_value = expression::nil();
-                let ctx = &ctx.with_new_scope();
+                let ctx = &ctx.with_new_context();
                 #[allow(clippy::while_let_loop)]
                 loop {
                     match self.eval(ctx,cond.to_owned())?.as_ref() {
@@ -136,7 +136,7 @@ impl Interpreter {
             ExpressionType::DoWhile(cond, body) => {
                 debug!("eval do while");
                 let mut body_value;
-                let ctx = &ctx.with_new_scope();
+                let ctx = &ctx.with_new_context();
                 #[allow(clippy::while_let_loop)]
                 loop {
                     body_value = self.eval(ctx,body.to_owned())?;
@@ -150,7 +150,7 @@ impl Interpreter {
             ExpressionType::Loop(body) => {
                 debug!("eval loop");
                 let mut body_value;
-                let ctx = &ctx.with_new_scope();
+                let ctx = &ctx.with_new_context();
                 #[allow(clippy::while_let_loop)]
                 loop {
                     body_value = self.eval(ctx,body.to_owned())?;
@@ -165,7 +165,7 @@ impl Interpreter {
                 debug!("eval for");
                 let iterator = self.eval(ctx, iterator.to_owned())?;
                 let mut body_value = expression::nil();
-                let ctx = &ctx.with_new_scope();
+                let ctx = &ctx.with_new_context();
                 ctx.add_binding(var.to_owned(), expression::nil());
                 match self.eval(ctx,iterator.to_owned())?.as_ref() {
                     ExpressionType::Array(arr) => {
@@ -272,9 +272,8 @@ impl Interpreter {
                         }
                     }
                     ExpressionType::Closure(closure_ctx, arg_names, body) => {
-                        let function_ctx = closure_ctx.with_new_scope();
+                        let function_ctx = ctx.with_context(closure_ctx.to_owned());
                         for (name,value) in arg_names.iter().zip(arg_values) {
-                            // function_ctx.add_binding(name.to_owned(), self.eval(ctx,value.to_owned())?);
                             let value = self.eval(ctx,value.to_owned())?;
                             match value.as_ref() {
                                 ExpressionType::Ref(rc) => {
