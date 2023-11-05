@@ -1,11 +1,10 @@
 ### a lambda is a nameless function
 ### it captures references to bindings in the definition context
 
-# syntax 1
-let l1 := lambda (x) { x + 1 };
+let global := 0;
+@println("global = ",global);
 
-# syntax 2
-let l2 := function (x) { x + 1 };
+let f1 := lambda (x) { x + 10 + global };
 
 ### note that "let" is not self-delimiting so it needs a semicolon
 ###  when used as a statement
@@ -18,14 +17,25 @@ let l2 := function (x) { x + 1 };
 ###  - it binds its name to the lambda (for safe recursion
 ###    without depending on external context at call site)
 
-# syntax 1
-def f1 (x) { x + 1 }
+function f2 (x) { 
+    x + 10 + global
+}
 
-# syntax 2
-function f2 (x) { x + 1 }
+@println(f1(0));
+@println(f2(0));
 
-@println(l1(0));
-@println(l2(0));
+# we are changing this inside the environment that is captured by the lambdas
+global := global + 1; 
+@println("global = ",global);
+
+@println(f1(0));
+@println(f2(0));
+
+# we are adding a new binding called "global" (it shadows the old one)
+# this will not change the binding that was captured by the lambdas
+let global := global + 1; 
+@println("global = ",global);
+
 @println(f1(0));
 @println(f2(0));
 

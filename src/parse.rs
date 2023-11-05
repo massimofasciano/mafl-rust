@@ -79,16 +79,13 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                     }
                 })?
             } 
-            Rule::closure => {
+            Rule::lambda => {
                 assert!(inner.len() == 2);
                 assert!(inner[0].as_rule() == Rule::function_args);
                 assert!(inner[1].as_rule() == Rule::block);
                 let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
                 let body = parse_rule(inner[1].clone())?;
-                match rule {
-                    Rule::closure => ExpressionType::Lambda(args, body).into(),
-                    _ => Err(anyhow!("parse error lambda"))?
-                }
+                ExpressionType::Lambda(args, body).into()
             }
             Rule::array => {
                 ExpressionType::Array(RefCell::new(
@@ -254,7 +251,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::let_in | Rule::context | Rule::module | Rule::defun | 
         Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
         Rule::assign | Rule::r#let | Rule::r#loop | Rule::r#for |
-        Rule::closure | 
+        Rule::lambda | 
         Rule::infix_identifier | Rule::r#return => {
             let rule = parsed.as_rule();
             let str = parsed.as_str().to_owned();

@@ -85,7 +85,7 @@ r := r + 100;
 let q = &c in q := q + 1;
 @println(v," ",c," ",r);
 
-let reftest := function (r) {
+let reftest := lambda (r) {
     r := r + 1;
     @println("inside: ",r);
 };
