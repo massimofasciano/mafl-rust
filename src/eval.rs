@@ -310,39 +310,39 @@ impl Interpreter {
                             .map(|e|self.eval(ctx,e.to_owned())).collect::<Result<Vec<_>>>()?;
                         self.builtin_fn(ctx, name, &eval_args)?
                     }
-                    ExpressionType::Array(vals) => {
-                        // indexing
-                        if arg_values.len() == 1 {
-                            if let ExpressionType::Integer(index) = self.eval(ctx, arg_values[0].to_owned())?.as_ref() {
-                                let index = (if *index >= 0 { *index } else { vals.borrow().len() as i64 + *index}) as usize;
-                                if let Some(result) = vals.borrow().get(index) {
-                                    result.to_owned()
-                                } else {
-                                    expression::error(format!("index {index} out of bounds"))
-                                }
-                            } else {
-                                Err(anyhow!("index by non-integer"))?
-                            }
-                        // mutate at index
-                        } else if arg_values.len() == 2 {
-                            if let ExpressionType::Integer(index) = self.eval(ctx, arg_values[0].to_owned())?.as_ref() {
-                                debug!("array set index {index}");
-                                let index = (if *index >= 0 { *index } else { vals.borrow().len() as i64 + *index}) as usize;
-                                let value = self.eval(ctx, arg_values[1].to_owned())?;
-                                if let Some(result) = vals.borrow_mut().get_mut(index) {
-                                    *result = value;
-                                    debug!("array set index {index} to {result:?}");
-                                    result.to_owned()
-                                } else {
-                                    expression::error(format!("index {index} out of bounds"))
-                                }
-                            } else {
-                                Err(anyhow!("index by non-integer"))?
-                            }
-                        } else {
-                            Err(anyhow!("array get or set index: need 1 or 2 arguments"))?
-                        }
-                    }
+                    // ExpressionType::Array(vals) => {
+                    //     // indexing
+                    //     if arg_values.len() == 1 {
+                    //         if let ExpressionType::Integer(index) = self.eval(ctx, arg_values[0].to_owned())?.as_ref() {
+                    //             let index = (if *index >= 0 { *index } else { vals.borrow().len() as i64 + *index}) as usize;
+                    //             if let Some(result) = vals.borrow().get(index) {
+                    //                 result.to_owned()
+                    //             } else {
+                    //                 expression::error(format!("index {index} out of bounds"))
+                    //             }
+                    //         } else {
+                    //             Err(anyhow!("index by non-integer"))?
+                    //         }
+                    //     // mutate at index
+                    //     } else if arg_values.len() == 2 {
+                    //         if let ExpressionType::Integer(index) = self.eval(ctx, arg_values[0].to_owned())?.as_ref() {
+                    //             debug!("array set index {index}");
+                    //             let index = (if *index >= 0 { *index } else { vals.borrow().len() as i64 + *index}) as usize;
+                    //             let value = self.eval(ctx, arg_values[1].to_owned())?;
+                    //             if let Some(result) = vals.borrow_mut().get_mut(index) {
+                    //                 *result = value;
+                    //                 debug!("array set index {index} to {result:?}");
+                    //                 result.to_owned()
+                    //             } else {
+                    //                 expression::error(format!("index {index} out of bounds"))
+                    //             }
+                    //         } else {
+                    //             Err(anyhow!("index by non-integer"))?
+                    //         }
+                    //     } else {
+                    //         Err(anyhow!("array get or set index: need 1 or 2 arguments"))?
+                    //     }
+                    // }
                     ExpressionType::String(s) => {
                         // indexing
                         if arg_values.len() == 1 {

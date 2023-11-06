@@ -112,7 +112,7 @@ for = {
 identifier_array = { "[" ~ (identifier ~ ("," ~ identifier)*)? ~ "]"}
 
 let = {
-    "let" ~ (identifier | identifier_array) ~ (":=" | "=") ~ expr
+    "let" ~ (identifier | identifier_array) ~ "=" ~ expr
 }
 
 field_access = { "." ~ identifier }

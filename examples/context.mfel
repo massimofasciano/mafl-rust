@@ -1,8 +1,8 @@
-let o := context () {
-    let x := 1;
-    let y := context () {  
-        let z := 2;
-        lambda(p){let old := z; z := p; old}
+let o = context () {
+    let x = 1;
+    let y = context () {  
+        let z = 2;
+        lambda(p){let old = z; z = p; old}
     };
     lambda(p){x+y.z+p}
 };

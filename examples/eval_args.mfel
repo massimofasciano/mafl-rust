@@ -7,7 +7,7 @@
 ###  [15,[2,4,[1,1],nil,false,[1,2,3,4]]]
 ###
 
-let map := @std.iter.map;
+let map = @std.iter.map;
 
 function f(args) {
     if @len(args) < 2 {
@@ -15,7 +15,7 @@ function f(args) {
     } else {
         let f = args[0];
         let x = args[1];
-        let args := @slice(args,2,@len(args));
+        let args = @slice(args,2,@len(args));
         [f(x),args]
     }
 };

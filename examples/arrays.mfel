@@ -1,7 +1,7 @@
 ### array syntax:
-### literals: [expr,expr,expr,...,expr]             (as in many other languages)
-### get value at index i for array a: a(i)          (like a function call)
-### set value at index i to v for array a: a(i,v)   (like a function call)
+### literals: [expr,expr,expr,...,expr]
+### get value at index i for array a: a[i]   
+### set value at index i to v for array a: a[i]=v
 ### creation: @array(size,init)
 ###   init can be
 ###     - a constant
@@ -12,19 +12,19 @@
 
 @println("******* testing arrays *******");
 
-let map := @std.iter.map;
-let sum := @std.iter.sum;
-let prod := @std.iter.prod;
-let filter := @std.iter.filter;
-let reduce := @std.array.reduce;
+let map = @std.iter.map;
+let sum = @std.iter.sum;
+let prod = @std.iter.prod;
+let filter = @std.iter.filter;
+let reduce = @std.array.reduce;
 
-let a1 := [1,2,3,4];
+let a1 = [1,2,3,4];
 @println("a1=",a1);
 
-let a2 := @array(10,4);
+let a2 = @array(10,4);
 @println("a2=",a2);
 
-let a3 := @array(10, lambda(x) { 
+let a3 = @array(10, lambda(x) { 
     if x < 5 { 
         (x + 1) * 10 
     } else { 
@@ -33,14 +33,14 @@ let a3 := @array(10, lambda(x) {
 });
 @println("a3=",a3);
 
-let a4 := a1 + a2 + a3;
+let a4 = a1 + a2 + a3;
 @println("a4=",a4);
 
-@println("a1[2]=",a1(2));
-let a1_2_3 := a1(2)+a1(3);
+@println("a1[2]=",a1[2]);
+let a1_2_3 = a1[2]+a1[3];
 @println("a1[2]+a1[3]=",a1_2_3);
-a1(2,a1_2_3); # a1[2]=a1_2_3
-a1(0,100); # mutate a1 index 0
+a1[2] = a1_2_3; 
+a1[0] = 100; # mutate a1 index 0
 @println("a1=",a1); 
 
 @println("map (*100) a1=",map(lambda(x){x*100},a1));
@@ -56,12 +56,12 @@ function all_gt(n,arr) {
 }
 # test if all elements are greater than n (using filter)
 function all_gt(n,arr) { 
-    let filtered := filter(lambda(x){x > n},arr);
+    let filtered = filter(lambda(x){x > n},arr);
     @len(filtered) == @len(arr)
 }
 @println("all_gt_0(a1)=",all_gt(0,a1));
 @println("all_gt_5(a1)=",all_gt(5,a1));
-@println("chain_div([9,3,4])=",reduce(lambda(x,y){x*1.0/y},[9,3,4]));
+@println("chain_div([9,3,4])=",reduce(lambda(x,y){x/y},[9,3,4]));
 
 @append(a1,42);
 @println("a1=",a1); 

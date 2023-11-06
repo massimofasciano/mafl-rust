@@ -2,8 +2,8 @@
 ### (this is what happens internally when a lambda is defined)
 ### the captured context inherits the global one
 
-let x := 1;
-let y := 2;
+let x = 1;
+let y = 2;
 
 @println("test 1");
 @set(@context(),"y",y+x);
@@ -17,7 +17,7 @@ let y := 2;
 @println();
 
 @println("test 2");
-let c := @context(); # captured to c
+let c = @context(); # captured to c
 @test("x",1);
 @test("c.x",1);
 @println();
@@ -31,7 +31,7 @@ let c := @context(); # captured to c
 
 @println("test 4");
 # the global x is changed but the one inside x has been shadowed above
-x := x + 1;
+x = x + 1;
 @test("x",2);
 @test("c.x",100);
 @println();
@@ -45,7 +45,7 @@ x := x + 1;
 
 @println("test 6");
 # the global x is shadowed
-let x := x + 1;
+let x = x + 1;
 @test("x",3);
 @test("c.x",101);
 @println();

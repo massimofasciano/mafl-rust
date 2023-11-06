@@ -7,17 +7,17 @@
 function range(start,end) {
     lambda() {
         if start < end {
-            let count := start;
-            start := start + 1;
+            let count = start;
+            start = start + 1;
             count            
         }
         # no else clause means return nil when condition is false
     }
 }
 # it is also available as @std.iter.range
-range := @std.iter.range;
+range = @std.iter.range;
 
-let iter := range(3,11);
+let iter = range(3,11);
 
 @println(iter());
 @println(iter());
@@ -33,7 +33,7 @@ for x in range(0,10) {
 }
 @println();
 
-let collect := @std.iter.collect;
+let collect = @std.iter.collect;
 
 @println(collect(range(14,23)));
 

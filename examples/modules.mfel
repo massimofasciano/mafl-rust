@@ -9,14 +9,14 @@
 ### they can be used like "objects" or "packages" in other languages
 ### 
 
-let y := 30;
+let y = 30;
 module mod (y) {
     # y gets shadowed by the module
-    let x := 10;
-    let get_x := lambda() {x}; 
-    let get_y := lambda() {y};
-    let set_x := lambda(new_x) {x := new_x};
-    let set_y := lambda(new_y) {y := new_y};
+    let x = 10;
+    let get_x = lambda() {x}; 
+    let get_y = lambda() {y};
+    let set_x = lambda(new_x) {x = new_x};
+    let set_y = lambda(new_y) {y = new_y};
 }
 
 @println(mod.get_x());

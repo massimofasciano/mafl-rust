@@ -1,6 +1,6 @@
 ### dict operators to create linked contexts (hashmaps with inheritance like objects)
 
-let o := @dict();
+let o = @dict();
 @insert(o,"x",1);
 @insert(o,"y",2);
 
@@ -8,7 +8,7 @@ let o := @dict();
 @println(@get(o,"y"));
 @println(@get(o,"z"));
 
-let p := @dict(o);  # p extends o (like inheritance)
+let p = @dict(o);  # p extends o (like inheritance)
 @insert(p,"y",12);
 @insert(p,"z",13);
 

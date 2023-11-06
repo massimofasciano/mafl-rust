@@ -1,29 +1,29 @@
 @debugln("1\n2\t3\n4");
 @debugln('\n');
 
-let filename := "Cargo.toml";
+let filename = "Cargo.toml";
 if @len(@env) < 1 {
     @println("******* ","defaulting to ",filename," for input"," *******");
 } else {
-    filename := @env(0);
+    filename = @env(0);
 };
 
-let file := @readfile(filename);
+let file = @readfile(filename);
 
 for ch in @array(file) {
     @print(ch);
 }
 
-let lines := @lines(file);
+let lines = @lines(file);
 
 for s in lines {
-    let chars := @array(s);
-    if @len(chars) > 0 and chars(0) == '[' and chars(-1) == ']' {
+    let chars = @array(s);
+    if @len(chars) > 0 and chars[0] == '[' and chars[-1] == ']' {
         @print("Got a new section: ");
         let i = 1;
         while i < @len(chars)-1 {
-            @print(chars(i));
-            i := i + 1;
+            @print(chars[i]);
+            i = i + 1;
         };
         @println();
     }

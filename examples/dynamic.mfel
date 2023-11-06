@@ -1,19 +1,19 @@
 ### a quick test to show the difference between dynamic and lexical binding
 
-let x := 1;
-let y := 100;
-let z := 1000;
+let x = 1;
+let y = 100;
+let z = 1000;
 
 # the lambda captures references to x and y at definition
 # z is a parameter so it always gets bound when calling
-let clo := lambda(z) {x+y+z};
+let clo = lambda(z) {x+y+z};
 
 # we create the lambda in an empty context, so x and y are not captured
 # z is a parameter so it always gets bound when calling
-let dyn := context () in lambda(z) {x+y+z};
+let dyn = context () in lambda(z) {x+y+z};
 
 # here, we shadow y (this is another y, the older y is still captured by the first lambda)
-let y := 10;
+let y = 10;
 
 # here we have an example of dynamic fall back binding:
 #  dyn did not capture x and y so it will look them up here
@@ -24,7 +24,7 @@ let y := 10;
 @println("closure: ",clo(10));
 
 # but if we mutate x instead of shadowing it, they have similar behavior
-x := 2;
+x = 2;
 # dyn looks up x here so it sees the change
 @println("dynamic: ",dyn(10));
 # clo has a reference to the global x so it sees the change

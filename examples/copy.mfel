@@ -1,9 +1,9 @@
-### arrays are mutable: use @copy when you don't want a shared value
+### arrays elements are shared and mutable: use @copy when you don't want a shared value
 
-let a := [1,2,3,4,5];
-let b := a;
-let c := @copy(a);
+let a = [1,2,3,4,5];
+let b = a;
+let c = @copy(a);
 
 @println(a,b,c);
-b(2,10);
+b[2] = 10;
 @println(a,b,c);

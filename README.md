@@ -7,6 +7,17 @@ FEATURES:
 - Error type (detectable to catch errors)
 
 TODO:
+
+- string[n]
+
+- synth vault november
+
+- @split, @regex, @command
+
+- builtin in grammar
+
+- block / function block / loop block / if block (for continue break return)
+
 - propagate anyhow errors into the language as Error types ?
 
 - implement deep copy for closure
@@ -31,7 +42,6 @@ TODO:
 
 - f(a,*b,c) expands to f(a,b1,b2,...,bn,c) ? identifier prefix for calls
 
-- implement xor_nn in MFEL
 
 
 
