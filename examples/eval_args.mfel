@@ -13,11 +13,11 @@ function f(args) {
     if @len(args) < 2 {
         @error("need at least 2 args, got ",@len(args))
     } else {
-        let f := args(0);
-        let x := args(1);
+        let f = args[0];
+        let x = args[1];
         let args := @slice(args,2,@len(args));
         [f(x),args]
     }
 };
-f(let eval = lambda(str) {@eval(str)} in map(eval,@env))
+f({let eval = lambda(str) {@eval(str)}; map(eval,@env)})
 

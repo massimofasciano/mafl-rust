@@ -105,19 +105,15 @@ for = {
     "for" ~ variable ~ "in" ~ expr ~ block_syntax
 }
 
-let_in = {
-    "let" ~ identifier ~ "=" ~ expr ~ "in" ~ expr
-}
+// let_in = {
+//     "let" ~ identifier ~ "=" ~ expr ~ "in" ~ expr
+// }
 
 identifier_array = { "[" ~ (identifier ~ ("," ~ identifier)*)? ~ "]"}
 
 let = {
-    "let" ~ (identifier | identifier_array) ~ ":=" ~ expr
+    "let" ~ (identifier | identifier_array) ~ (":=" | "=") ~ expr
 }
-
-// let = {
-//     "let" ~ identifier ~ ":=" ~ expr
-// }
 
 field_access = { "." ~ identifier }
 array_access = { "[" ~ expr ~ "]" }
@@ -187,7 +183,7 @@ expr_base = _{
     array |
     block | if | 
     while | unless | do_while | loop | for |
-    let | let_in | defun | lambda | assign | context | module |
+    let | defun | lambda | assign | context | module |
     return | continue | break |
     boolean | float | integer | string_literal | char_literal | variable 
 }

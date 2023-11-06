@@ -1,26 +1,26 @@
-let z := 30;
+let z = 30;
 
 module test (z) {
-    let x := 10;
-    let y := 20;
-    let f := lambda() { x + y };
+    let x = 10;
+    let y = 20;
+    let f = lambda() { x + y };
     module m (x,y,z) {
         # shadows x and y (by value)
-        let f := lambda() { x + y + z };
-        #let c2 := @context();
+        let f = lambda() { x + y + z };
+        #let c2 = @context();
     }
-    #let c1 := @context();
+    #let c1 = @context();
 }
 
 function bindings(mod) {
-    let arr := @array(mod);
+    let arr = @array(mod);
     if @type(arr) == "Error" {
         @print(mod)
     } else {
         @print("{ ");
         for binding in @array(mod) {
-            let var := binding(0);
-            let val := binding(1);
+            let var = binding(0);
+            let val = binding(1);
             @print(var, "=");
             bindings(val);
             @print(" ");
@@ -31,7 +31,7 @@ function bindings(mod) {
 
 bindings(test); @println();
 
-let test2 := @copy(test);
+let test2 = @copy(test);
 
 #@println(test,test2);
 
@@ -53,8 +53,8 @@ let test2 := @copy(test);
 @println(test.q);
 @println(test2.q);
 
-let a := [1,2,3,[4,5,6,[7,8,9]]];
-let b := @copy(a);
+let a = [1,2,3,[4,5,6,[7,8,9]]];
+let b = @copy(a);
 
 @println(a);
 @println(b);
@@ -68,25 +68,26 @@ a(3)(3)(2,18);
 function plus(x,y) { x + y }
 @println(4 `plus` 6);
 
-let v := 200;
-let r := &v;
-let c := v;
+let v = 200;
+let r = &v;
+let c = v;
 
-#r := &v;
+#r = &v;
 
 @println(v," ",c," ",r);
-c := c + 1;
+c = c + 1;
 @println(v," ",c," ",r);
-v := v + 10;
+v = v + 10;
 @println(v," ",c," ",r);
-r := r + 100;
-@println(v," ",c," ",r);
-
-let q = &c in q := q + 1;
+r = r + 100;
 @println(v," ",c," ",r);
 
-let reftest := lambda (r) {
-    r := r + 1;
+{ let q = &c; q = q + 1; }
+
+@println(v," ",c," ",r);
+
+let reftest = lambda (r) {
+    r = r + 1;
     @println("inside: ",r);
 };
 
@@ -95,47 +96,47 @@ reftest(v);
 reftest(&v);
 @println("outside: ",v);
 
-let x := 100000;
-let y := 100;
+let x = 100000;
+let y = 100;
 function dynclo(x) {
     x + y + zzz
 }
 
-let y := 10000;
-let zzz := 1;
+let y = 10000;
+let zzz = 1;
 
 @println(dynclo(10));
 
-let start := @now();
+let start = @now();
 for i in [1,2,3,4,5] {
 #    @sleep(i);
     @println(@now()-start);
 }
-let args := @array(0,nil);
+let args = @array(0,nil);
 @append(args,10);
 @println(@call(dynclo,args));
 
 function f(x,y) { 
-    let d := @dict();
+    let d = @dict();
     @insert(d,"r",[x * y, x + y, x / y]);
     d 
 }
-let d := @dict();
+let d = @dict();
 @insert(d,"hello",[f]);
-let a := [1,2,[d],4,5];
+let a = [1,2,[d],4,5];
 
 @println(a[2][0].hello[0](3,4).r[2]);
 
-a[3] := 20;
+a[3] = 20;
 @println(a[3]);
 
-let d1 := @dict();
-let d2 := @dict();
+let d1 = @dict();
+let d2 = @dict();
 @insert(d2,"data",[10]);
 @insert(d1,"d2",[d2]);
-let a1 := [1,2,d1,4,5];
-a1[2].d2[0].data[0] := a1[2].d2[0].data[0] + 1;
+let a1 = [1,2,d1,4,5];
+a1[2].d2[0].data[0] = a1[2].d2[0].data[0] + 1;
 @println(a1[2].d2[0].data[0]);
 
-let [q,w,e,r,t,y] := a1;
+let [q,w,e,r,t,y] = a1;
 @println([q,w,r,t,y]);

@@ -126,13 +126,13 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 };
                 ExpressionType::If(cond, then, r#else).into()
             } 
-            Rule::let_in => {
-                assert!(inner.len() == 3);
-                let var = inner[0].as_str().to_owned();
-                let val = parse_rule(inner[1].clone())?;
-                let body = parse_rule(inner[2].clone())?;
-                ExpressionType::LetIn(var, val, body).into()
-            } 
+            // Rule::let_in => {
+            //     assert!(inner.len() == 3);
+            //     let var = inner[0].as_str().to_owned();
+            //     let val = parse_rule(inner[1].clone())?;
+            //     let body = parse_rule(inner[2].clone())?;
+            //     ExpressionType::LetIn(var, val, body).into()
+            // } 
             Rule::r#let => {
                 assert!(inner.len() == 2);
                 let val = parse_rule(inner[1].clone())?;
@@ -281,7 +281,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
         Rule::expr_mul | Rule::expr_apply_or_field | Rule::expr_post | 
         Rule::expr_prefix | Rule::expr_exp | 
-        Rule::let_in | Rule::context | Rule::module | Rule::defun | 
+        Rule::context | Rule::module | Rule::defun | 
         Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
         Rule::assign | 
         Rule::r#let | Rule::r#loop | Rule::r#for |

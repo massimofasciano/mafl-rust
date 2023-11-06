@@ -20,7 +20,8 @@ for s in lines {
     let chars := @array(s);
     if @len(chars) > 0 and chars(0) == '[' and chars(-1) == ']' {
         @print("Got a new section: ");
-        let i = 1 in while i < @len(chars)-1 {
+        let i = 1;
+        while i < @len(chars)-1 {
             @print(chars(i));
             i := i + 1;
         };
