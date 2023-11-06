@@ -8,8 +8,6 @@ FEATURES:
 
 TODO:
 
-- string[n]
-
 - synth vault november
 
 - @split, @regex, @command
