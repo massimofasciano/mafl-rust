@@ -1,4 +1,6 @@
-use crate::{expression::{ExpressionType, Expression, self}, builtin, context::Context, Interpreter};
+use std::cell;
+
+use crate::{expression::{ExpressionType, Expression, self}, builtin::{self}, context::Context, Interpreter};
 use anyhow::{Result,anyhow};
 use log::debug;
 
@@ -89,6 +91,72 @@ impl Interpreter {
                             val
                         }
                     }
+                }
+            }
+            ExpressionType::ArrayAccess(target, index) => {
+            debug!("array access with index {index}");
+            let target = self.eval(ctx, target.to_owned())?;
+                if let ExpressionType::Array(arr) = target.as_ref() {
+                    if let ExpressionType::Integer(index) = self.eval(ctx, index.to_owned())?.as_ref() {
+                        let index = (if *index >= 0 { *index } else { arr.borrow().len() as i64 + *index}) as usize;
+                        if let Some(result) = arr.borrow().get(index) {
+                            result.to_owned()
+                        } else {
+                            expression::error(format!("index {index} out of bounds"))
+                        }
+                    } else {
+                        Err(anyhow!("index by non-integer"))?
+                    }
+                } else {
+                    Err(anyhow!("index on non-array"))?
+                }
+            }
+            ExpressionType::AssignToExpression(target, val) => {
+                let val = self.eval(ctx,val.to_owned())?;
+                match target.as_ref() {
+                    // not used
+                    ExpressionType::Variable(id) => {
+                        if ctx.set_binding(id.to_owned(), val.to_owned()).is_none() {
+                            Err(anyhow!("binding not found {id}"))?
+                        } else {
+                            val
+                        }
+                    },
+                    ExpressionType::Field(target, field) => {
+                        let target = self.eval(ctx, target.to_owned())?;
+                        match target.as_ref() {
+                            ExpressionType::Closure(closure_ctx, _arg_names, _body) => {
+                                if let Some(value) = closure_ctx.get_binding_ref(field) {
+                                    let mut cell_mut = value.get_refmut();
+                                    *cell_mut = val;
+                                    cell_mut.to_owned()
+                                } else {
+                                    Err(anyhow!("field binding not found {field}"))?
+                                }
+                            }
+                            _ => ast.to_error()?,
+                        }
+                    },
+                    ExpressionType::ArrayAccess(target, index) => {
+                        let target = self.eval(ctx, target.to_owned())?;
+                        if let ExpressionType::Array(arr) = target.as_ref() {
+                            if let ExpressionType::Integer(index) = self.eval(ctx, index.to_owned())?.as_ref() {
+                                let index = (if *index >= 0 { *index } else { arr.borrow().len() as i64 + *index}) as usize;
+                                if let Some(result) = arr.borrow_mut().get_mut(index) {
+                                    *result = val;
+                                    debug!("array set index {index} to {result:?}");
+                                    result.to_owned()
+                                } else {
+                                    expression::error(format!("index {index} out of bounds"))
+                                }
+                            } else {
+                                Err(anyhow!("index assign by non-integer"))?
+                            }
+                        } else {
+                            Err(anyhow!("index assign on non-array"))?
+                        }
+                    }
+                    _ => ast.to_error()?,
                 }
             }
             ExpressionType::Variable(s) => {

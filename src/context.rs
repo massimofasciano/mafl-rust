@@ -38,6 +38,9 @@ impl MemCell {
     pub fn get(&self) -> Expression {
         self.inner.borrow().to_owned()
     }
+    pub fn get_refmut(&self) -> std::cell::RefMut<Expression> {
+        self.inner.borrow_mut()
+    }
     pub fn set(&self, e: Expression) -> Expression {
         let old = self.get();
         *self.inner.borrow_mut() = e;

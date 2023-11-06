@@ -115,3 +115,28 @@ let args := @array(0,nil);
 @append(args,10);
 @println(@call(dynclo,args));
 
+function f(x,y) { 
+    let d := @dict();
+    @insert(d,"r",[x * y, x + y, x / y]);
+    d 
+}
+let d := @dict();
+@insert(d,"hello",[f]);
+let a := [1,2,[d],4,5];
+
+@println(a[2][0].hello[0](3,4).r[2]);
+
+a[3] := 20;
+@println(a[3]);
+
+a[2][0].hello[0] := d;
+#a[2][0].hello[0].hello := [1];
+#a[2][0].hello[0].hello
+
+let d1 := @dict();
+let d2 := @dict();
+@insert(d2,"data",[10]);
+@insert(d1,"d2",[d2]);
+let a1 := [1,2,d1,4,5];
+a1[2].d2[0].data[0] := a1[2].d2[0].data[0] + 1;
+a1[2].d2[0].data[0]

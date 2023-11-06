@@ -69,6 +69,7 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                                 .map(|e| (parse_rule(e.clone()))).collect::<Result<Vec<_>>>()?;
                             Ok(ExpressionType::FunctionCall(ast, args).into())
                         }
+                        Rule::array_access => Ok(ExpressionType::ArrayAccess(ast, parse_rule(pair.clone())?).into()),
                         Rule::field_access => {
                             let inner : Vec<Pair<Rule>> = pair.clone().into_inner().collect();
                             assert!(inner.len() == 1);
@@ -148,11 +149,30 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 ExpressionType::Defun(var, args, body).into()
             } 
             Rule::assign => {
-                assert!(inner.len() == 2);
+                assert!(inner.len() >= 2);
                 let var = inner[0].as_str().to_owned();
-                let val = parse_rule(inner[1].clone())?;
-                ExpressionType::Assign(var, val).into()
-            } 
+                if inner.len() == 2 {
+                    let val = parse_rule(inner[1].clone())?;
+                    ExpressionType::Assign(var, val).into()
+                } else {
+                    let init = ExpressionType::Variable(var).into();
+                    let chain = inner[1..inner.len()-1].iter().try_fold(init, |acc, pair| {
+                        match pair.as_rule() {
+                            Rule::array_access => Ok(ExpressionType::ArrayAccess(acc, parse_rule(pair.clone())?).into()),
+                            // Rule::field_access => Ok(ExpressionType::Field(acc, pair.as_str().to_owned()).into()),
+                            Rule::field_access => {
+                                let inner : Vec<Pair<Rule>> = pair.clone().into_inner().collect();
+                                assert!(inner.len() == 1);
+                                let field = inner[0].as_str().to_owned();
+                                Ok(ExpressionType::Field(acc, field).into())
+                            }
+                            _ => Err(anyhow!("bad assign chain")),
+                        }
+                    })?;
+                    let val = parse_rule(inner[inner.len()-1].clone())?;
+                    ExpressionType::AssignToExpression(chain, val).into()
+                }
+            }
             Rule::r#while => {
                 assert!(inner.len() == 2);
                 let cond = parse_rule(inner[0].clone())?;
@@ -206,6 +226,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::integer => { ExpressionType::Integer(parsed.as_str().parse()?).into() },
         Rule::float => { ExpressionType::Float(parsed.as_str().parse()?).into() },
         Rule::string => { ExpressionType::String(unescape_string(parsed.as_str())).into() },
+        Rule::identifier => { ExpressionType::Identifier(parsed.as_str().to_owned()).into() },
         Rule::character => { 
             assert!(!parsed.as_str().is_empty());
             ExpressionType::Character(unescape_string(parsed.as_str()).chars().next().unwrap()).into() 
@@ -240,8 +261,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::r#continue => { ExpressionType::Continue.into() },
         Rule::r#break => { ExpressionType::Break.into() },
         Rule::block_syntax | Rule::block | Rule::file  => { parse_block(parsed)? },
-        Rule::string_literal | Rule::char_literal => {
-            // these rules can't be made silent in the grammar (as of current version)
+        Rule::string_literal | Rule::char_literal  | Rule::array_access => {
             let inner = parsed.into_inner().next().ok_or(anyhow!("problem parsing silent rule"))?;
             parse_rule(inner)?
         }
@@ -251,7 +271,8 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::expr_prefix | Rule::expr_exp | 
         Rule::let_in | Rule::context | Rule::module | Rule::defun | 
         Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
-        Rule::assign | Rule::r#let | Rule::r#loop | Rule::r#for |
+        Rule::assign | 
+        Rule::r#let | Rule::r#loop | Rule::r#for |
         Rule::lambda | 
         Rule::infix_identifier | Rule::r#return => {
             let rule = parsed.as_rule();
