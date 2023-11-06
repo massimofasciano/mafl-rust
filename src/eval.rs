@@ -35,20 +35,20 @@ impl Interpreter {
                 debug!("eval ref");
                 rc.get()
             }
-            ExpressionType::LetIn(id, val, expr) => {
-                debug!("eval let {id} in");
-                let val = self.eval(ctx,val.to_owned())?;
-                let ctx = &ctx.with_new_context();
-                match val.as_ref() {
-                    ExpressionType::Ref(rc) => {
-                        ctx.add_binding_ref(id.to_owned(), rc.to_owned());
-                    }
-                    _ => {
-                        ctx.add_binding(id.to_owned(), val.to_owned());
-                    }
-                }
-                self.eval(ctx,expr.to_owned())?
-            }
+            // ExpressionType::LetIn(id, val, expr) => {
+            //     debug!("eval let {id} in");
+            //     let val = self.eval(ctx,val.to_owned())?;
+            //     let ctx = &ctx.with_new_context();
+            //     match val.as_ref() {
+            //         ExpressionType::Ref(rc) => {
+            //             ctx.add_binding_ref(id.to_owned(), rc.to_owned());
+            //         }
+            //         _ => {
+            //             ctx.add_binding(id.to_owned(), val.to_owned());
+            //         }
+            //     }
+            //     self.eval(ctx,expr.to_owned())?
+            // }
             ExpressionType::Let(id, val) => {
                 debug!("eval var declaration: {id}");
                 let val = self.eval(ctx,val.to_owned())?;
@@ -90,19 +90,32 @@ impl Interpreter {
             ExpressionType::ArrayAccess(target, index) => {
             debug!("array access with index {index}");
             let target = self.eval(ctx, target.to_owned())?;
-                if let ExpressionType::Array(arr) = target.as_ref() {
-                    if let ExpressionType::Integer(index) = self.eval(ctx, index.to_owned())?.as_ref() {
-                        let index = (if *index >= 0 { *index } else { arr.borrow().len() as i64 + *index}) as usize;
-                        if let Some(result) = arr.borrow().get(index) {
-                            result.to_owned()
+                match target.as_ref() {
+                    ExpressionType::Array(arr) => {
+                        if let ExpressionType::Integer(index) = self.eval(ctx, index.to_owned())?.as_ref() {
+                            let index = (if *index >= 0 { *index } else { arr.borrow().len() as i64 + *index}) as usize;
+                            if let Some(result) = arr.borrow().get(index) {
+                                result.to_owned()
+                            } else {
+                                expression::error(format!("index {index} out of bounds"))
+                            }
                         } else {
-                            expression::error(format!("index {index} out of bounds"))
+                            Err(anyhow!("index by non-integer"))?
                         }
-                    } else {
-                        Err(anyhow!("index by non-integer"))?
                     }
-                } else {
-                    Err(anyhow!("index on non-array"))?
+                    ExpressionType::String(s) => {
+                        if let ExpressionType::Integer(index) = self.eval(ctx, index.to_owned())?.as_ref() {
+                            let index = (if *index >= 0 { *index } else { s.len() as i64 + *index}) as usize;
+                            if let Some(result) = s.chars().nth(index) {
+                                expression::character(result)
+                            } else {
+                                expression::error(format!("index {index} out of bounds"))
+                            }
+                        } else {
+                            Err(anyhow!("index by non-integer"))?
+                        }
+                    }
+                    _ => Err(anyhow!("index on non-array/string"))?
                 }
             }
             // deprecated in favor of AssignToExpression
@@ -168,21 +181,35 @@ impl Interpreter {
                     ExpressionType::ArrayAccess(target, index) => {
                         debug!("eval assign to array with index {index}");
                         let target = self.eval(ctx, target.to_owned())?;
-                        if let ExpressionType::Array(arr) = target.as_ref() {
-                            if let ExpressionType::Integer(index) = self.eval(ctx, index.to_owned())?.as_ref() {
-                                let index = (if *index >= 0 { *index } else { arr.borrow().len() as i64 + *index}) as usize;
-                                if let Some(result) = arr.borrow_mut().get_mut(index) {
-                                    *result = val;
-                                    debug!("array set index {index} to {result:?}");
-                                    result.to_owned()
+                        match target.as_ref() {
+                            ExpressionType::Array(arr) => {
+                                if let ExpressionType::Integer(index) = self.eval(ctx, index.to_owned())?.as_ref() {
+                                    let index = (if *index >= 0 { *index } else { arr.borrow().len() as i64 + *index}) as usize;
+                                    if let Some(result) = arr.borrow_mut().get_mut(index) {
+                                        *result = val;
+                                        debug!("array set index {index} to {result:?}");
+                                        result.to_owned()
+                                    } else {
+                                        expression::error(format!("index {index} out of bounds"))
+                                    }
                                 } else {
-                                    expression::error(format!("index {index} out of bounds"))
+                                    Err(anyhow!("index assign by non-integer"))?
                                 }
-                            } else {
-                                Err(anyhow!("index assign by non-integer"))?
                             }
-                        } else {
-                            Err(anyhow!("index assign on non-array"))?
+                            ExpressionType::String(s) => {
+                                Err(anyhow!("all strings are immutable ({s})"))?
+                                // if let ExpressionType::Integer(index) = self.eval(ctx, index.to_owned())?.as_ref() {
+                                //     let index = (if *index >= 0 { *index } else { s.len() as i64 + *index}) as usize;
+                                //     if let Some(result) = s.chars().nth(index) {
+                                //         expression::error(format!("we can't mutate strings at the moment (char={result})"))
+                                //     } else {
+                                //         expression::error(format!("index {index} out of bounds"))
+                                //     }
+                                // } else {
+                                //     Err(anyhow!("index by non-integer"))?
+                                // }
+                            }
+                        _ => Err(anyhow!("index assign on non-array/string"))?
                         }
                     }
                     _ => ast.to_error()?,
@@ -343,23 +370,23 @@ impl Interpreter {
                     //         Err(anyhow!("array get or set index: need 1 or 2 arguments"))?
                     //     }
                     // }
-                    ExpressionType::String(s) => {
-                        // indexing
-                        if arg_values.len() == 1 {
-                            if let ExpressionType::Integer(index) = self.eval(ctx, arg_values[0].to_owned())?.as_ref() {
-                                let index = (if *index >= 0 { *index } else { s.len() as i64 + *index}) as usize;
-                                if let Some(result) = s.chars().nth(index) {
-                                    expression::character(result)
-                                } else {
-                                    expression::error(format!("index {index} out of bounds"))
-                                }
-                            } else {
-                                Err(anyhow!("index by non-integer"))?
-                            }
-                        } else {
-                            Err(anyhow!("string get index: need one argument"))?
-                        }
-                    }
+                    // ExpressionType::String(s) => {
+                    //     // indexing
+                    //     if arg_values.len() == 1 {
+                    //         if let ExpressionType::Integer(index) = self.eval(ctx, arg_values[0].to_owned())?.as_ref() {
+                    //             let index = (if *index >= 0 { *index } else { s.len() as i64 + *index}) as usize;
+                    //             if let Some(result) = s.chars().nth(index) {
+                    //                 expression::character(result)
+                    //             } else {
+                    //                 expression::error(format!("index {index} out of bounds"))
+                    //             }
+                    //         } else {
+                    //             Err(anyhow!("index by non-integer"))?
+                    //         }
+                    //     } else {
+                    //         Err(anyhow!("string get index: need one argument"))?
+                    //     }
+                    // }
                     ExpressionType::Closure(closure_ctx, arg_names, body) => {
                         let function_ctx = ctx.with_context(closure_ctx.to_owned());
                         for (name,value) in arg_names.iter().zip(arg_values) {

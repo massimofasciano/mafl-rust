@@ -19,8 +19,7 @@ function bindings(mod) {
     } else {
         @print("{ ");
         for binding in @array(mod) {
-            let var = binding(0);
-            let val = binding(1);
+            let [var,val] = binding;
             @print(var, "=");
             bindings(val);
             @print(" ");
@@ -59,8 +58,8 @@ let b = @copy(a);
 @println(a);
 @println(b);
 
-a(3)(0,14);
-a(3)(3)(2,18);
+a[3][0]=14;
+a[3][3][2]=18;
 
 @println(a);
 @println(b);
@@ -140,3 +139,7 @@ a1[2].d2[0].data[0] = a1[2].d2[0].data[0] + 1;
 
 let [q,w,e,r,t,y] = a1;
 @println([q,w,r,t,y]);
+
+let str = "hello world!";
+#str[11] = '_'; # strings are immutable
+@println(str[11]);
