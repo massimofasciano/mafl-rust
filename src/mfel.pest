@@ -109,15 +109,21 @@ let_in = {
     "let" ~ identifier ~ "=" ~ expr ~ "in" ~ expr
 }
 
+identifier_array = { "[" ~ (identifier ~ ("," ~ identifier)*)? ~ "]"}
+
 let = {
-    "let" ~ identifier ~ ":=" ~ expr
+    "let" ~ (identifier | identifier_array) ~ ":=" ~ expr
 }
+
+// let = {
+//     "let" ~ identifier ~ ":=" ~ expr
+// }
 
 field_access = { "." ~ identifier }
 array_access = { "[" ~ expr ~ "]" }
 
 assign = {
-    identifier ~ (array_access | field_access)* ~ ":=" ~ expr
+    identifier ~ (array_access | field_access)* ~ (":=" | "=") ~ expr
 }
 
 return = {

@@ -135,9 +135,20 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
             } 
             Rule::r#let => {
                 assert!(inner.len() == 2);
-                let var = inner[0].as_str().to_owned();
                 let val = parse_rule(inner[1].clone())?;
-                ExpressionType::Let(var, val).into()
+                match inner[0].as_rule() {
+                    Rule::identifier => {
+                        let var = inner[0].as_str().to_owned();
+                        ExpressionType::Let(var, val).into()
+                    }
+                    Rule::identifier_array => {
+                        let vars = inner[0].clone().into_inner().map(|pair| {
+                            pair.as_str().to_owned()
+                        }).collect();
+                        ExpressionType::LetArray(vars, val).into()
+                    }
+                    _ => Err(anyhow!("bad let syntax {:?}", inner[1].as_rule()))?,
+                }
             } 
             Rule::defun => {
                 assert!(inner.len() == 3);
@@ -153,7 +164,8 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 let var = inner[0].as_str().to_owned();
                 if inner.len() == 2 {
                     let val = parse_rule(inner[1].clone())?;
-                    ExpressionType::Assign(var, val).into()
+                    // ExpressionType::Assign(var, val).into()
+                    ExpressionType::AssignToExpression(ExpressionType::Variable(var).into(), val).into()
                 } else {
                     let init = ExpressionType::Variable(var).into();
                     let chain = inner[1..inner.len()-1].iter().try_fold(init, |acc, pair| {

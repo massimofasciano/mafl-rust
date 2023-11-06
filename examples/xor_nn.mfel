@@ -72,23 +72,19 @@ let max_loss := nil;
 let epoch := 0;
 
 while epoch < epochs and (max_loss == nil or max_loss >= target_loss) {
-    if epoch % trace_steps == 0 {
-        @println("Epoch ",epoch);
+    let trace_now := epoch % trace_steps == 0;
+    if trace_now { 
+        @println("Epoch ",epoch); 
     }
     max_loss := 0.0;
     for row in data {
-        let x1 := row(0);
-        let x2 := row(1);
-        let y := row(2);
-        let back := model.forward(x1,x2);
-        let h1 := back(0);
-        let h2 := back(1);
-        let out := back(2);
+        let [x1,x2,y] := row;
+        let [h1,h2,out] := model.forward(x1,x2);
         let loss := model.backward(out, x1, x2, y, h1, h2, learning_rate);
-        if loss > max_loss {
-            max_loss := loss;
+        if loss > max_loss { 
+            max_loss := loss; 
         }
-        if epoch % trace_steps == 0 {
+        if trace_now { 
             @println("Out(",x1,",",x2,") = ",out,", Expected = ",y,", Loss = ",loss,"");
         }
     }

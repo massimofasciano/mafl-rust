@@ -39,8 +39,9 @@ pub enum ExpressionType {
     DoWhile(Expression,Expression),
     For(String,Expression,Expression),
     Let(String,Expression),
+    LetArray(Strings,Expression),
     LetIn(String,Expression,Expression),
-    Assign(String,Expression),
+    Assign(String,Expression), // deprecated in favor of AssignToExpression
     AssignToExpression(Expression,Expression),
     ArrayAccess(Expression,Expression),
     Loop(Expression),

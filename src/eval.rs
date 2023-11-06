@@ -1,5 +1,3 @@
-use std::cell;
-
 use crate::{expression::{ExpressionType, Expression, self}, builtin::{self}, context::Context, Interpreter};
 use anyhow::{Result,anyhow};
 use log::debug;
@@ -65,6 +63,22 @@ impl Interpreter {
                     }
                 }
             }
+            ExpressionType::LetArray(ids, val) => {
+                debug!("eval var array declaration: {ids:?}");
+                let val = self.eval(ctx,val.to_owned())?;
+                match val.as_ref() {
+                    ExpressionType::Array(rc) => {
+                        let vals = rc.borrow().to_owned();
+                        for (var, val) in ids.iter().zip(vals) {
+                            self.eval(ctx, ExpressionType::Let(var.to_owned(), val).into())?;
+                        }
+                        val.to_owned()
+                    }
+                    _ => {
+                        Err(anyhow!("let array (destructure) on non-array"))?
+                    }
+                }
+            }
             ExpressionType::Defun(fname, arg_names, body) => {
                 debug!("eval function definition {fname} {arg_names:?}");
                 let cctx = ctx.capture();
@@ -73,6 +87,25 @@ impl Interpreter {
                 ctx.add_binding(fname.to_owned(), val.to_owned());
                 val
             }
+            ExpressionType::ArrayAccess(target, index) => {
+            debug!("array access with index {index}");
+            let target = self.eval(ctx, target.to_owned())?;
+                if let ExpressionType::Array(arr) = target.as_ref() {
+                    if let ExpressionType::Integer(index) = self.eval(ctx, index.to_owned())?.as_ref() {
+                        let index = (if *index >= 0 { *index } else { arr.borrow().len() as i64 + *index}) as usize;
+                        if let Some(result) = arr.borrow().get(index) {
+                            result.to_owned()
+                        } else {
+                            expression::error(format!("index {index} out of bounds"))
+                        }
+                    } else {
+                        Err(anyhow!("index by non-integer"))?
+                    }
+                } else {
+                    Err(anyhow!("index on non-array"))?
+                }
+            }
+            // deprecated in favor of AssignToExpression
             ExpressionType::Assign(id, val) => {
                 debug!("eval assign to identifier: {id}");
                 let val = self.eval(ctx,val.to_owned())?;
@@ -93,36 +126,31 @@ impl Interpreter {
                     }
                 }
             }
-            ExpressionType::ArrayAccess(target, index) => {
-            debug!("array access with index {index}");
-            let target = self.eval(ctx, target.to_owned())?;
-                if let ExpressionType::Array(arr) = target.as_ref() {
-                    if let ExpressionType::Integer(index) = self.eval(ctx, index.to_owned())?.as_ref() {
-                        let index = (if *index >= 0 { *index } else { arr.borrow().len() as i64 + *index}) as usize;
-                        if let Some(result) = arr.borrow().get(index) {
-                            result.to_owned()
-                        } else {
-                            expression::error(format!("index {index} out of bounds"))
-                        }
-                    } else {
-                        Err(anyhow!("index by non-integer"))?
-                    }
-                } else {
-                    Err(anyhow!("index on non-array"))?
-                }
-            }
             ExpressionType::AssignToExpression(target, val) => {
                 let val = self.eval(ctx,val.to_owned())?;
                 match target.as_ref() {
-                    // not used
                     ExpressionType::Variable(id) => {
-                        if ctx.set_binding(id.to_owned(), val.to_owned()).is_none() {
-                            Err(anyhow!("binding not found {id}"))?
-                        } else {
-                            val
+                        debug!("eval assign to identifier: {id}");
+                        let val = self.eval(ctx,val.to_owned())?;
+                        match val.as_ref() {
+                            ExpressionType::Ref(rc) => {
+                                if ctx.set_binding_ref(id.to_owned(), rc.to_owned()).is_none() {
+                                    Err(anyhow!("binding not found {id}"))?
+                                } else {
+                                    val
+                                }
+                            }
+                            _ => {
+                                if ctx.set_binding(id.to_owned(), val.to_owned()).is_none() {
+                                    Err(anyhow!("binding not found {id}"))?
+                                } else {
+                                    val
+                                }
+                            }
                         }
                     },
                     ExpressionType::Field(target, field) => {
+                        debug!("eval assign to dict/object with key/field {field}");
                         let target = self.eval(ctx, target.to_owned())?;
                         match target.as_ref() {
                             ExpressionType::Closure(closure_ctx, _arg_names, _body) => {
@@ -138,6 +166,7 @@ impl Interpreter {
                         }
                     },
                     ExpressionType::ArrayAccess(target, index) => {
+                        debug!("eval assign to array with index {index}");
                         let target = self.eval(ctx, target.to_owned())?;
                         if let ExpressionType::Array(arr) = target.as_ref() {
                             if let ExpressionType::Integer(index) = self.eval(ctx, index.to_owned())?.as_ref() {
