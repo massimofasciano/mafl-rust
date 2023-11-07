@@ -204,14 +204,27 @@ pub fn not(_: &Context, val: &Expression) -> Result<Expression> {
     }.into())
 }
 
-pub fn print(_: &Context, args: &[Expression]) -> Result<Expression> {
-    for arg in args { print!("{arg}"); }
+#[allow(clippy::only_used_in_recursion)]
+pub fn print(interpreter: &Interpreter, ctx: &Context, args: &[Expression]) -> Result<Expression> {
+    for arg in args { 
+        match arg.as_ref() {
+            ExpressionType::Closure(cctx, _, _) if cctx.get_binding("__str__").is_some() => {
+                // if the closure/object has a binding for __str__, we call it
+                let str = cctx.get_binding("__str__").unwrap();
+                let string = interpreter.eval(cctx, 
+                    ExpressionType::FunctionCall(str, vec![]).into()
+                )?;
+                print(interpreter, ctx, &[string])?;
+            }
+            _ => print!("{arg}"),
+        } 
+    }
     stdout().flush()?;
     Ok(nil())
 }
 
-pub fn println(_: &Context, args: &[Expression]) -> Result<Expression> {
-    for arg in args { print!("{arg}"); }
+pub fn println(interpreter: &Interpreter, ctx: &Context, args: &[Expression]) -> Result<Expression> {
+    print(interpreter, ctx, args)?;
     println!();
     stdout().flush()?;
     Ok(nil())

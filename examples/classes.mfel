@@ -1,0 +1,23 @@
+### this is how to build the equivalent of a class using a function that returns a module
+###
+### we should add a "class" statement to the grammar to make this easier
+###
+
+function Point(x,y) {
+    module _ (Point,x,y) {
+        function add(point) {
+            Point(x + point.x,y + point.y)
+        }
+        function __str__() {
+            "Point("+x+","+y+")"
+        }
+        @println("=> new ",__str__());
+    }
+    _
+}
+
+let p1 = Point(3,4);
+let p2 = Point(5,6);
+let p3 = p1.add(p2);
+@println(p3);
+p2

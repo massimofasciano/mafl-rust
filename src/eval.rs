@@ -119,26 +119,26 @@ impl Interpreter {
                 }
             }
             // deprecated in favor of AssignToExpression
-            ExpressionType::Assign(id, val) => {
-                debug!("eval assign to identifier: {id}");
-                let val = self.eval(ctx,val.to_owned())?;
-                match val.as_ref() {
-                    ExpressionType::Ref(rc) => {
-                        if ctx.set_binding_ref(id.to_owned(), rc.to_owned()).is_none() {
-                            Err(anyhow!("binding not found {id}"))?
-                        } else {
-                            val
-                        }
-                    }
-                    _ => {
-                        if ctx.set_binding(id.to_owned(), val.to_owned()).is_none() {
-                            Err(anyhow!("binding not found {id}"))?
-                        } else {
-                            val
-                        }
-                    }
-                }
-            }
+            // ExpressionType::Assign(id, val) => {
+            //     debug!("eval assign to identifier: {id}");
+            //     let val = self.eval(ctx,val.to_owned())?;
+            //     match val.as_ref() {
+            //         ExpressionType::Ref(rc) => {
+            //             if ctx.set_binding_ref(id.to_owned(), rc.to_owned()).is_none() {
+            //                 Err(anyhow!("binding not found {id}"))?
+            //             } else {
+            //                 val
+            //             }
+            //         }
+            //         _ => {
+            //             if ctx.set_binding(id.to_owned(), val.to_owned()).is_none() {
+            //                 Err(anyhow!("binding not found {id}"))?
+            //             } else {
+            //                 val
+            //             }
+            //         }
+            //     }
+            // }
             ExpressionType::AssignToExpression(target, val) => {
                 let val = self.eval(ctx,val.to_owned())?;
                 match target.as_ref() {
@@ -509,8 +509,8 @@ impl Interpreter {
     pub fn builtin_fn(&self, ctx: &Context, name: &str, args: &[Expression]) -> Result<Expression> {
         match (name, args) {
             ("call", [callable, args]) => { builtin::call(self, ctx, callable, args) },
-            ("println", args) => { builtin::println(ctx, args) },
-            ("print", args) => { builtin::print(ctx, args) },
+            ("println", args) => { builtin::println(self, ctx, args) },
+            ("print", args) => { builtin::print(self, ctx, args) },
             ("debugln", args) => { builtin::debugln(ctx, args) },
             ("debug", args) => { builtin::debug(ctx, args) },
             ("error", args) => { builtin::error_from_strings(ctx, args) },

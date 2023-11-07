@@ -25,7 +25,7 @@ p^ = 10 or p ^= 10 to deref assign
 
 - propagate anyhow errors into the language as Error types ?
 
-- implement deep copy for closure
+- offer both shallow and deep copy ?
 
 - context inheritance syntax
 - use statement or @use builtin to import contexts (ex: @use(@std.iter)). maybe @import ?

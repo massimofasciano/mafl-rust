@@ -1,6 +1,6 @@
 use std::env::Args;
 use context::Context;
-use expression::Expression;
+use expression::{Expression, ExpressionType};
 use pest::Parser;
 use crate::expression::{MfelParser, Rule};
 use anyhow::{anyhow, Result};
@@ -33,10 +33,16 @@ impl Interpreter {
         interpreter.std = expression::closure(ctx, vec![], expression::nil());
         Ok(interpreter)
     }
-    pub fn run(&self, source: &str) -> Result<Expression>{
+    pub fn run(&self, source: &str) -> Result<Expression> {
         let expr = parse_source(source)?;
         // println!("{ast:#?}");
         self.eval(&self.ctx,expr)
+    }
+    pub fn print(&self, e: Expression) -> Result<Expression> {
+        self.builtin_fn(&self.ctx, "print", &[e])
+    }
+    pub fn println(&self, e: Expression) -> Result<Expression> {
+        self.builtin_fn(&self.ctx, "println", &[e])
     }
 }
 

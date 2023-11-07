@@ -1,7 +1,7 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, ops::Deref, collections::{HashSet, HashMap}};
 use anyhow::{anyhow, Result};
 use pest_derive::Parser;
-use crate::context::{Context, MemCell};
+use crate::{context::{Context, MemCell, ScopeID}, expression};
 
 #[derive(Parser)]
 #[grammar = "mfel.pest"]
@@ -41,7 +41,7 @@ pub enum ExpressionType {
     Let(String,Expression),
     LetArray(Strings,Expression),
     LetIn(String,Expression,Expression),
-    Assign(String,Expression), // deprecated in favor of AssignToExpression
+    // Assign(String,Expression), // deprecated in favor of AssignToExpression
     AssignToExpression(Expression,Expression),
     ArrayAccess(Expression,Expression),
     Loop(Expression),
@@ -49,12 +49,15 @@ pub enum ExpressionType {
     Module(String,Strings,Expression),
     Defun(String,Strings,Expression),
     Lambda(Strings,Expression),
-    PrintableClosure(Strings,Strings,Expression),
     Closure(Context,Strings,Expression),
+    ClosurePrintable(Expression,Strings,Expression),
     Array(RefCell<Expressions>),
+    ArrayPrintable(Expressions),
     Return(Expression),
     Ref(Rc<MemCell>),
     Continue, Break,
+    Scope(ScopeID,HashMap<String,Expression>),
+    ScopeCycle(ScopeID),
 }
 
 impl PartialEq for ExpressionType {
@@ -99,6 +102,57 @@ impl ExpressionType {
     }
 }
 
+fn decycle(e: Expression, env: &mut HashSet<ScopeID>) -> Expression {
+    match e.as_ref() {
+        ExpressionType::Array(arr) => {
+            let mut safe = vec![];
+            for rc in arr.borrow().iter() {
+                match rc.as_ref() {
+                    ExpressionType::Closure(_,_ ,_) => {
+                        safe.push(decycle(rc.to_owned(),env));
+                    }
+                    ExpressionType::Array(_) => {
+                        safe.push(decycle(rc.to_owned(),env));
+                    }
+                    _ => safe.push(rc.to_owned()),
+                }
+            }
+            ExpressionType::ArrayPrintable(safe).into()
+        }
+        ExpressionType::Closure(ctx, args, body) => {
+            let scope_id = ctx.scope_id();
+            if env.contains(&scope_id) {
+                ExpressionType::ClosurePrintable(
+                    ExpressionType::ScopeCycle(scope_id).into(), 
+                    args.to_owned(), body.to_owned()
+                ).into()
+            } else {
+                env.insert(scope_id);
+                let mut safe = HashMap::new();
+                for (k, v) in ctx.bindings_ref() {
+                    let value = v.get();
+                    match value.as_ref() {
+                        ExpressionType::Closure(_, _, _) => {
+                            safe.insert(k, decycle(value, env));
+                        }
+                        ExpressionType::Array(_) => {
+                            safe.insert(k, decycle(value, env));
+                        }
+                        _ => {
+                            safe.insert(k, value);
+                        }
+                    }
+                }
+                ExpressionType::ClosurePrintable(
+                    ExpressionType::Scope(scope_id, safe).into(),
+                    args.to_owned(),body.to_owned()
+                ).into()
+            }
+        }
+        _ => e.to_owned(),
+    }
+}
+
 impl std::fmt::Display for ExpressionType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -109,13 +163,11 @@ impl std::fmt::Display for ExpressionType {
             ExpressionType::Character(a) => write!(f,"{a}"),
             ExpressionType::String(a) => write!(f,"{a}"),
             ExpressionType::Error(a) => write!(f,"Error: {a}"),
-            ExpressionType::Array(a) => 
-                write!(f,"[{}]",a.borrow().iter().map(|x|x.to_string()).collect::<Vec<_>>().join(",")),
-            ExpressionType::Closure(ctx, args, body) => {
-                // remove context values until we can print cycles... 
-                let keys : Vec<String> = ctx.bindings_ref().into_keys().collect();
-                write!(f,"{}",ExpressionType::PrintableClosure(keys,args.to_owned(),body.to_owned()))
-            }
+            ExpressionType::ArrayPrintable(a) =>
+                write!(f,"[{}]",a.iter().map(|x|x.to_string()).collect::<Vec<_>>().join(",")),
+            ExpressionType::Array(_) | 
+            ExpressionType::Closure(_, _, _) => 
+                write!(f,"{}",decycle(self.to_owned().into(),&mut HashSet::new()).deref()),
             _ => write!(f,"{:#?}",self),
         }
     }

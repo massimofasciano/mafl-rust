@@ -16,6 +16,7 @@ fn main() -> Result<()> {
     let interpreter = Interpreter::new(env)?;
     let result = interpreter.run(&source)?;
     // println!("{result:#?}");
-    println!("{result}");
+    // println!("{result}");
+    interpreter.println(result)?;
     Ok(())
 }

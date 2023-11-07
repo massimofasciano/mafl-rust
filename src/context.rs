@@ -102,6 +102,9 @@ impl Context {
         debug!("capture");
         self.flatten_ref()
     }
+    pub fn scope_id(&self) -> ScopeID {
+        self.inner.id
+    }
     // pub fn capture(&self) -> Self {
     //     debug!("capture");
     //     let captured = Context::new();
