@@ -557,9 +557,9 @@ pub fn ref_var(ctx: &Context, var: &Expression) -> Result<Expression> {
 pub fn test(interpreter: &Interpreter, ctx: &Context, source: &Expression, expected: &Expression) -> Result<Expression> {
     let result = eval_string_as_source(interpreter, ctx, source)?;
     if &result == expected {
-        println!("# test success: {source} = {expected}");
+        println!("# test success: {source} == {expected}");
     } else {
-        println!("# test failure: {source} != {expected}");
+        println!("# test failure: {source} == {result} != {expected}");
     }
     stdout().flush()?;
     Ok(nil())
