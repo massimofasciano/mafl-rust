@@ -17,19 +17,25 @@ impl Interpreter {
             ExpressionType::Block(exprs) => {
                 debug!("eval block");
                 let ctx = &ctx.with_new_context();
-                let mut block_value = expression::nil();
+                let mut last_value = expression::nil();
                 for expr in exprs {
-                    block_value = self.eval(ctx,expr.to_owned())?;
+                    last_value = self.eval(ctx,expr.to_owned())?;
+                    if let ExpressionType::Break = last_value.as_ref() {
+                        break
+                    }
                 }
-                block_value
+                last_value
             }
             ExpressionType::Sequence(exprs) => {
                 debug!("eval sequence");
-                let mut seq_value = expression::nil();
+                let mut last_value = expression::nil();
                 for expr in exprs {
-                    seq_value = self.eval(ctx,expr.to_owned())?;
+                    last_value = self.eval(ctx,expr.to_owned())?;
+                    if let ExpressionType::Break = last_value.as_ref() {
+                        break
+                    }
                 }
-                seq_value
+                last_value
             }
             ExpressionType::Ref(rc) => {
                 debug!("eval ref");
@@ -249,6 +255,10 @@ impl Interpreter {
                     match self.eval(ctx,cond.to_owned())?.as_ref() {
                         ExpressionType::Boolean(b) => if *b {
                             body_value = self.eval(ctx,body.to_owned())?;
+                            if let ExpressionType::Break = body_value.as_ref() {
+                                body_value = expression::nil();
+                                break
+                            }
                         } else {
                             break;
                         },
@@ -264,6 +274,10 @@ impl Interpreter {
                 #[allow(clippy::while_let_loop)]
                 loop {
                     body_value = self.eval(ctx,body.to_owned())?;
+                    if let ExpressionType::Break = body_value.as_ref() {
+                        body_value = expression::nil();
+                        break
+                    }
                     match self.eval(ctx,cond.to_owned())?.as_ref() {
                         ExpressionType::Boolean(b) => if !b { break; },
                         _ => break,
@@ -278,8 +292,8 @@ impl Interpreter {
                 #[allow(clippy::while_let_loop)]
                 loop {
                     body_value = self.eval(ctx,body.to_owned())?;
-                    // pretty weak implementation (the whole body has to eval to break)
                     if let ExpressionType::Break = body_value.as_ref() {
+                        body_value = expression::nil();
                         break
                     }
                 }
