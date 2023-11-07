@@ -1,113 +1,91 @@
 (##########################################################
 
 773575/1000000 epochs
-MFEL : 51s
-
-74908544/100000000 epochs
-Python 3.11 (standard cpython interpreter) Linux: 378s
-
-around 13x slower than the Python interpreter...
+MFEL : 77s with module+object
 
 ###########################################################)
 
-function sigmoid(x) {
-    1.0/(1.0+@exp(-x))
-}
-
-module Model (sigmoid) {
-    let w_x1_h1 = 0;
-    let w_x1_h2 = 0;
-    let w_x2_h1 = 0;
-    let w_x2_h2 = 0;
-    let w_b1_h1 = 0;
-    let w_b1_h2 = 0;
-    let w_h1_out = 0;
-    let w_h2_out = 0;
-    let w_b2_out = 0;
-
-    function forward(x1, x2) {
-        let h1 = sigmoid(x1 * w_x1_h1 + x2 * w_x2_h1 + w_b1_h1);
-        let h2 = sigmoid(x1 * w_x1_h2 + x2 * w_x2_h2 + w_b1_h2);
-        let out = sigmoid(h1 * w_h1_out + h2 * w_h2_out + w_b2_out);
-        [h1,h2,out]
-    }
-    function backward(out, x1, x2, y, h1, h2, learning_rate) {
-        let grad_out = out * (1.0 - out) * (y - out);
-        let grad_h1 = h1 * (1.0 - h1) * w_h1_out * grad_out;
-        let grad_h2 = h2 * (1.0 - h2) * w_h2_out * grad_out;
-        let grad_out_lr = learning_rate * grad_out;
-        let grad_h1_lr = learning_rate * grad_h1;
-        let grad_h2_lr = learning_rate * grad_h2;
-        w_x1_h1 = w_x1_h1 + grad_h1_lr * x1;
-        w_x1_h2 = w_x1_h2 + grad_h2_lr * x1;
-        w_x2_h1 = w_x2_h1 + grad_h1_lr * x2;
-        w_x2_h2 = w_x2_h2 + grad_h2_lr * x2;
-        w_b1_h1 = w_b1_h1 + grad_h1_lr;
-        w_b1_h2 = w_b1_h2 + grad_h2_lr;
-        w_h1_out = w_h1_out + grad_out_lr * h1;
-        w_h2_out = w_h2_out + grad_out_lr * h2;
-        w_b2_out = w_b2_out + grad_out_lr;
-        let diff = y - out;
-        let loss = 0.5*diff*diff;
-        loss
-    }
-    function init(w_x1_h1_a, w_x1_h2_a, w_x2_h1_a, w_x2_h2_a, w_b1_h1_a, w_b1_h2_a, w_h1_out_a, w_h2_out_a, w_b2_out_a) {
-        w_x1_h1 = w_x1_h1_a;
-        w_x1_h2 = w_x1_h2_a;
-        w_x2_h1 = w_x2_h1_a;
-        w_x2_h2 = w_x2_h2_a;
-        w_b1_h1 = w_b1_h1_a;
-        w_b1_h2 = w_b1_h2_a;
-        w_h1_out = w_h1_out_a;
-        w_h2_out = w_h2_out_a;
-        w_b2_out = w_b2_out_a;
-    }
-    function __str__() {
-        "Model(" + w_x1_h1 + "," + w_x1_h2 + "," + w_x2_h1 + "," + w_x2_h2 + "," +
-        w_b1_h1 + "," + w_b1_h2 + "," + w_h1_out + "," + w_h2_out + "," + w_b2_out + ")"
-    }
-}
-
-function train(epochs, learning_rate, target_loss, model, data) {
-    let trace_steps = epochs // 10;
-    let range = @std.iter.range;
-    let start = @now();
-    @println(model);
-    let loss = for epoch in range(0,epochs) {
-        let trace_now = epoch % trace_steps == 0;
-        if trace_now { 
-            @println("Epoch ",epoch); 
-        }
-        let max_loss = 0.0;
-        for row in data {
-            let [x1,x2,y] = row;
-            let [h1,h2,out] = model.forward(x1,x2);
-            let loss = model.backward(out, x1, x2, y, h1, h2, learning_rate);
-            if loss > max_loss { 
-                max_loss = loss; 
+module Model() {
+    function new(w_x1_h1, w_x1_h2, w_x2_h1, w_x2_h2, w_b1_h1, w_b1_h2, w_h1_out, w_h2_out, w_b2_out) {
+        object {
+            function sigmoid(x) {
+                1.0/(1.0+@exp(-x))
             }
-            if trace_now { 
-                @println("Out(",x1,",",x2,") = ",out,", Expected = ",y,", Loss = ",loss,"");
+            function forward(x1, x2) {
+                let h1 = sigmoid(x1 * w_x1_h1 + x2 * w_x2_h1 + w_b1_h1);
+                let h2 = sigmoid(x1 * w_x1_h2 + x2 * w_x2_h2 + w_b1_h2);
+                let out = sigmoid(h1 * w_h1_out + h2 * w_h2_out + w_b2_out);
+                [h1,h2,out]
+            }
+            function backward(out, x1, x2, y, h1, h2, learning_rate) {
+                let grad_out = out * (1.0 - out) * (y - out);
+                let grad_h1 = h1 * (1.0 - h1) * w_h1_out * grad_out;
+                let grad_h2 = h2 * (1.0 - h2) * w_h2_out * grad_out;
+                let grad_out_lr = learning_rate * grad_out;
+                let grad_h1_lr = learning_rate * grad_h1;
+                let grad_h2_lr = learning_rate * grad_h2;
+                w_x1_h1 = w_x1_h1 + grad_h1_lr * x1;
+                w_x1_h2 = w_x1_h2 + grad_h2_lr * x1;
+                w_x2_h1 = w_x2_h1 + grad_h1_lr * x2;
+                w_x2_h2 = w_x2_h2 + grad_h2_lr * x2;
+                w_b1_h1 = w_b1_h1 + grad_h1_lr;
+                w_b1_h2 = w_b1_h2 + grad_h2_lr;
+                w_h1_out = w_h1_out + grad_out_lr * h1;
+                w_h2_out = w_h2_out + grad_out_lr * h2;
+                w_b2_out = w_b2_out + grad_out_lr;
+                let diff = y - out;
+                let loss = 0.5*diff*diff;
+                loss
+            }
+            function __str__() {
+                "Model(" + w_x1_h1 + "," + w_x1_h2 + "," + w_x2_h1 + "," + w_x2_h2 + "," +
+                w_b1_h1 + "," + w_b1_h2 + "," + w_h1_out + "," + w_h2_out + "," + w_b2_out + ")"
+            }
+            function train(epochs, learning_rate, target_loss, data) {
+                let trace_steps = epochs // 10;
+                let range = @std.iter.range;
+                let start = @now();
+                @println(@self);
+                let loss = for epoch in range(0,epochs) {
+                    let trace_now = epoch % trace_steps == 0;
+                    if trace_now { 
+                        @println("Epoch ",epoch); 
+                    }
+                    let max_loss = 0.0;
+                    for row in data {
+                        let [x1,x2,y] = row;
+                        let [h1,h2,out] = forward(x1,x2);
+                        let loss = backward(out, x1, x2, y, h1, h2, learning_rate);
+                        if loss > max_loss { 
+                            max_loss = loss; 
+                        }
+                        if trace_now { 
+                            @println("Out(",x1,",",x2,") = ",out,", Expected = ",y,", Loss = ",loss,"");
+                        }
+                    }
+                    if max_loss < target_loss {
+                        @println("Stopping at epoch ",epoch," with max loss below ",target_loss);
+                        break max_loss;
+                    }
+                    max_loss
+                };
+                let elapsed = @now() - start;
+                @println(@self);
+                @println("Loss: ",loss);
+                @println("Elapsed time: ",elapsed," seconds");
             }
         }
-        if max_loss < target_loss {
-            @println("Stopping at epoch ",epoch," with max loss below ",target_loss);
-            break max_loss;
-        }
-        max_loss
-    };
-    let elapsed = @now() - start;
-    @println(model);
-    @println("Loss: ",loss);
-    @println("Elapsed time: ",elapsed," seconds");
+    }
 }
 
-Model.init(0.5,0.9,0.4,1.0,-0.8,0.1,-1.2,1.1,-0.3);
-let data_set = [
+let data = [
         [1.0,1.0,0.0],
         [1.0,0.0,1.0],
         [0.0,1.0,1.0],
         [0.0,0.0,0.0]
 ];
 
-train(1000000, 0.1, 0.00001, Model, data_set);
+let model = Model.new(0.5,0.9,0.4,1.0,-0.8,0.1,-1.2,1.1,-0.3);
+
+model.train(1000000, 0.1, 0.00001, data);
+

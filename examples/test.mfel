@@ -165,3 +165,14 @@ for i in range(0,10) {
     if i > 5 { break i };
     @println(i," after");
 } 
+
+module TestSelf () {
+    let o = object {
+        let x = 10;
+        function f() {
+            @self.x
+        }
+    };
+}
+
+TestSelf.o.f()
