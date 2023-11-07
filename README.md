@@ -1,16 +1,12 @@
 Rust parser and interpreter for the MFEL language
 
 FEATURES:
-- added staticfn (no capture) vs closure (captures context at definition) vs function (captures context at application)
-- added external stdlib example (coded in mfel)
+- added internal stdlib (coded in mfel)
 - mutable arrays with @array, @len, @append and literals
 - Error type (detectable to catch errors)
+- object factory
 
 TODO:
-
-- class statement ?
-- module as an expression (like before) ? call it object ?
-
 - String as array of characters ? mutable.
 
 - ref and deref: refs as objects, what syntax to deref on assign ?
@@ -23,8 +19,6 @@ p^ = 10 or p ^= 10 to deref assign
 - @split, @regex, @command
 
 - builtin in grammar
-
-- block / function block / loop block / if block (for continue break return)
 
 - propagate anyhow errors into the language as Error types ?
 

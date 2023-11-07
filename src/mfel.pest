@@ -18,7 +18,7 @@ reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
     "return" | "break" | "continue" |
     "let" | "function" | "lambda" | "in" | 
-    "context" | "module" |
+    "context" | "module" | "object" |
     "true" | "false" | "nil" |
     "and" | "or" | "not"
 }
@@ -79,6 +79,10 @@ context = {
 
 module = {
     "module" ~ identifier ~ "(" ~ function_args ~ ")" ~ block_syntax
+}
+
+object = {
+    "object" ~ block_syntax
 }
 
 if = {
@@ -185,7 +189,7 @@ expr_base = _{
     array |
     block | if | 
     while | unless | do_while | loop | for |
-    let | defun | lambda | assign | context | module |
+    let | defun | lambda | assign | context | module | object |
     return | continue | break |
     boolean | float | integer | string_literal | char_literal | variable 
 }

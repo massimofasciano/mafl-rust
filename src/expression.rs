@@ -46,6 +46,7 @@ pub enum ExpressionType {
     AssignToExpression(Expression,Expression),
     ArrayAccess(Expression,Expression),
     Loop(Expression),
+    Object(Expression),
     Context(Strings,Expression),
     Module(String,Strings,Expression),
     Defun(String,Strings,Expression),

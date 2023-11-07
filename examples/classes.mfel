@@ -1,16 +1,16 @@
-### this is how to build the equivalent of a class using 
+### the Point example is how to build the equivalent of a class using 
 ###  - a module for the class (with class variables and methods)
-###  - a new method that returns a module (instance of the class)
+###  - a new method that returns an object (instance of the class)
 ###
-### we should add a "class" statement to the grammar to make this easier
-### should we change the module syntax to the old style ?
+### the Counter example is an object factory with no equivalent
+###  to class variables and methods
 ###
 
 module Point () {
     let count = 0; # class variable
     function new(x,y) {
         count = count + 1;
-        module _ (count,Point,x,y) {
+        object {
             function add(point) {
                 Point.new(x + point.x,y + point.y)
             }
@@ -23,7 +23,20 @@ module Point () {
             }
             @println("=> point instance ",count,": ",__str__());
         }
-        _
+    }
+}
+
+function Counter(start, end) {
+    object {
+        let count = nil;
+        function count() {
+            if start > end {
+                return nil;
+            }
+            count = start;
+            start = start + 1;
+            count
+        }
     }
 }
 
@@ -35,3 +48,12 @@ let p3 = p1.add(p2);
 @println(p3);
 p3.add_assign(p3);
 @println(p3);
+
+let c1 = Counter(10,20);
+let c2 = Counter(0,5);
+for i in c1.count {
+    @println("c1 is ",i);
+}
+for i in c2.count {
+    @println("c2 is ",i);
+}

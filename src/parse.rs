@@ -1,5 +1,4 @@
 use std::cell::RefCell;
-
 use pest::iterators::Pair;
 use anyhow::{anyhow, Result};
 use crate::{expression::{Rule, ExpressionType, Expression}, unescape_string};
@@ -100,6 +99,11 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
                 let body = parse_rule(inner[1].clone())?;
                 ExpressionType::Context(args, body).into()
+            } 
+            Rule::object => {
+                assert!(inner.len() == 1);
+                let body = parse_rule(inner[0].clone())?;
+                ExpressionType::Object(body).into()
             } 
             Rule::module => {
                 assert!(inner.len() == 3);
@@ -289,7 +293,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::expr_prefix | Rule::expr_exp | 
         Rule::context | Rule::module | Rule::defun | 
         Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
-        Rule::assign | 
+        Rule::assign | Rule::object |
         Rule::r#let | Rule::r#loop | Rule::r#for |
         Rule::lambda | Rule::r#break |
         Rule::infix_identifier | Rule::r#return => {

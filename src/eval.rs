@@ -457,6 +457,12 @@ impl Interpreter {
                     _ => ast.to_error()?
                 }
             }
+            ExpressionType::Object(body) => {
+                debug!("eval object");
+                let ctx = &ctx.with_new_context();
+                self.eval(ctx, body.to_owned())?;
+                builtin::capture_context(ctx)?
+            }
             ExpressionType::Context(arg_names, body) => {
                 debug!("eval context: {arg_names:?}");
                 let local_ctx = Context::new();
