@@ -58,7 +58,7 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                     Ok(ExpressionType::UnaryOpCall(op, ast).into())
                 })?
             }
-            Rule::expr_apply_or_field => {
+            Rule::expr_apply_or_access => {
                 if inner.len() == 1 { return parse_rule(inner[0].clone()) }
                 assert!(inner.len() > 1);
                 let target = parse_rule(inner[0].clone())?;
@@ -76,7 +76,7 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                             let field = inner[0].as_str().to_owned();
                             Ok(ExpressionType::Field(ast, field).into())
                         }
-                        _ => Err(anyhow!("parse error expr_apply_or_field"))
+                        _ => Err(anyhow!("parse error expr_apply_or_access"))
                     }
                 })?
             } 
@@ -161,17 +161,15 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
             } 
             Rule::assign => {
                 assert!(inner.len() >= 2);
-                let var = inner[0].as_str().to_owned();
+                let var_str = inner[0].as_str().to_owned();
+                let var = ExpressionType::Variable(var_str).into();
                 if inner.len() == 2 {
                     let val = parse_rule(inner[1].clone())?;
-                    // ExpressionType::Assign(var, val).into()
-                    ExpressionType::AssignToExpression(ExpressionType::Variable(var).into(), val).into()
+                    ExpressionType::AssignToExpression(var, val).into()
                 } else {
-                    let init = ExpressionType::Variable(var).into();
-                    let chain = inner[1..inner.len()-1].iter().try_fold(init, |acc, pair| {
+                    let chain = inner[1..inner.len()-1].iter().try_fold(var, |acc, pair| {
                         match pair.as_rule() {
                             Rule::array_access => Ok(ExpressionType::ArrayAccess(acc, parse_rule(pair.clone())?).into()),
-                            // Rule::field_access => Ok(ExpressionType::Field(acc, pair.as_str().to_owned()).into()),
                             Rule::field_access => {
                                 let inner : Vec<Pair<Rule>> = pair.clone().into_inner().collect();
                                 assert!(inner.len() == 1);
@@ -279,7 +277,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         }
         Rule::expr_infix_id | Rule::expr_infix_pipe | Rule::expr_or | Rule::expr_and | 
         Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
-        Rule::expr_mul | Rule::expr_apply_or_field | Rule::expr_post | 
+        Rule::expr_mul | Rule::expr_apply_or_access | Rule::expr_post | 
         Rule::expr_prefix | Rule::expr_exp | 
         Rule::context | Rule::module | Rule::defun | 
         Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |

@@ -8,7 +8,14 @@ FEATURES:
 
 TODO:
 
-- synth vault november
+- String as array of characters ? mutable.
+
+- ref and deref: refs as objects, what syntax to deref on assign ?
+&x creates a Ref
+p^ or *p derefs
+p^ = 10 or p ^= 10 to deref assign
+
+- *=, +=, etc...
 
 - @split, @regex, @command
 
@@ -26,19 +33,11 @@ TODO:
 
 - names of function types: function, staticfn, closure ?  function -> dynfn, closure -> lambda, staticfn (remove and use context () in lambda ...)
 
-- ref and deref (by name ?)
-- implement return continue break
-- Option<Result<Expression>> vs Result<Option<..>> for builtin_var
 - struct syntax useful or not ? we have module.
-- ast: Expression or ast: &Expression in eval ?
 
-- thunk statement (same as closure but without need to call). maybe call it lazy ?
+- mutual recursion (how to bind) ?
 
-- parallel rec or patch closures after binding (with @bind)
-- extend field notation for let and assign ? m.x := 5
-- extend array notation for assign ? a[3] := 5
 
-- f(a,*b,c) expands to f(a,b1,b2,...,bn,c) ? identifier prefix for calls
 
 
 
