@@ -105,20 +105,6 @@ impl Context {
     pub fn scope_id(&self) -> ScopeID {
         self.inner.id
     }
-    // pub fn capture(&self) -> Self {
-    //     debug!("capture");
-    //     let captured = Context::new();
-    //     {   // we swap old and new in a block to contain the mut borrows
-    //         let new_bindings = &mut *captured.inner.bindings.borrow_mut();
-    //         let new_parent = &mut *captured.inner.parent.borrow_mut();
-    //         let old_bindings = &mut *self.inner.bindings.borrow_mut();
-    //         let old_parent = &mut *self.inner.parent.borrow_mut();
-    //         swap(old_bindings,new_bindings);
-    //         swap(old_parent,new_parent);
-    //         *old_parent = Some(captured.to_owned());
-    //     }
-    //     captured
-    // }
     pub fn append(&self, ctx: &Self) {
         debug!("append");
         let mut end = self.to_owned();
@@ -277,49 +263,6 @@ impl Default for Scope {
         }
     }
 }
-
-// impl Debug for Context {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         self.cycle_fmt(f, &mut HashSet::new())
-//     }
-// }
-
-// impl Context {
-//     fn cycle_fmt(&self, f: &mut std::fmt::Formatter<'_>, env: &mut HashSet<ScopeID>) -> std::fmt::Result {
-//         let scope = self.inner.as_ref();
-//         write!(f,"Context({}",scope.id)?;
-//         if env.contains(&scope.id) {
-//             write!(f," => ...]]")
-//         } else {
-//             env.insert(scope.id);
-//             let bindings = scope.bindings.borrow();
-//             write!(f," => {{")?;
-//             let mut iter = bindings.iter().peekable();
-//             while let Some((k,v)) = iter.next() {
-//                 write!(f,"{k:?} = ")?;
-//                 match v.as_ref() {
-//                     ExpressionType::Closure(ctx, args, body) => {
-//                         write!(f,"Closure(")?;
-//                         ctx.cycle_fmt(f, env)?;
-//                         write!(f,",{:#?}",args)?;
-//                         write!(f,",{:#?}",body)?;
-//                         write!(f,")")?;
-//                     },
-//                     _ => {
-//                         write!(f,"{v:?}")?;
-//                     },
-//                 }
-//                 if iter.peek().is_some() { write!(f,",")?; }
-//             }
-//             write!(f,"}}")?;
-//             if let Some(parent) = scope.parent.borrow().as_ref() {
-//                 write!(f,",")?; 
-//                 parent.cycle_fmt(f,env)?;
-//             }
-//             write!(f,")")
-//         }
-//     }
-// }
 
 #[cfg(test)]
 mod tests {

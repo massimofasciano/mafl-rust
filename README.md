@@ -8,8 +8,6 @@ FEATURES:
 
 TODO:
 
-- BIG BUG!!!! global variables appear to override locals in function calls!!!
-
 - class statement ?
 - module as an expression (like before) ? call it object ?
 
