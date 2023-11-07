@@ -158,11 +158,9 @@ arr1[1] = 12;
 
 @println(arr1,arr2,arr3);
 
-let i = 0;
-do {
+let range = @std.iter.range;
+for i in range(0,10) {
     @println(i," before");
-    if i > 5 { break };
+    if i > 5 { break i };
     @println(i," after");
-    i = i + 1;
-} while (i < 10);
-
+} 

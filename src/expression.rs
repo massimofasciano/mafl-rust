@@ -54,8 +54,9 @@ pub enum ExpressionType {
     Array(RefCell<Expressions>),
     ArrayPrintable(Expressions),
     Return(Expression),
+    Break(Expression),
+    Continue, 
     Ref(Rc<MemCell>),
-    Continue, Break,
     Scope(ScopeID,HashMap<String,Expression>),
     ScopeCycle(ScopeID),
 }

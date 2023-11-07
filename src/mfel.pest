@@ -122,7 +122,9 @@ return = {
     "return" ~ expr?
 }
 continue = { "continue" }
-break = { "break" }
+break = { 
+    "break" ~ expr? 
+}
 
 block = {
     "{" ~ sequence ~ "}"

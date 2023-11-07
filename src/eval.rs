@@ -11,16 +11,17 @@ impl Interpreter {
             ExpressionType::Float(_) |
             ExpressionType::Character(_) |
             ExpressionType::Boolean(_) |
-            ExpressionType::String(_) |
-            ExpressionType::Break
+            ExpressionType::String(_)
                 => ast.to_owned(),
+            ExpressionType::Break(br) =>
+                ExpressionType::Break(self.eval(ctx, br.to_owned())?).into(),
             ExpressionType::Block(exprs) => {
                 debug!("eval block");
                 let ctx = &ctx.with_new_context();
                 let mut last_value = expression::nil();
                 for expr in exprs {
                     last_value = self.eval(ctx,expr.to_owned())?;
-                    if let ExpressionType::Break = last_value.as_ref() {
+                    if let ExpressionType::Break(_) = last_value.as_ref() {
                         break
                     }
                 }
@@ -31,7 +32,7 @@ impl Interpreter {
                 let mut last_value = expression::nil();
                 for expr in exprs {
                     last_value = self.eval(ctx,expr.to_owned())?;
-                    if let ExpressionType::Break = last_value.as_ref() {
+                    if let ExpressionType::Break(_) = last_value.as_ref() {
                         break
                     }
                 }
@@ -255,8 +256,8 @@ impl Interpreter {
                     match self.eval(ctx,cond.to_owned())?.as_ref() {
                         ExpressionType::Boolean(b) => if *b {
                             body_value = self.eval(ctx,body.to_owned())?;
-                            if let ExpressionType::Break = body_value.as_ref() {
-                                body_value = expression::nil();
+                            if let ExpressionType::Break(bval) = body_value.as_ref() {
+                                body_value = bval.to_owned();
                                 break
                             }
                         } else {
@@ -274,8 +275,8 @@ impl Interpreter {
                 #[allow(clippy::while_let_loop)]
                 loop {
                     body_value = self.eval(ctx,body.to_owned())?;
-                    if let ExpressionType::Break = body_value.as_ref() {
-                        body_value = expression::nil();
+                    if let ExpressionType::Break(bval) = body_value.as_ref() {
+                        body_value = bval.to_owned();
                         break
                     }
                     match self.eval(ctx,cond.to_owned())?.as_ref() {
@@ -292,8 +293,8 @@ impl Interpreter {
                 #[allow(clippy::while_let_loop)]
                 loop {
                     body_value = self.eval(ctx,body.to_owned())?;
-                    if let ExpressionType::Break = body_value.as_ref() {
-                        body_value = expression::nil();
+                    if let ExpressionType::Break(bval) = body_value.as_ref() {
+                        body_value = bval.to_owned();
                         break
                     }
                 }
@@ -310,6 +311,10 @@ impl Interpreter {
                         for v in arr.borrow().iter() {
                             ctx.set_binding(var.to_owned(), v.to_owned());
                             body_value = self.eval(ctx,body.to_owned())?;
+                            if let ExpressionType::Break(bval) = body_value.as_ref() {
+                                body_value = bval.to_owned();
+                                break
+                            }
                         }
                     },
                     ExpressionType::Closure(_,_,_) => {
@@ -319,6 +324,10 @@ impl Interpreter {
                             if next == expression::nil() { break; }
                             ctx.set_binding(var.to_owned(), next.to_owned());
                             body_value = self.eval(ctx,body.to_owned())?;
+                            if let ExpressionType::Break(bval) = body_value.as_ref() {
+                                body_value = bval.to_owned();
+                                break
+                            }
                         }
                     },
                     _ => return ast.to_error(),
@@ -351,56 +360,6 @@ impl Interpreter {
                             .map(|e|self.eval(ctx,e.to_owned())).collect::<Result<Vec<_>>>()?;
                         self.builtin_fn(ctx, name, &eval_args)?
                     }
-                    // ExpressionType::Array(vals) => {
-                    //     // indexing
-                    //     if arg_values.len() == 1 {
-                    //         if let ExpressionType::Integer(index) = self.eval(ctx, arg_values[0].to_owned())?.as_ref() {
-                    //             let index = (if *index >= 0 { *index } else { vals.borrow().len() as i64 + *index}) as usize;
-                    //             if let Some(result) = vals.borrow().get(index) {
-                    //                 result.to_owned()
-                    //             } else {
-                    //                 expression::error(format!("index {index} out of bounds"))
-                    //             }
-                    //         } else {
-                    //             Err(anyhow!("index by non-integer"))?
-                    //         }
-                    //     // mutate at index
-                    //     } else if arg_values.len() == 2 {
-                    //         if let ExpressionType::Integer(index) = self.eval(ctx, arg_values[0].to_owned())?.as_ref() {
-                    //             debug!("array set index {index}");
-                    //             let index = (if *index >= 0 { *index } else { vals.borrow().len() as i64 + *index}) as usize;
-                    //             let value = self.eval(ctx, arg_values[1].to_owned())?;
-                    //             if let Some(result) = vals.borrow_mut().get_mut(index) {
-                    //                 *result = value;
-                    //                 debug!("array set index {index} to {result:?}");
-                    //                 result.to_owned()
-                    //             } else {
-                    //                 expression::error(format!("index {index} out of bounds"))
-                    //             }
-                    //         } else {
-                    //             Err(anyhow!("index by non-integer"))?
-                    //         }
-                    //     } else {
-                    //         Err(anyhow!("array get or set index: need 1 or 2 arguments"))?
-                    //     }
-                    // }
-                    // ExpressionType::String(s) => {
-                    //     // indexing
-                    //     if arg_values.len() == 1 {
-                    //         if let ExpressionType::Integer(index) = self.eval(ctx, arg_values[0].to_owned())?.as_ref() {
-                    //             let index = (if *index >= 0 { *index } else { s.len() as i64 + *index}) as usize;
-                    //             if let Some(result) = s.chars().nth(index) {
-                    //                 expression::character(result)
-                    //             } else {
-                    //                 expression::error(format!("index {index} out of bounds"))
-                    //             }
-                    //         } else {
-                    //             Err(anyhow!("index by non-integer"))?
-                    //         }
-                    //     } else {
-                    //         Err(anyhow!("string get index: need one argument"))?
-                    //     }
-                    // }
                     ExpressionType::Closure(closure_ctx, arg_names, body) => {
                         let function_ctx = ctx.with_context(closure_ctx.to_owned());
                         for (name,value) in arg_names.iter().zip(arg_values) {

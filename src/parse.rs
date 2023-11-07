@@ -220,6 +220,14 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 };
                 ExpressionType::Return(body).into() 
             },
+            Rule::r#break => { 
+                let body = if inner.len() == 1 {
+                    parse_rule(inner[0].clone())?
+                } else {
+                    ExpressionType::Nil.into()
+                };
+                ExpressionType::Break(body).into() 
+            },
             Rule::infix_identifier => { 
                 assert!(inner.len() == 1);
                 let id = inner[0].as_str().to_owned();
@@ -269,7 +277,6 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::ne => { ExpressionType::NeOp.into() },
         Rule::eq => { ExpressionType::EqOp.into() },
         Rule::r#continue => { ExpressionType::Continue.into() },
-        Rule::r#break => { ExpressionType::Break.into() },
         Rule::block_syntax | Rule::block | Rule::file  => { parse_block(parsed)? },
         Rule::string_literal | Rule::char_literal  | Rule::array_access => {
             let inner = parsed.into_inner().next().ok_or(anyhow!("problem parsing silent rule"))?;
@@ -283,7 +290,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
         Rule::assign | 
         Rule::r#let | Rule::r#loop | Rule::r#for |
-        Rule::lambda | 
+        Rule::lambda | Rule::r#break |
         Rule::infix_identifier | Rule::r#return => {
             let rule = parsed.as_rule();
             let str = parsed.as_str().to_owned();

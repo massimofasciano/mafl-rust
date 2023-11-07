@@ -207,7 +207,9 @@ impl Context {
         let mut current = self.to_owned();
         loop {
             let kv = current.inner.bindings.borrow().to_owned();
-            bindings.extend(kv);
+            for (k,v) in kv {
+                bindings.entry(k).or_insert(v);
+            }
             let parent = current.parent();
             if let Some(parent) = parent {
                 current = parent;

@@ -6,7 +6,6 @@
 
 ## iterators and iterator functions
 module iter () {
-
     function range(start,end) {
         lambda() {
             if start < end {
@@ -50,7 +49,6 @@ module iter () {
 
 ## array functions
 module array () {
-
     function reduce(f,arr) {
         if @len(arr) < 1 { 
             @error("reduce called on empty array")
