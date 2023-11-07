@@ -1,24 +1,25 @@
 let range = @std.iter.range;
 
 function f2(i) {
-    # the break is pushed up (like an exception) until a loop catches it
-    break i;
-    @println("will never print");
+    # the break is caught here (at function top-level it is like a return)
+    break i*100;
+    @println("in f2: will never print");
 }
 
 function f1(x,a,b) {
     for i in range(a,b) {
-        @println("f1 ",i," before");
         if i > x { 
             # also works inside a second block...
             { 
-                # this pushes the value of i up until it hits a loop
-                # the loop will abort and return what the break statement pushed up
-                f2(i); # same as: break i; 
-                @println("will never print");
+                let r2 = f2(i); # the break inside f2 does not affect us
+                @println("in f1: f2 returned ",r2);
+                @println("in f1: will break");
+                # this pushes the value of i up until it hits a loop or a function body
+                # the loop or function will abort and return what the break statement pushed up
+                break i; 
+                @println("in f1: will never print");
             }
         };
-        @println("f1 ",i," after");
         i
     }
     # the loop will return the value pushed by break or the last expression (i in this case)

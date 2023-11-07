@@ -66,11 +66,11 @@ array = { "[" ~ (expr ~ ("," ~ expr)*)? ~ "]"}
 function_args = { (identifier ~ ("," ~ identifier)*)? }
 
 lambda = {
-    "lambda" ~ "(" ~ function_args ~ ")" ~ block
+    "lambda" ~ "(" ~ function_args ~ ")" ~ function_block
 }
 
 defun = {
-    "function" ~ identifier ~ "(" ~ function_args ~ ")" ~ block
+    "function" ~ identifier ~ "(" ~ function_args ~ ")" ~ function_block
 }
 
 context = {
@@ -127,6 +127,10 @@ break = {
 }
 
 block = {
+    "{" ~ sequence ~ "}"
+}
+
+function_block = {
     "{" ~ sequence ~ "}"
 }
 

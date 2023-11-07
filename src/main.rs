@@ -15,8 +15,8 @@ fn main() -> Result<()> {
     };
     let interpreter = Interpreter::new(env)?;
     let result = interpreter.run(&source)?;
-    // println!("{result:#?}");
-    // println!("{result}");
+    println!();
+    println!("*** DEBUG INFO: full program evaluates to:");
     interpreter.println(result)?;
     Ok(())
 }

@@ -17,6 +17,7 @@ fn parse_block(parsed: Pair<Rule>) -> Result<Expression> {
         1 => sequence[0].clone(),
         _ => match rule { 
             Rule::block => ExpressionType::Block(sequence).into(),
+            Rule::function_block => ExpressionType::FunctionBlock(sequence).into(),
             Rule::block_syntax => ExpressionType::Sequence(sequence).into(),
             Rule::file => ExpressionType::Sequence(sequence).into(),
             _ => Err(anyhow!("parse error block type: {rule:?}"))?,
@@ -83,7 +84,7 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
             Rule::lambda => {
                 assert!(inner.len() == 2);
                 assert!(inner[0].as_rule() == Rule::function_args);
-                assert!(inner[1].as_rule() == Rule::block);
+                assert!(inner[1].as_rule() == Rule::function_block);
                 let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
                 let body = parse_rule(inner[1].clone())?;
                 ExpressionType::Lambda(args, body).into()
@@ -154,7 +155,7 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 assert!(inner.len() == 3);
                 let var = inner[0].as_str().to_owned();
                 assert!(inner[1].as_rule() == Rule::function_args);
-                assert!(inner[2].as_rule() == Rule::block);
+                assert!(inner[2].as_rule() == Rule::function_block);
                 let args : Vec<_> = inner[1].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
                 let body = parse_rule(inner[2].clone())?;
                 ExpressionType::Defun(var, args, body).into()
@@ -277,7 +278,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::ne => { ExpressionType::NeOp.into() },
         Rule::eq => { ExpressionType::EqOp.into() },
         Rule::r#continue => { ExpressionType::Continue.into() },
-        Rule::block_syntax | Rule::block | Rule::file  => { parse_block(parsed)? },
+        Rule::block_syntax | Rule::block | Rule::file | Rule::function_block => { parse_block(parsed)? },
         Rule::string_literal | Rule::char_literal  | Rule::array_access => {
             let inner = parsed.into_inner().next().ok_or(anyhow!("problem parsing silent rule"))?;
             parse_rule(inner)?

@@ -25,6 +25,7 @@ pub enum ExpressionType {
     BuiltinFunction(String),
     Nil,
     Block(Expressions),
+    FunctionBlock(Expressions),
     Sequence(Expressions),
     FunctionCall(Expression,Expressions),
     Field(Expression,String),

@@ -1,8 +1,20 @@
+(##########################################################
+
+773575/1000000 epochs
+MFEL : 51s
+
+74908544/100000000 epochs
+Python 3.11 (standard cpython interpreter) Linux: 378s
+
+around 13x slower than the Python interpreter...
+
+###########################################################)
+
 function sigmoid(x) {
     1.0/(1.0+@exp(-x))
 }
 
-module model (sigmoid) {
+module Model (sigmoid) {
     let w_x1_h1 = 0;
     let w_x1_h2 = 0;
     let w_x2_h1 = 0;
@@ -50,56 +62,52 @@ module model (sigmoid) {
         w_h2_out = w_h2_out_a;
         w_b2_out = w_b2_out_a;
     }
+    function __str__() {
+        "Model(" + w_x1_h1 + "," + w_x1_h2 + "," + w_x2_h1 + "," + w_x2_h2 + "," +
+        w_b1_h1 + "," + w_b1_h2 + "," + w_h1_out + "," + w_h2_out + "," + w_b2_out + ")"
+    }
 }
 
-#let epochs = 100000000;
-let epochs = 1000000;
-let learning_rate = 0.1;
-let target_loss = 0.0000001;
+function train(epochs, learning_rate, target_loss, model, data) {
+    let trace_steps = epochs // 10;
+    let range = @std.iter.range;
+    let start = @now();
+    @println(model);
+    let loss = for epoch in range(0,epochs) {
+        let trace_now = epoch % trace_steps == 0;
+        if trace_now { 
+            @println("Epoch ",epoch); 
+        }
+        let max_loss = 0.0;
+        for row in data {
+            let [x1,x2,y] = row;
+            let [h1,h2,out] = model.forward(x1,x2);
+            let loss = model.backward(out, x1, x2, y, h1, h2, learning_rate);
+            if loss > max_loss { 
+                max_loss = loss; 
+            }
+            if trace_now { 
+                @println("Out(",x1,",",x2,") = ",out,", Expected = ",y,", Loss = ",loss,"");
+            }
+        }
+        if max_loss < target_loss {
+            @println("Stopping at epoch ",epoch," with max loss below ",target_loss);
+            break max_loss;
+        }
+        max_loss
+    };
+    let elapsed = @now() - start;
+    @println(model);
+    @println("Loss: ",loss);
+    @println("Elapsed time: ",elapsed," seconds");
+}
 
-let trace_steps = epochs // 10;
-
-model.init(0.5,0.9,0.4,1.0,-0.8,0.1,-1.2,1.1,-0.3);
-
-let data = [
+Model.init(0.5,0.9,0.4,1.0,-0.8,0.1,-1.2,1.1,-0.3);
+let data_set = [
         [1.0,1.0,0.0],
         [1.0,0.0,1.0],
         [0.0,1.0,1.0],
         [0.0,0.0,0.0]
 ];
 
-let max_loss = nil;
-let epoch = 0;
-
-while epoch < epochs and (max_loss == nil or max_loss >= target_loss) {
-    let trace_now = epoch % trace_steps == 0;
-    if trace_now { 
-        @println("Epoch ",epoch); 
-    }
-    max_loss = 0.0;
-    for row in data {
-        let [x1,x2,y] = row;
-        let [h1,h2,out] = model.forward(x1,x2);
-        let loss = model.backward(out, x1, x2, y, h1, h2, learning_rate);
-        if loss > max_loss { 
-            max_loss = loss; 
-        }
-        if trace_now { 
-            @println("Out(",x1,",",x2,") = ",out,", Expected = ",y,", Loss = ",loss,"");
-        }
-    }
-    epoch = epoch + 1;
-    max_loss
-}
-
-(#
-
-1000000 epochs 
-MFEL : 61s
-
-74908544/100000000 epochs
-Python 3.11 (standard cpython interpreter) Linux: 6m18s (378s)
-
-around 12x slower than the Python interpreter...
-
-#)
+train(1000000, 0.1, 0.00001, Model, data_set);

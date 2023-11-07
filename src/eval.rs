@@ -15,6 +15,8 @@ impl Interpreter {
                 => ast.to_owned(),
             ExpressionType::Break(br) =>
                 ExpressionType::Break(self.eval(ctx, br.to_owned())?).into(),
+            ExpressionType::Return(br) =>
+                ExpressionType::Return(self.eval(ctx, br.to_owned())?).into(),
             ExpressionType::Block(exprs) => {
                 debug!("eval block");
                 let ctx = &ctx.with_new_context();
@@ -22,6 +24,26 @@ impl Interpreter {
                 for expr in exprs {
                     last_value = self.eval(ctx,expr.to_owned())?;
                     if let ExpressionType::Break(_) = last_value.as_ref() {
+                        break
+                    }
+                    if let ExpressionType::Return(_) = last_value.as_ref() {
+                        break
+                    }
+                }
+                last_value
+            }
+            ExpressionType::FunctionBlock(exprs) => {
+                debug!("eval function block");
+                let ctx = &ctx.with_new_context();
+                let mut last_value = expression::nil();
+                for expr in exprs {
+                    last_value = self.eval(ctx,expr.to_owned())?;
+                    if let ExpressionType::Break(bval) = last_value.as_ref() {
+                        last_value = bval.to_owned();
+                        break
+                    }
+                    if let ExpressionType::Return(rval) = last_value.as_ref() {
+                        last_value = rval.to_owned();
                         break
                     }
                 }
@@ -33,6 +55,9 @@ impl Interpreter {
                 for expr in exprs {
                     last_value = self.eval(ctx,expr.to_owned())?;
                     if let ExpressionType::Break(_) = last_value.as_ref() {
+                        break
+                    }
+                    if let ExpressionType::Return(_) = last_value.as_ref() {
                         break
                     }
                 }
@@ -260,6 +285,9 @@ impl Interpreter {
                                 body_value = bval.to_owned();
                                 break
                             }
+                            if let ExpressionType::Return(_) = body_value.as_ref() {
+                                break
+                            }
                         } else {
                             break;
                         },
@@ -277,6 +305,9 @@ impl Interpreter {
                     body_value = self.eval(ctx,body.to_owned())?;
                     if let ExpressionType::Break(bval) = body_value.as_ref() {
                         body_value = bval.to_owned();
+                        break
+                    }
+                    if let ExpressionType::Return(_) = body_value.as_ref() {
                         break
                     }
                     match self.eval(ctx,cond.to_owned())?.as_ref() {
@@ -297,6 +328,9 @@ impl Interpreter {
                         body_value = bval.to_owned();
                         break
                     }
+                    if let ExpressionType::Return(_) = body_value.as_ref() {
+                        break
+                    }
                 }
                 body_value
             }
@@ -315,6 +349,9 @@ impl Interpreter {
                                 body_value = bval.to_owned();
                                 break
                             }
+                            if let ExpressionType::Return(_) = body_value.as_ref() {
+                                break
+                            }
                         }
                     },
                     ExpressionType::Closure(_,_,_) => {
@@ -326,6 +363,9 @@ impl Interpreter {
                             body_value = self.eval(ctx,body.to_owned())?;
                             if let ExpressionType::Break(bval) = body_value.as_ref() {
                                 body_value = bval.to_owned();
+                                break
+                            }
+                            if let ExpressionType::Return(_) = body_value.as_ref() {
                                 break
                             }
                         }
