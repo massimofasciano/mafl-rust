@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc, ops::Deref, collections::{HashSet, HashMap}};
 use anyhow::{anyhow, Result};
 use pest_derive::Parser;
-use crate::{context::{Context, MemCell, ScopeID}, expression};
+use crate::context::{Context, MemCell, ScopeID};
 
 #[derive(Parser)]
 #[grammar = "mfel.pest"]

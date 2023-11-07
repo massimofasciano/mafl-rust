@@ -1,6 +1,6 @@
 use std::env::Args;
 use context::Context;
-use expression::{Expression, ExpressionType};
+use expression::Expression;
 use pest::Parser;
 use crate::expression::{MfelParser, Rule};
 use anyhow::{anyhow, Result};

@@ -8,6 +8,9 @@ FEATURES:
 
 TODO:
 
+- class statement ?
+- module as an expression (like before) ? call it object ?
+
 - String as array of characters ? mutable.
 
 - ref and deref: refs as objects, what syntax to deref on assign ?
@@ -30,8 +33,6 @@ p^ = 10 or p ^= 10 to deref assign
 - context inheritance syntax
 - use statement or @use builtin to import contexts (ex: @use(@std.iter)). maybe @import ?
 - use MFEL Error type where needed instead of Rust errors
-
-- names of function types: function, staticfn, closure ?  function -> dynfn, closure -> lambda, staticfn (remove and use context () in lambda ...)
 
 - struct syntax useful or not ? we have module.
 
