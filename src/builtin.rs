@@ -119,12 +119,12 @@ pub fn or(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression>
 }
 
 pub fn and_lazy(interpreter: &Interpreter, ctx: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
-    let lhs = interpreter.eval(ctx,lhs.to_owned())?;
+    let lhs = interpreter.eval(ctx,lhs)?;
     match lhs.as_ref() {
         ExpressionType::Boolean(b) => if !b { return Ok(ExpressionType::Boolean(false).into()) },
         _ => Err(anyhow!("and_lazy lhs not boolean: {lhs:?}"))?,
     };
-    let rhs = interpreter.eval(ctx,rhs.to_owned())?;
+    let rhs = interpreter.eval(ctx,rhs)?;
     match rhs.as_ref() {
         ExpressionType::Boolean(b) => if !b { return Ok(ExpressionType::Boolean(false).into()) },
         _ => Err(anyhow!("and_lazy rhs not boolean: {rhs:?}"))?,
@@ -133,12 +133,12 @@ pub fn and_lazy(interpreter: &Interpreter, ctx: &Context, lhs: &Expression, rhs:
 }
 
 pub fn or_lazy(interpreter: &Interpreter, ctx: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
-    let lhs = interpreter.eval(ctx,lhs.to_owned())?;
+    let lhs = interpreter.eval(ctx,lhs)?;
     match lhs.as_ref() {
         ExpressionType::Boolean(b) => if *b { return Ok(ExpressionType::Boolean(true).into()) },
         _ => Err(anyhow!("or_lazy lhs not boolean: {lhs:?}"))?,
     };
-    let rhs = interpreter.eval(ctx,rhs.to_owned())?;
+    let rhs = interpreter.eval(ctx,rhs)?;
     match rhs.as_ref() {
         ExpressionType::Boolean(b) => if *b { return Ok(ExpressionType::Boolean(true).into()) },
         _ => Err(anyhow!("or_lazy rhs not boolean: {rhs:?}"))?,
@@ -212,7 +212,7 @@ pub fn print(interpreter: &Interpreter, ctx: &Context, args: &[Expression]) -> R
                 // if the closure/object has a binding for __str__, we call it
                 let str = cctx.get_binding("__str__").unwrap();
                 let string = interpreter.eval(cctx, 
-                    ExpressionType::FunctionCall(str, vec![]).into()
+                    &ExpressionType::FunctionCall(str, vec![]).into()
                 )?;
                 print(interpreter, ctx, &[string])?;
             }
@@ -247,7 +247,7 @@ pub fn eval_string_as_source(interpreter: &Interpreter, ctx: &Context, arg: &Exp
     match arg.as_ref() {
         ExpressionType::String(s) => {
             debug!("evaluating string: {s}");
-            interpreter.eval(ctx, parse_source(s)?)
+            interpreter.eval(ctx, &parse_source(s)?)
         }
         _ => arg.to_error()
     }
@@ -257,11 +257,11 @@ pub fn array(interpreter: &Interpreter, ctx: &Context, size: &Expression, init: 
     let mut arr : Vec<Expression> = vec![];
     if let ExpressionType::Integer(size) = size.as_ref() {
         let size = *size;
-        let init = &interpreter.eval(ctx,init.to_owned())?;
+        let init = &interpreter.eval(ctx,init)?;
         for i in 0..size {
             let init = match init.as_ref() {
                 ExpressionType::Closure(_, _, _) => {
-                    interpreter.eval(ctx, ExpressionType::FunctionCall(init.to_owned(), vec![ExpressionType::Integer(i).into()]).into())?
+                    interpreter.eval(ctx, &ExpressionType::FunctionCall(init.to_owned(), vec![ExpressionType::Integer(i).into()]).into())?
                 }
                 _ => init.to_owned(),
             };
@@ -338,7 +338,7 @@ pub fn len(_: &Context, val: &Expression) -> Result<Expression> {
 pub fn append(interpreter: &Interpreter, ctx: &Context, target: &Expression, new: &Expression) -> Result<Expression> {
     Ok(match target.as_ref() {
         ExpressionType::Array(a) => {
-            let new = interpreter.eval(ctx,new.to_owned())?;
+            let new = interpreter.eval(ctx,new)?;
             a.borrow_mut().push(new);
             target.to_owned()
         }
@@ -359,7 +359,7 @@ pub fn include(interpreter: &Interpreter, ctx: &Context, file_expr: &Expression)
 
 pub fn include_str(interpreter: &Interpreter, ctx: &Context, s: &str) -> Result<Expression> {
     debug!("include_str");
-    interpreter.eval(ctx, parse_source(s)?)
+    interpreter.eval(ctx, &parse_source(s)?)
 }
 
 pub fn read_file(_ctx: &Context, file_expr: &Expression) -> Result<Expression> {
@@ -585,7 +585,7 @@ pub fn call(interpreter: &Interpreter, ctx: &Context, callable: &Expression, arg
     match args.as_ref() {
         ExpressionType::Array(args_vec) => {
             let args_copy = args_vec.clone().into_inner();
-            interpreter.eval(ctx, ExpressionType::FunctionCall(callable.to_owned(), args_copy).into())
+            interpreter.eval(ctx, &ExpressionType::FunctionCall(callable.to_owned(), args_copy).into())
         }
         _ => Err(anyhow!("call {callable:?} {args:?}"))?
     }

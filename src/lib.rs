@@ -36,7 +36,7 @@ impl Interpreter {
     pub fn run(&self, source: &str) -> Result<Expression> {
         let expr = parse_source(source)?;
         // println!("{ast:#?}");
-        self.eval(&self.ctx,expr)
+        self.eval(&self.ctx,&expr)
     }
     pub fn print(&self, e: Expression) -> Result<Expression> {
         self.builtin_fn(&self.ctx, "print", &[e])
