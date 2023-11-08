@@ -1,6 +1,9 @@
 ### @context() captures the current state of all variables by reference
 ### (this is what happens internally when a lambda is defined)
 ### the captured context inherits the global one
+###
+### @self simply points to the current context
+###
 
 let x = 1;
 let y = 2;
@@ -14,6 +17,10 @@ let y = 2;
 @insert(@context(),"z",3);
 @test("z",@error("binding not found z"));
 # z not found (it was inserted in the captured context that is gone now)
+@insert(@self,"zz",3);
+@test("zz",3);
+# @self manipulates the current context
+# @context() returns a new context with pointers to existing values
 @println();
 
 @println("test 2");
@@ -57,4 +64,4 @@ let x = x + 1;
 @test("c.x",10);
 @println();
 
-#@println(@context());
+#@self

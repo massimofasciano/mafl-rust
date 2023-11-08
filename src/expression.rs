@@ -208,6 +208,10 @@ pub fn closure(ctx: Context, args: Strings, body: Expression) -> Expression {
     ExpressionType::Closure(ctx,args,body).into()
 }
 
+pub fn context(ctx: Context) -> Expression {
+    ExpressionType::Closure(ctx,vec![],nil()).into()
+}
+
 pub fn array(vals: Expressions) -> Expression {
     ExpressionType::Array(RefCell::new(vals)).into()
 }

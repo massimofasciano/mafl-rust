@@ -2,6 +2,7 @@
 ### @var("x") is equivalent to x
 ### @assign("x",10) is equivalent to x = 10
 ### @let("x",10) is equivalent to let x = 10
+### @self points directly to the current context
 
 let x = 1;
 let y = 2;
@@ -9,32 +10,38 @@ let y = 2;
 @assign("y",y+x);
 @assign("y",@var("y")+@var("x"));
 
-@println("y=",@var("y"));
-# y=4
-
-@println("y=",y);
-# y=4
+@test("@var(\"y\")",4);
+@test("y",4);
 
 @let("z",3);
 
-@println("z=",z);
-# z=3
+@test("z",3);
+
+# we add a circular reference to our current context
+# and call it "ref"
+@let("ref",@self);
+@test("ref.z",3);
 
 @println();
-
-#@println(@context());
+@println(@self);
+@println();
 
 {
     @assign("z",4);
-    @println("z=",z);
-    # z=4
+    @test("z",4);
 
     @let("z",5);
-    @println("z=",z);
-    # z=5
+    @test("z",5);
 
-    #@println(@context());
+    # we save in the existing "ref" from outside
+    # a reference to the current block context
+    # to be used later to refer to this inner "z"
+    @assign("ref",@self);
+
+    @println();
+    @println(@self);
+    @println();
 }
 
-@println("z=",z);
-# z=4
+@test("z",4);
+@test("ref.z",5);

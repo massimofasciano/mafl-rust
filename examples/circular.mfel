@@ -1,0 +1,22 @@
+### @self returns the current context
+### 
+### it can be used to save a reference to a parent context when shadowing variables
+###
+### watch out if you plan on using @clone on the object: it will crash on these circular references (MFEL 0.2.0)
+### @print handles them correctly
+###
+
+let o = object {
+    let self1 = @self;
+    let val = 1;
+    let p = object {
+        let self2 = @self;
+        let val = 2;
+        function f(val) {
+            [self1.val, self2.val, val]
+        }
+    }
+};
+
+o.p.f(3)
+

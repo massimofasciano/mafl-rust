@@ -4,7 +4,7 @@
 ### @copy makes a shallow copy (level 1 only)
 ### @clone makes a deep copy (fully recursive)
 ###
-### @clone rebinds the @self binding when making a copy because it's a circular reference
+### watch out for circular references with @clone: it will crash the program! (see example below)
 ###
 
 let a = [1,2,[3,4],5];
@@ -48,6 +48,10 @@ b[2][1] = 14;
 let o = object {
     let x = 1;
     let y = 2;
+    # the circular below reference would crash @clone!
+    # it is useful for an embedded object to reference
+    #  shadowed members of the parent.
+    #let outer = @self;
     let m = object {
         let z = 3;
         let f = lambda () {
@@ -65,8 +69,6 @@ o.x = 11;
 @test("p.x",11);
 @test("q.x",1);
 @test("r.x",1);
-@test("@get(q,\"@self\").x",1);
-@test("@get(r,\"@self\").x",1);
 
 o.m.z = 13;
 
@@ -74,10 +76,6 @@ o.m.z = 13;
 @test("p.m.z",13);
 @test("q.m.z",13);
 @test("r.m.z",3);
-@test("@get(q,\"@self\").m.z",13);
-@test("@get(r,\"@self\").m.z",3);
-@test("@get(q.m,\"@self\").z",13);
-@test("@get(r.m,\"@self\").z",3);
 
 @test("o.m.f()",[11,2,13]);
 @test("p.m.f()",[11,2,13]);

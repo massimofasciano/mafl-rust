@@ -446,16 +446,10 @@ impl Interpreter {
             ExpressionType::Object(body) => {
                 debug!("eval object");
                 let ctx = &ctx.with_new_context();
-                // tricky operation to bind @self to the object inside the object
-                // we create the binding with nil so that it is present when evaluating the body
-                ctx.add_binding("@self".to_owned(), expression::nil());
                 self.eval(ctx, body)?;
                 // we capture the context from the body in a closure
                 let cap_ctx = ctx.capture();
-                let captured = expression::closure(cap_ctx.to_owned(),vec![],expression::nil());
-                // then we inject the captured context back into itself via the existing @self binding
-                cap_ctx.set_binding("@self".to_owned(), captured.to_owned());
-                captured
+                expression::context(cap_ctx.to_owned())
             }
             ExpressionType::Context(arg_names, body) => {
                 debug!("eval context: {arg_names:?}");
@@ -544,13 +538,7 @@ impl Interpreter {
         match name {
             "env" => Some(Ok(self.env.to_owned())),
             "std" => { Some(Ok(self.std.to_owned())) }
-            "self" => {
-                Some(if let Some(value) = ctx.get_binding("@self") {
-                    Ok(value.to_owned())
-                } else {
-                    Ok(expression::error("@self not found".to_string()))
-                })
-            }
+            "self" => Some(Ok(expression::context(ctx.to_owned()))),
             _ => None,
         }
     }

@@ -374,7 +374,7 @@ pub fn read_file(_ctx: &Context, file_expr: &Expression) -> Result<Expression> {
 }
 
 pub fn capture_context(ctx: &Context) -> Result<Expression> {
-    Ok(expression::closure(ctx.capture(),vec![],nil()))
+    Ok(expression::context(ctx.capture()))
 }
 
 pub fn type_of(_: &Context, expr: &Expression) -> Result<Expression> {
@@ -467,7 +467,7 @@ pub fn insert(_ctx: &Context, container: &Expression, key: &Expression, value: &
 
 pub fn dict(_ctx: &Context) -> Result<Expression> {
     debug!("new dict");
-    Ok(closure(Context::new(),vec![],nil()))
+    Ok(expression::context(Context::new()))
 }
 
 pub fn dict_extend(_ctx: &Context, parent: &Expression) -> Result<Expression> {
@@ -525,21 +525,9 @@ pub fn shallow_copy(_: &Context, val: &Expression) -> Result<Expression> {
             expression::array(ac)
         }
         ExpressionType::Closure(cctx,args,body) => {
-            let mut found_self = false;
-            let copy = cctx.bindings_cloned().into_iter().map(|(k,v)| {
-                if k == "@self" {
-                    found_self = true;
-                    (k, v)
-                } else {
-                    (k, v)
-                }
-            }).collect::<HashMap<String,Rc<MemCell>>>();
+            let copy = cctx.bindings_cloned();
             let new_ctx = cctx.with_bindings(copy);
-            let result = expression::closure(new_ctx.to_owned(), args.to_owned(), body.to_owned());
-            if found_self {
-                new_ctx.set_binding("@self".to_owned(), ExpressionType::Closure(new_ctx.to_owned(), vec![], expression::nil()).into());
-            }
-            result
+            expression::closure(new_ctx.to_owned(), args.to_owned(), body.to_owned())
         }
         _ => val.to_owned(),
     })
@@ -555,21 +543,11 @@ pub fn deep_copy(ctx: &Context, val: &Expression) -> Result<Expression> {
             expression::array(ac)
         }
         ExpressionType::Closure(cctx,args,body) => {
-            let mut found_self = false;
             let copyrec = cctx.bindings_cloned().into_iter().map(|(k,v)| {
-                if k == "@self" {
-                    found_self = true;
-                    (k, v)
-                } else {
-                    (k, MemCell::new_ref(deep_copy(ctx, &v.get()).unwrap()))
-                }
+                (k, MemCell::new_ref(deep_copy(ctx, &v.get()).unwrap()))
             }).collect::<HashMap<String,Rc<MemCell>>>();
             let new_ctx = cctx.with_bindings(copyrec);
-            let result = expression::closure(new_ctx.to_owned(), args.to_owned(), body.to_owned());
-            if found_self {
-                new_ctx.set_binding("@self".to_owned(), ExpressionType::Closure(new_ctx.to_owned(), vec![], expression::nil()).into());
-            }
-            result
+            expression::closure(new_ctx.to_owned(), args.to_owned(), body.to_owned())
         }
         _ => val.to_owned(),
     })
