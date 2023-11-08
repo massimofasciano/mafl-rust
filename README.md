@@ -7,8 +7,6 @@ FEATURES:
 - object factory
 
 TODO:
-- is RefCell still needed with Array ?
-
 - String as array of characters ? mutable.
 
 - ref and deref: refs as objects, what syntax to deref on assign ?
