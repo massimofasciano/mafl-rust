@@ -1,9 +1,24 @@
-let returna = 10;
+let returning = 10;
+let breaker = 20;
+
+let ing = 1000;
+let er = 2000;
 
 let bindings = [["x",1],["y",2]];
 
 @println(bindings);
 
-@println(returna);
+let ings = lambda(x) {
+    if x < 0 {
+        0
+    } else {
+        ings(x-1)
+    }
+};
+bind ings;
 
-return 100;
+@println(returning);
+@println(breaker);
+
+#return ing;
+break er;

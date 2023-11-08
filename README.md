@@ -8,8 +8,6 @@ FEATURES:
 
 TODO:
 
-- BIG BUG: bind is reserved so the parser refuses bindings as an ID !!!!
-
 - String as array of characters ? mutable.
 
 - ref and deref: refs as objects, what syntax to deref on assign ?

@@ -116,7 +116,9 @@ let = {
 }
 
 bind = {
-    "bind" ~ WHITESPACE ~ identifier ~ (("=" ~ expr)? ~ "in" ~ expr)?
+    // "bind" ~ WHITESPACE ~ identifier ~ (("=" ~ expr)? ~ "in" ~ expr)?
+    // "bind" ~ identifier ~ ("=" ~ expr)? ~ "in" ~ expr
+    "bind" ~ identifier ~ (("=" ~ expr)? ~ "in" ~ expr)?
 }
 
 field_access = { "." ~ identifier }
@@ -189,13 +191,13 @@ expr_post = { expr_apply_or_access ~ (question|exclam)* }
 expr_apply_or_access = { expr_prefix ~ (apply_args | field_access | array_access )* }
 expr_prefix = { (not|neg|ref|deref)* ~ expr_base }
 expr_base = _{
-    "(" ~ expr ~ ")" | nil_literal |
-    array |
-    block | if | 
+    "(" ~ expr ~ ")" | nil_literal | 
+    array | block | if | 
     while | unless | do_while | loop | for |
-    let | defun | lambda | assign | context | module | object | bind |
-    return | continue | break |
-    boolean | float | integer | string_literal | char_literal | variable 
+    let | defun | lambda | assign | context | module | object | 
+    continue | 
+    boolean | float | integer | string_literal | char_literal | 
+    variable | return | break | bind
 }
 
 // expressions that behave like blocks
