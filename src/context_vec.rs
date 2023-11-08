@@ -98,7 +98,7 @@ impl Context {
     }
     pub fn capture(&self) -> Self {
         debug!("capture");
-        self.clone()
+        self.flatten_ref()
     }
     pub fn scope_id(&self) -> ScopeID {
         next_scope_id()
