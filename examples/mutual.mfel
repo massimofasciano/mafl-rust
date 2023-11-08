@@ -1,0 +1,73 @@
+# f1 has an open reference to f2
+function f1(x) {
+    if x < 10 {
+        x
+    } else {
+        f2(x)
+    }
+}
+
+# f2 has captured f1
+function f2(x) {
+    if x > 20 {
+        x
+    } else {
+        f1(-x)
+    }
+}
+#bind f2 in f1; # let's do this later in the example...
+
+# the mutual recursion works because we fall back
+# to the context at the call site
+
+@test("f1(5)",5);
+@test("f1(15)",-15);
+@test("f1(25)",25);
+
+# let's keep references to both functions so we can rebind the names later...
+let f1c = f1;
+let f2c = f2;
+
+# we can safely redefine f1 and f2 will still call the captured original
+function f1(x) {
+    x
+}
+
+@test("f1c(5)",5);
+@test("f1c(15)",-15);
+@test("f1c(25)",25);
+
+# we restore f1
+let f1 = f1c;
+
+# but if we redefine f2, f1 will call the new one
+function f2(x) {
+    x
+}
+
+@test("f1(5)",5);
+@test("f1(15)",15); # the wrong f2 is called
+@test("f1(25)",25);
+
+# we restore f2
+let f2 = f2c;
+
+# we bind the name f2 inside of f1 to the original f2
+bind f2 in f1;
+
+# now if we redefine f2, f1 will call the correct version
+function f2(x) {
+    x
+}
+
+@test("f1(5)",5);
+@test("f1(15)",-15);
+@test("f1(25)",25);
+
+# we restore f2
+let f2 = f2c;
+
+# we can inspect the captured contexts for f1 and f2...
+#@println(f1);
+#@println(f2);
+

@@ -78,6 +78,18 @@ impl Interpreter {
                 debug!("eval ref");
                 rc.get()
             }
+            ExpressionType::BindIn(id, value, container) => {
+                debug!("bind in declaration: {id}");
+                let container = self.eval(ctx,container)?;
+                let value = self.eval(ctx,value)?;
+                match container.as_ref() {
+                    ExpressionType::Closure(cctx,_,_) => {
+                        cctx.add_binding(id.to_owned(), value.to_owned());
+                        value.to_owned()
+                    }
+                    _ => Err(anyhow!("bind {id}"))?,
+                }
+            }
             ExpressionType::Let(id, val) => {
                 debug!("eval var declaration: {id}");
                 let val = self.eval(ctx,val)?;
@@ -147,27 +159,6 @@ impl Interpreter {
                     _ => Err(anyhow!("index on non-array/string"))?
                 }
             }
-            // deprecated in favor of AssignToExpression
-            // ExpressionType::Assign(id, val) => {
-            //     debug!("eval assign to identifier: {id}");
-            //     let val = self.eval(ctx,val.to_owned())?;
-            //     match val.as_ref() {
-            //         ExpressionType::Ref(rc) => {
-            //             if ctx.set_binding_ref(id.to_owned(), rc.to_owned()).is_none() {
-            //                 Err(anyhow!("binding not found {id}"))?
-            //             } else {
-            //                 val
-            //             }
-            //         }
-            //         _ => {
-            //             if ctx.set_binding(id.to_owned(), val.to_owned()).is_none() {
-            //                 Err(anyhow!("binding not found {id}"))?
-            //             } else {
-            //                 val
-            //             }
-            //         }
-            //     }
-            // }
             ExpressionType::AssignToExpression(target, val) => {
                 let val = self.eval(ctx,val)?;
                 match target.as_ref() {
@@ -225,20 +216,7 @@ impl Interpreter {
                                     Err(anyhow!("index assign by non-integer"))?
                                 }
                             }
-                            ExpressionType::String(s) => {
-                                Err(anyhow!("all strings are immutable ({s})"))?
-                                // if let ExpressionType::Integer(index) = self.eval(ctx, index.to_owned())?.as_ref() {
-                                //     let index = (if *index >= 0 { *index } else { s.len() as i64 + *index}) as usize;
-                                //     if let Some(result) = s.chars().nth(index) {
-                                //         expression::error(format!("we can't mutate strings at the moment (char={result})"))
-                                //     } else {
-                                //         expression::error(format!("index {index} out of bounds"))
-                                //     }
-                                // } else {
-                                //     Err(anyhow!("index by non-integer"))?
-                                // }
-                            }
-                        _ => Err(anyhow!("index assign on non-array/string"))?
+                        _ => Err(anyhow!("index assign on non-array"))?
                         }
                     }
                     _ => ast.to_error()?,

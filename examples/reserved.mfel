@@ -1,0 +1,9 @@
+let returna = 10;
+
+let bindings = [["x",1],["y",2]];
+
+@println(bindings);
+
+@println(returna);
+
+return 100;

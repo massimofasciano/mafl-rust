@@ -41,8 +41,7 @@ pub enum ExpressionType {
     For(String,Expression,Expression),
     Let(String,Expression),
     LetArray(Strings,Expression),
-    LetIn(String,Expression,Expression),
-    // Assign(String,Expression), // deprecated in favor of AssignToExpression
+    BindIn(String,Expression,Expression),
     AssignToExpression(Expression,Expression),
     ArrayAccess(Expression,Expression),
     Loop(Expression),
@@ -107,6 +106,9 @@ impl ExpressionType {
 
 fn decycle(e: Expression, env: &mut HashSet<ScopeID>) -> Expression {
     match e.as_ref() {
+        ExpressionType::Break(rc) |
+        ExpressionType::Return(rc) => 
+            decycle(rc.to_owned(),env),
         ExpressionType::Array(arr) => {
             let mut safe = vec![];
             for rc in arr.borrow().iter() {
@@ -168,6 +170,8 @@ impl std::fmt::Display for ExpressionType {
             ExpressionType::Error(a) => write!(f,"Error: {a}"),
             ExpressionType::ArrayPrintable(a) =>
                 write!(f,"[{}]",a.iter().map(|x|x.to_string()).collect::<Vec<_>>().join(",")),
+            ExpressionType::Return(_) | 
+            ExpressionType::Break(_) | 
             ExpressionType::Array(_) | 
             ExpressionType::Closure(_, _, _) => 
                 write!(f,"{}",decycle(self.to_owned().into(),&mut HashSet::new()).deref()),

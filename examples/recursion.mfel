@@ -9,15 +9,16 @@ let fibo1 = lambda (x) {
 };
 
 # here fibo1 exists at the call site, so the recursive call works
-@println(fibo1(10));
+@test("fibo1(10)",55);
 
 # fibo1 under another name
 let fibo1copy = fibo1;
-@println(fibo1copy(10));
+@test("fibo1copy(10)",55);
+
 # we replace fibo1 at the call site
 let fibo1 = lambda (x) { 0 };
 # this will return 0 because the recursive call to fibo1 was shadowed above
-@println(fibo1copy(10));
+@test("fibo1copy(10)",0);
 
 @println("**************************************************");
 
@@ -30,23 +31,25 @@ let fibo2 = lambda (x) {
         fibo2(x-2) + fibo2(x-1)
     }
 }; 
-@bind(fibo2,"fibo2",fibo2); # inserts binding for fibo2 into the fibo2 lambda (for recursion)
+# inserts binding for fibo2 into the fibo2 lambda (for recursion)
+bind fibo2;
 
-# warning: trying to print the fibo2 lambda after binding
-# to itself will cause an infinite loop (referential cycle on fibo2).
-# TODO: a patched version of print removes all of the values from the bindings
-#  until we implement a cycle-aware print.
+# we could also use...
+#bind fibo2 = fibo2 in fibo2;
+#bind fibo2 in fibo2;
+
 #@println(fibo2);
 
-@println(fibo2(10));
+@test("fibo2(10)",55);
 
 # fibo2 under another name
 let fibo2copy = fibo2;
-@println(fibo2copy(10));
+@test("fibo2copy(10)",55);
+
 # we replace fibo1 at the call site
 let fibo2 = lambda (x) { 0 };
 # this works because a lambda carries it's context around
-@println(fibo2copy(10));
+@test("fibo2copy(10)",55);
 
 @println("**************************************************");
 
@@ -60,15 +63,16 @@ function fibo3(x) {
     }
 }
 
-@println(fibo3(10));
+@test("fibo3(10)",55);
 
 # fibo3 under another name
 let fibo3copy = fibo3;
-@println(fibo3copy(10));
+@test("fibo3copy(10)",55);
+
 # we replace fibo1 at the call site
 let fibo3 = lambda (x) { 0 };
 # this works because a lambda carries it's context around
-@println(fibo3copy(10));
+@test("fibo3copy(10)",55);
 
 @println("**************************************************");
 

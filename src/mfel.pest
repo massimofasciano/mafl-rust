@@ -17,7 +17,7 @@ block_comment = @{
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
     "return" | "break" | "continue" |
-    "let" | "function" | "lambda" | "in" | 
+    "let" | "function" | "lambda" | "in" | "bind" |
     "context" | "module" | "object" |
     "true" | "false" | "nil" |
     "and" | "or" | "not"
@@ -115,6 +115,10 @@ let = {
     "let" ~ (identifier | identifier_array) ~ "=" ~ expr
 }
 
+bind = {
+    "bind" ~ WHITESPACE ~ identifier ~ (("=" ~ expr)? ~ "in" ~ expr)?
+}
+
 field_access = { "." ~ identifier }
 array_access = { "[" ~ expr ~ "]" }
 
@@ -127,7 +131,7 @@ return = {
 }
 continue = { "continue" }
 break = { 
-    "break" ~ expr? 
+    "break" ~ expr?
 }
 
 block = {
@@ -189,7 +193,7 @@ expr_base = _{
     array |
     block | if | 
     while | unless | do_while | loop | for |
-    let | defun | lambda | assign | context | module | object |
+    let | defun | lambda | assign | context | module | object | bind |
     return | continue | break |
     boolean | float | integer | string_literal | char_literal | variable 
 }

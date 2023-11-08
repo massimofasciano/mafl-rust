@@ -1,0 +1,37 @@
+### the bind statement inserts a binding into an existing context
+### useful for circular references (mutual recursion)
+### the general form is
+### bind name = value in context;
+### but 2 simplified versions exist:
+### bind name in context;  # like bind name = name in context;
+### bind name;             # like bind name = name in name;
+
+let o = object {
+    function __str__() { msg + " " + mult(2,3) + " " + o.f(4,5) }
+};
+
+bind msg = "hello" in o;
+
+function f(x,y) {x * y}
+
+bind mult = f in o;
+bind f in o;
+bind o;
+
+let p = o;
+let o = nil;
+
+@println(p);
+
+# this prints: hello 6 20
+# because 
+# - msg is bound to "hello" in the context of the object
+# - mult is bound to the code of function f
+# - f is bound to the code of function f
+# - o is bound to the object itself (circular reference)
+# even though we reference the object via p after setting o to nil,
+# the internal reference to o still holds.
+#
+# BTW: the __str__ binding has a special meaning for @print. (as of MFEL 0.2.0)
+# it will call __str__ to convert an object to a string if it is available,
+# otherwise it will use the default system implementation.

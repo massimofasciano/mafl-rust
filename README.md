@@ -7,6 +7,9 @@ FEATURES:
 - object factory
 
 TODO:
+
+- BIG BUG: bind is reserved so the parser refuses bindings as an ID !!!!
+
 - String as array of characters ? mutable.
 
 - ref and deref: refs as objects, what syntax to deref on assign ?
@@ -17,8 +20,6 @@ p^ = 10 or p ^= 10 to deref assign
 - *=, +=, etc...
 
 - @split, @regex, @command
-
-- builtin in grammar
 
 - propagate anyhow errors into the language as Error types ?
 

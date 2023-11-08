@@ -131,13 +131,23 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 };
                 ExpressionType::If(cond, then, r#else).into()
             } 
-            // Rule::let_in => {
-            //     assert!(inner.len() == 3);
-            //     let var = inner[0].as_str().to_owned();
-            //     let val = parse_rule(inner[1].clone())?;
-            //     let body = parse_rule(inner[2].clone())?;
-            //     ExpressionType::LetIn(var, val, body).into()
-            // } 
+            Rule::bind => {
+                assert!(!inner.is_empty() || inner.len() <= 3);
+                let var = inner[0].as_str().to_owned();
+                if inner.len() == 1 {
+                    let value = ExpressionType::Variable(var.to_owned()).into();
+                    let body = ExpressionType::Variable(var.to_owned()).into();
+                    ExpressionType::BindIn(var, value, body).into()
+                } else if inner.len() == 2 {
+                    let value = ExpressionType::Variable(var.to_owned()).into();
+                    let body = parse_rule(inner[1].clone())?;
+                    ExpressionType::BindIn(var, value, body).into()
+                } else {
+                    let value = parse_rule(inner[1].clone())?;
+                    let body = parse_rule(inner[2].clone())?;
+                    ExpressionType::BindIn(var, value, body).into()
+                }
+            } 
             Rule::r#let => {
                 assert!(inner.len() == 2);
                 let val = parse_rule(inner[1].clone())?;
@@ -293,7 +303,7 @@ pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
         Rule::expr_prefix | Rule::expr_exp | 
         Rule::context | Rule::module | Rule::defun | 
         Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
-        Rule::assign | Rule::object |
+        Rule::assign | Rule::object | Rule::bind |
         Rule::r#let | Rule::r#loop | Rule::r#for |
         Rule::lambda | Rule::r#break |
         Rule::infix_identifier | Rule::r#return => {
