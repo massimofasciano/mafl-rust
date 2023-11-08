@@ -290,7 +290,7 @@ pub fn to_array(ctx: &Context, init: &Expression) -> Result<Expression> {
             Ok(expression::array(arr))
         } 
         ExpressionType::Array(_) => {
-            copy(ctx, init)
+            deep_copy(ctx, init)
         } 
         _ => Ok(expression::error(format!("to array {init:?}")))
     }
@@ -518,23 +518,58 @@ pub fn let_var(ctx: &Context, key: &Expression, value: &Expression) -> Result<Ex
 }
 
 #[allow(clippy::only_used_in_recursion)]
-pub fn copy(ctx: &Context, val: &Expression) -> Result<Expression> {
+pub fn shallow_copy(_: &Context, val: &Expression) -> Result<Expression> {
     Ok(match val.as_ref() {
         ExpressionType::Array(a) => {
+            let ac = a.borrow().iter().cloned().collect::<Vec<Expression>>();
+            expression::array(ac)
+        }
+        ExpressionType::Closure(cctx,args,body) => {
+            let mut found_self = false;
+            let copy = cctx.bindings_cloned().into_iter().map(|(k,v)| {
+                if k == "@self" {
+                    found_self = true;
+                    (k, v)
+                } else {
+                    (k, v)
+                }
+            }).collect::<HashMap<String,Rc<MemCell>>>();
+            let new_ctx = cctx.with_bindings(copy);
+            let result = expression::closure(new_ctx.to_owned(), args.to_owned(), body.to_owned());
+            if found_self {
+                new_ctx.set_binding("@self".to_owned(), ExpressionType::Closure(new_ctx.to_owned(), vec![], expression::nil()).into());
+            }
+            result
+        }
+        _ => val.to_owned(),
+    })
+}
 
+#[allow(clippy::only_used_in_recursion)]
+pub fn deep_copy(ctx: &Context, val: &Expression) -> Result<Expression> {
+    Ok(match val.as_ref() {
+        ExpressionType::Array(a) => {
             let ac = a.borrow().iter()
-                    .map(|e| { copy(ctx,e) })
+                    .map(|e| { deep_copy(ctx,e) })
                     .collect::<Result<Vec<Expression>>>()?;
             expression::array(ac)
         }
         ExpressionType::Closure(cctx,args,body) => {
-            // single level copy
-            // expression::closure(cctx.flatten_clone(), args.to_owned(), body.to_owned())   
-            // recursive copy
+            let mut found_self = false;
             let copyrec = cctx.bindings_cloned().into_iter().map(|(k,v)| {
-                (k, MemCell::new_ref(copy(ctx, &v.get()).unwrap()))
+                if k == "@self" {
+                    found_self = true;
+                    (k, v)
+                } else {
+                    (k, MemCell::new_ref(deep_copy(ctx, &v.get()).unwrap()))
+                }
             }).collect::<HashMap<String,Rc<MemCell>>>();
-            expression::closure(cctx.with_bindings(copyrec), args.to_owned(), body.to_owned())   
+            let new_ctx = cctx.with_bindings(copyrec);
+            let result = expression::closure(new_ctx.to_owned(), args.to_owned(), body.to_owned());
+            if found_self {
+                new_ctx.set_binding("@self".to_owned(), ExpressionType::Closure(new_ctx.to_owned(), vec![], expression::nil()).into());
+            }
+            result
         }
         _ => val.to_owned(),
     })

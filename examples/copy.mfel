@@ -1,9 +1,85 @@
-### arrays elements are shared and mutable: use @copy when you don't want a shared value
+### arrays elements are shared and mutable
+### objects (and closures in general) are also mutable
+###
+### @copy makes a shallow copy (level 1 only)
+### @clone makes a deep copy (fully recursive)
+###
+### @clone rebinds the @self binding when making a copy because it's a circular reference
+###
 
-let a = [1,2,3,4,5];
+let a = [1,2,[3,4],5];
 let b = a;
 let c = @copy(a);
+let d = @clone(a);
 
-@println(a,b,c);
-b[2] = 10;
-@println(a,b,c);
+@test("a",[1,2,[3,4],5]);
+@test("b",[1,2,[3,4],5]);
+@test("c",[1,2,[3,4],5]);
+@test("d",[1,2,[3,4],5]);
+
+b[1] = 12;
+
+@test("a",[1,12,[3,4],5]);
+@test("b",[1,12,[3,4],5]);
+@test("c",[1,2,[3,4],5]);
+@test("d",[1,2,[3,4],5]);
+
+b[2][1] = 14;
+
+@test("a",[1,12,[3,14],5]);
+@test("b",[1,12,[3,14],5]);
+@test("c",[1,2,[3,14],5]);
+@test("d",[1,2,[3,4],5]);
+
+@append(b,6);
+
+@test("a",[1,12,[3,14],5,6]);
+@test("b",[1,12,[3,14],5,6]);
+@test("c",[1,2,[3,14],5]);
+@test("d",[1,2,[3,4],5]);
+
+@append(b[2],15);
+
+@test("a",[1,12,[3,14,15],5,6]);
+@test("b",[1,12,[3,14,15],5,6]);
+@test("c",[1,2,[3,14,15],5]);
+@test("d",[1,2,[3,4],5]);
+
+let o = object {
+    let x = 1;
+    let y = 2;
+    let m = object {
+        let z = 3;
+        let f = lambda () {
+            [x,y,z]
+        };
+    };
+};
+let p = o;
+let q = @copy(o);
+let r = @clone(o);
+
+o.x = 11;
+
+@test("o.x",11);
+@test("p.x",11);
+@test("q.x",1);
+@test("r.x",1);
+@test("@get(q,\"@self\").x",1);
+@test("@get(r,\"@self\").x",1);
+
+o.m.z = 13;
+
+@test("o.m.z",13);
+@test("p.m.z",13);
+@test("q.m.z",13);
+@test("r.m.z",3);
+@test("@get(q,\"@self\").m.z",13);
+@test("@get(r,\"@self\").m.z",3);
+@test("@get(q.m,\"@self\").z",13);
+@test("@get(r.m,\"@self\").z",3);
+
+@test("o.m.f()",[11,2,13]);
+@test("p.m.f()",[11,2,13]);
+@test("q.m.f()",[11,2,13]);
+@test("r.m.f()",[1,2,3]);
