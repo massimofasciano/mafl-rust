@@ -213,7 +213,7 @@ pub fn closure(ctx: Context, args: Strings, body: Expression) -> Expression {
 }
 
 pub fn context(ctx: Context) -> Expression {
-    ExpressionType::Closure(ctx,vec![],nil()).into()
+    closure(ctx,vec![],nil())
 }
 
 pub fn array(vals: Expressions) -> Expression {

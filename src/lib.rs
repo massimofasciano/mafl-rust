@@ -9,7 +9,6 @@ pub mod expression;
 pub mod context;
 pub mod builtin;
 pub mod parse;
-pub mod context_vec;
 
 #[derive(Debug,Clone)]
 pub struct Interpreter {
