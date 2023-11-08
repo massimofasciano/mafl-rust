@@ -1,3 +1,5 @@
+### this program tests potential issues with the grammar and reserved identifiers
+
 let returning = 10;
 let breaker = 20;
 
@@ -16,6 +18,7 @@ let ings = lambda(x) {
     }
 };
 bind ings;
+#return ings;
 
 @println(returning);
 @println(breaker);
