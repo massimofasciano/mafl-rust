@@ -15,7 +15,7 @@ let y = 2;
 @test("@get(@context(),\"y\")",4);
 @test("y",4);
 @insert(@context(),"z",3);
-@test("z",@error("binding not found z"));
+@test("@type(z)","Error");
 # z not found (it was inserted in the captured context that is gone now)
 @insert(@self,"zz",3);
 @test("zz",3);

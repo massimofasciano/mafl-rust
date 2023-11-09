@@ -272,27 +272,29 @@ mod tests {
     #[test]
     fn ref_test() {
         let (v1,v2,v3,v4,v10,v11, v12) = (1,2,3,4,10,11,12);
+        // let (v1,v2,v3,v4,v10,v11, v12) = 
+        //     ("1".to_string(),"2".to_string(),"3".to_string(),"4".to_string(),"10".to_string(),"11".to_string(),"12".to_string());
         let ctx1 = Context::new();
-        ctx1.add_binding(v1, integer(1));
+        ctx1.add_binding(v1.to_owned(), integer(1));
         let ctx2 = ctx1.with_new_context();
-        ctx2.add_binding(v2, integer(2));
+        ctx2.add_binding(v2.to_owned(), integer(2));
         assert_eq!(ctx2.get_binding(&v1),Some(integer(1)));
         assert_eq!(ctx2.get_binding(&v2),Some(integer(2)));
         assert_eq!(ctx1.get_binding(&v1),Some(integer(1)));
         assert_eq!(ctx1.get_binding(&v2),None);
-        ctx2.set_binding(v1,integer(11));
-        ctx2.set_binding(v2,integer(12));
+        ctx2.set_binding(v1.to_owned(),integer(11));
+        ctx2.set_binding(v2.to_owned(),integer(12));
         assert_eq!(ctx2.get_binding(&v1),Some(integer(11)));
         assert_eq!(ctx2.get_binding(&v2),Some(integer(12)));
         assert_eq!(ctx1.get_binding(&v1),Some(integer(11)));
         assert_eq!(ctx1.get_binding(&v2),None);
 
         let ctx3 = Context::new();
-        ctx3.add_binding(v3, integer(3));
+        ctx3.add_binding(v3.to_owned(), integer(3));
         assert_eq!(ctx3.get_binding(&v3),Some(integer(3)));
 
         let ctx4 = ctx3.with_new_context();
-        ctx4.add_binding(v4, integer(4));
+        ctx4.add_binding(v4.to_owned(), integer(4));
         assert_eq!(ctx4.get_binding(&v4),Some(integer(4)));
         ctx4.append(&ctx1);
 
@@ -305,22 +307,22 @@ mod tests {
         assert_eq!(ctx1.get_binding(&v1),Some(integer(11)));
         assert_eq!(ctx1.get_binding(&v2),None);
 
-        ctx1.add_binding(v10, integer(10));
+        ctx1.add_binding(v10.to_owned(), integer(10));
         assert_eq!(ctx1.get_binding(&v10),Some(integer(10)));
         assert_eq!(ctx2.get_binding(&v10),Some(integer(10)));
         assert_eq!(ctx3.get_binding(&v10),Some(integer(10)));
         assert_eq!(ctx4.get_binding(&v10),Some(integer(10)));
 
-        ctx4.set_binding(v2, integer(22));
+        ctx4.set_binding(v2.to_owned(), integer(22));
         assert_eq!(ctx1.get_binding(&v2),None);
         assert_eq!(ctx2.get_binding(&v2),Some(integer(12)));
         assert_eq!(ctx3.get_binding(&v2),None);
         assert_eq!(ctx4.get_binding(&v2),None);
 
         let ctx1_cap = ctx1.capture();
-        ctx1_cap.set_binding(v10, integer(110));
-        ctx1.add_binding(v11, integer(111));
-        ctx1_cap.add_binding(v12, integer(112));
+        ctx1_cap.set_binding(v10.to_owned(), integer(110));
+        ctx1.add_binding(v11.to_owned(), integer(111));
+        ctx1_cap.add_binding(v12.to_owned(), integer(112));
         assert_eq!(ctx1_cap.get_binding(&v10),Some(integer(110)));
         assert_eq!(ctx1_cap.get_binding(&v11),None);
         assert_eq!(ctx1_cap.get_binding(&v12),Some(integer(112)));
@@ -334,20 +336,20 @@ mod tests {
         let ctx4m = ctx4.flatten_clone();
         assert_eq!(ctx1.get_binding(&v1),Some(integer(11)));
         assert_eq!(ctx4m.get_binding(&v1),Some(integer(11)));
-        ctx4.set_binding(v1, integer(411));
+        ctx4.set_binding(v1.to_owned(), integer(411));
         assert_eq!(ctx1.get_binding(&v1),Some(integer(411)));
         assert_eq!(ctx4m.get_binding(&v1),Some(integer(11)));
-        ctx4m.set_binding(v1, integer(1411));
+        ctx4m.set_binding(v1.to_owned(), integer(1411));
         assert_eq!(ctx1.get_binding(&v1),Some(integer(411)));
         assert_eq!(ctx4m.get_binding(&v1),Some(integer(1411)));
 
         let ctx4r = ctx4.flatten_ref();
         assert_eq!(ctx1.get_binding(&v1),Some(integer(411)));
         assert_eq!(ctx4r.get_binding(&v1),Some(integer(411)));
-        ctx4.set_binding(v1, integer(2411));
+        ctx4.set_binding(v1.to_owned(), integer(2411));
         assert_eq!(ctx1.get_binding(&v1),Some(integer(2411)));
         assert_eq!(ctx4r.get_binding(&v1),Some(integer(2411)));
-        ctx4r.set_binding(v1, integer(3411));
+        ctx4r.set_binding(v1.to_owned(), integer(3411));
         assert_eq!(ctx1.get_binding(&v1),Some(integer(3411)));
         assert_eq!(ctx4r.get_binding(&v1),Some(integer(3411)));
     }

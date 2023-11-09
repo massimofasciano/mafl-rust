@@ -285,7 +285,7 @@ pub fn to_array(ctx: &Context, init: &Expression) -> Result<Expression> {
         } 
         ExpressionType::Closure(cctx, _args, _body) => {
             for (s, cell) in cctx.bindings_ref() {
-                let pair = vec![expression::string(format!("{s}")),cell.get()];
+                let pair = vec![expression::string(format!("#{s}")),cell.get()];
                 arr.push(expression::array(pair));
             }
             Ok(expression::array(arr))

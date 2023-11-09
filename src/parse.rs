@@ -145,12 +145,12 @@ impl Interpreter {
                     if inner.len() == 1 {
                         // let value = ExpressionType::Variable(var.to_owned()).into();
                         // let body = ExpressionType::Variable(var.to_owned()).into();
-                        let value = ExpressionType::Variable(var).into();
-                        let body = ExpressionType::Variable(var).into();
+                        let value = ExpressionType::Variable(var.to_owned()).into();
+                        let body = ExpressionType::Variable(var.to_owned()).into();
                         ExpressionType::BindIn(var, value, body).into()
                     } else if inner.len() == 2 {
                         // let value = ExpressionType::Variable(var.to_owned()).into();
-                        let value = ExpressionType::Variable(var).into();
+                        let value = ExpressionType::Variable(var.to_owned()).into();
                         let body = self.parse_rule(inner[1].clone())?;
                         ExpressionType::BindIn(var, value, body).into()
                     } else {
