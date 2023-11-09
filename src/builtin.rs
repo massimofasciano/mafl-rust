@@ -5,7 +5,7 @@ use std::fmt::Write as _;
 use std::rc::Rc;
 use std::time::{SystemTime, UNIX_EPOCH, Duration};
 
-use crate::context::MemCell;
+use crate::context::{MemCell, Bindings};
 use crate::expression::Ident;
 use crate::{expression::{Expression, self, nil, closure, ExpressionType}, context::Context, Interpreter};
 use anyhow::{Result,anyhow};
@@ -546,7 +546,7 @@ pub fn deep_copy(ctx: &Context, val: &Expression) -> Result<Expression> {
         ExpressionType::Closure(cctx,args,body) => {
             let copyrec = cctx.bindings_cloned().into_iter().map(|(k,v)| {
                 (k, MemCell::new_ref(deep_copy(ctx, &v.get()).unwrap()))
-            }).collect::<HashMap<Ident,Rc<MemCell>>>();
+            }).collect::<Bindings>();
             let new_ctx = cctx.with_bindings(copyrec);
             expression::closure(new_ctx.to_owned(), args.to_owned(), body.to_owned())
         }

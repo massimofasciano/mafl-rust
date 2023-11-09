@@ -73,9 +73,11 @@ pub struct Context {
     inner: Rc<Scope>,
 }
 
+pub type Bindings = HashMap<Ident,Rc<MemCell>>;
+
 #[derive(Debug,Clone)]
 struct Scope {
-    bindings: RefCell<HashMap<Ident,Rc<MemCell>>>,
+    bindings: RefCell<Bindings>,
     parent: RefCell<Option<Context>>,
     id: ScopeID,
 }
@@ -187,7 +189,7 @@ impl Context {
         *scope.bindings.borrow_mut() = self.bindings_ref();
         scope.into()
     }
-    pub fn bindings_ref(&self) -> HashMap<Ident,Rc<MemCell>> {
+    pub fn bindings_ref(&self) -> Bindings {
         debug!("bindings");
         let mut bindings = HashMap::new();
         let mut current = self.to_owned();
@@ -211,11 +213,11 @@ impl Context {
         *scope.bindings.borrow_mut() = self.bindings_cloned();
         scope.into()
     }
-    pub fn bindings_cloned(&self) -> HashMap<Ident,Rc<MemCell>> {
+    pub fn bindings_cloned(&self) -> Bindings {
         debug!("bindings cloned");
         self.bindings_ref().into_iter().map(| (k, rc) | { (k, rc.duplicate_ref()) }).collect()
     }
-    pub fn with_bindings(&self, bindings: HashMap<Ident,Rc<MemCell>>) -> Self {
+    pub fn with_bindings(&self, bindings: Bindings) -> Self {
         debug!("with bindings");
         let scope = Scope::new();
         *scope.bindings.borrow_mut() = bindings;
