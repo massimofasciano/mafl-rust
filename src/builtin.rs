@@ -6,7 +6,8 @@ use std::rc::Rc;
 use std::time::{SystemTime, UNIX_EPOCH, Duration};
 
 use crate::context::MemCell;
-use crate::{expression::{Expression, self, nil, closure, ExpressionType}, parse_source, context::Context, Interpreter};
+use crate::expression::Ident;
+use crate::{expression::{Expression, self, nil, closure, ExpressionType}, context::Context, Interpreter};
 use anyhow::{Result,anyhow};
 use log::debug;
 
@@ -208,9 +209,9 @@ pub fn not(_: &Context, val: &Expression) -> Result<Expression> {
 pub fn print(interpreter: &Interpreter, ctx: &Context, args: &[Expression]) -> Result<Expression> {
     for arg in args { 
         match arg.as_ref() {
-            ExpressionType::Closure(cctx, _, _) if cctx.get_binding("__str__").is_some() => {
+            ExpressionType::Closure(cctx, _, _) if cctx.get_binding(&interpreter.ident("__str__")).is_some() => {
                 // if the closure/object has a binding for __str__, we call it
-                let str = cctx.get_binding("__str__").unwrap();
+                let str = cctx.get_binding(&interpreter.ident("__str__")).unwrap();
                 let string = interpreter.eval(cctx, 
                     &ExpressionType::FunctionCall(str, vec![]).into()
                 )?;
@@ -247,7 +248,7 @@ pub fn eval_string_as_source(interpreter: &Interpreter, ctx: &Context, arg: &Exp
     match arg.as_ref() {
         ExpressionType::String(s) => {
             debug!("evaluating string: {s}");
-            interpreter.eval(ctx, &parse_source(s)?)
+            interpreter.eval(ctx, &interpreter.parse_source(s)?)
         }
         _ => arg.to_error()
     }
@@ -284,7 +285,7 @@ pub fn to_array(ctx: &Context, init: &Expression) -> Result<Expression> {
         } 
         ExpressionType::Closure(cctx, _args, _body) => {
             for (s, cell) in cctx.bindings_ref() {
-                let pair = vec![expression::string(s),cell.get()];
+                let pair = vec![expression::string(format!("{s}")),cell.get()];
                 arr.push(expression::array(pair));
             }
             Ok(expression::array(arr))
@@ -359,7 +360,7 @@ pub fn include(interpreter: &Interpreter, ctx: &Context, file_expr: &Expression)
 
 pub fn include_str(interpreter: &Interpreter, ctx: &Context, s: &str) -> Result<Expression> {
     debug!("include_str");
-    interpreter.eval(ctx, &parse_source(s)?)
+    interpreter.eval(ctx, &interpreter.parse_source(s)?)
 }
 
 pub fn read_file(_ctx: &Context, file_expr: &Expression) -> Result<Expression> {
@@ -404,7 +405,7 @@ pub fn read_line(_ctx: &Context) -> Result<Expression> {
     }
 }
 
-pub fn get(_ctx: &Context, container: &Expression, key: &Expression) -> Result<Expression> {
+pub fn get(interpreter: &Interpreter, _ctx: &Context, container: &Expression, key: &Expression) -> Result<Expression> {
     Ok(match container.as_ref() {
         ExpressionType::Array(a) => {
             match key.as_ref() {
@@ -416,7 +417,7 @@ pub fn get(_ctx: &Context, container: &Expression, key: &Expression) -> Result<E
         ExpressionType::Closure(c,_,_) => {
             match key.as_ref() {
                 ExpressionType::String(s) => 
-                    c.get_binding(s).unwrap_or(expression::error(format!("binding not found {s}"))),
+                    c.get_binding(&interpreter.ident(s)).unwrap_or(expression::error(format!("binding not found {s}"))),
                 _ => Err(anyhow!("get on closure with non-string key {key:?}"))?,
             }
         }
@@ -424,7 +425,7 @@ pub fn get(_ctx: &Context, container: &Expression, key: &Expression) -> Result<E
     })
 }
 
-pub fn set(_ctx: &Context, container: &Expression, key: &Expression, value: &Expression) -> Result<Expression> {
+pub fn set(interpreter: &Interpreter, _ctx: &Context, container: &Expression, key: &Expression, value: &Expression) -> Result<Expression> {
     Ok(match container.as_ref() {
         ExpressionType::Array(a) => {
             match key.as_ref() {
@@ -441,7 +442,7 @@ pub fn set(_ctx: &Context, container: &Expression, key: &Expression, value: &Exp
         ExpressionType::Closure(c,_,_) => {
             match key.as_ref() {
                 ExpressionType::String(s) => 
-                    c.set_binding(s.to_owned(), value.to_owned())
+                    c.set_binding(interpreter.ident(s), value.to_owned())
                         .unwrap_or(expression::error(format!("binding not found {s}"))),
                 _ => Err(anyhow!("set on closure with non-string key {key:?}"))?,
             }
@@ -450,12 +451,12 @@ pub fn set(_ctx: &Context, container: &Expression, key: &Expression, value: &Exp
     })
 }
 
-pub fn insert(_ctx: &Context, container: &Expression, key: &Expression, value: &Expression) -> Result<Expression> {
+pub fn insert(interpreter: &Interpreter, _ctx: &Context, container: &Expression, key: &Expression, value: &Expression) -> Result<Expression> {
     Ok(match container.as_ref() {
         ExpressionType::Closure(c,_,_) => {
             match key.as_ref() {
                 ExpressionType::String(s) => {
-                    c.add_binding(s.to_owned(), value.to_owned());
+                    c.add_binding(interpreter.ident(s), value.to_owned());
                     value.to_owned()
                 }
                 _ => Err(anyhow!("insert on closure with non-string key {key:?}"))?,
@@ -487,30 +488,30 @@ pub fn error_from_strings(_: &Context, args: &[Expression]) -> Result<Expression
     Ok(expression::error(output))
 }
 
-pub fn get_var(ctx: &Context, key: &Expression) -> Result<Expression> {
+pub fn get_var(interpreter: &Interpreter, ctx: &Context, key: &Expression) -> Result<Expression> {
     debug!("get_var {key:?}");
     Ok(match key.as_ref() {
         ExpressionType::String(s) => 
-            ctx.get_binding(s).unwrap_or(expression::error(format!("binding not found {s}"))),
+            ctx.get_binding(&interpreter.ident(s)).unwrap_or(expression::error(format!("binding not found {s}"))),
         _ => Err(anyhow!("get on closure with non-string key {key:?}"))?,
     })
 }
 
-pub fn assign_var(ctx: &Context, key: &Expression, value: &Expression) -> Result<Expression> {
+pub fn assign_var(interpreter: &Interpreter, ctx: &Context, key: &Expression, value: &Expression) -> Result<Expression> {
     debug!("set_var {key:?} {value:?}");
     Ok(match key.as_ref() {
         ExpressionType::String(s) => 
-            ctx.set_binding(s.to_owned(), value.to_owned())
+            ctx.set_binding(interpreter.ident(s), value.to_owned())
                 .unwrap_or(expression::error(format!("binding not found {s}"))),
         _ => Err(anyhow!("set on closure with non-string key {key:?}"))?,
     })
 }
 
-pub fn let_var(ctx: &Context, key: &Expression, value: &Expression) -> Result<Expression> {
+pub fn let_var(interpreter: &Interpreter, ctx: &Context, key: &Expression, value: &Expression) -> Result<Expression> {
     debug!("insert_var {key:?} {value:?}");
     Ok(match key.as_ref() {
         ExpressionType::String(s) => {
-            ctx.add_binding(s.to_owned(), value.to_owned());
+            ctx.add_binding(interpreter.ident(s), value.to_owned());
             value.to_owned()
         }
         _ => Err(anyhow!("insert on closure with non-string key {key:?}"))?,
@@ -545,7 +546,7 @@ pub fn deep_copy(ctx: &Context, val: &Expression) -> Result<Expression> {
         ExpressionType::Closure(cctx,args,body) => {
             let copyrec = cctx.bindings_cloned().into_iter().map(|(k,v)| {
                 (k, MemCell::new_ref(deep_copy(ctx, &v.get()).unwrap()))
-            }).collect::<HashMap<String,Rc<MemCell>>>();
+            }).collect::<HashMap<Ident,Rc<MemCell>>>();
             let new_ctx = cctx.with_bindings(copyrec);
             expression::closure(new_ctx.to_owned(), args.to_owned(), body.to_owned())
         }

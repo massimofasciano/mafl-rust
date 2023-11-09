@@ -222,16 +222,15 @@ impl Interpreter {
                     _ => ast.to_error()?,
                 }
             }
+            ExpressionType::BuiltinVariable(name) => {
+                if let Some(result) = self.builtin_var(ctx, name) {
+                    result?
+                } else {
+                    ExpressionType::BuiltinFunction(name.to_owned()).into()
+                }
+            }
             ExpressionType::Variable(s) => {
-                debug!("eval variable: {s}");
-                if s.starts_with('@') {
-                    let name = s.strip_prefix('@').unwrap().to_owned();
-                    if let Some(result) = self.builtin_var(ctx, &name) {
-                        result?
-                    } else {
-                        ExpressionType::BuiltinFunction(name).into()
-                    }
-                } else if let Some(value) = ctx.get_binding(s) {
+                if let Some(value) = ctx.get_binding(s) {
                     value.to_owned()
                 } else {
                     expression::error(format!("binding not found {s}"))
@@ -561,15 +560,15 @@ impl Interpreter {
             ("lines", [init]) => builtin::to_array_lines(ctx, init),
             ("append", [target, new]) => builtin::append(self, ctx, target, new),
             ("readline", []) => builtin::read_line(ctx),
-            ("get", [container, key]) => builtin::get(ctx, container, key),
-            ("set", [container, key, value]) => builtin::set(ctx, container, key, value),
-            ("insert", [container, key, value]) => builtin::insert(ctx, container, key, value),
-            ("bind", [container, key, value]) => builtin::insert(ctx, container, key, value),
+            ("get", [container, key]) => builtin::get(self, ctx, container, key),
+            ("set", [container, key, value]) => builtin::set(self, ctx, container, key, value),
+            ("insert", [container, key, value]) => builtin::insert(self, ctx, container, key, value),
+            ("bind", [container, key, value]) => builtin::insert(self, ctx, container, key, value),
             ("dict", [parent]) => builtin::dict_extend(ctx, parent),
             ("dict", []) => builtin::dict(ctx),
-            ("var", [key]) => builtin::get_var(ctx, key),
-            ("assign", [key, value]) => builtin::assign_var(ctx, key, value),
-            ("let", [key, value]) => builtin::let_var(ctx, key, value),
+            ("var", [key]) => builtin::get_var(self, ctx, key),
+            ("assign", [key, value]) => builtin::assign_var(self, ctx, key, value),
+            ("let", [key, value]) => builtin::let_var(self, ctx, key, value),
             ("test", [source, expected]) => builtin::test(self, ctx, source, expected),
             ("now", []) => builtin::now(ctx),
             ("sleep", [seconds]) => builtin::sleep(ctx, seconds),

@@ -1,324 +1,353 @@
 use std::cell::RefCell;
 use pest::iterators::Pair;
 use anyhow::{anyhow, Result};
-use crate::{expression::{Rule, ExpressionType, Expression, self}, unescape_string};
+use crate::{expression::{Rule, ExpressionType, Expression, self}, unescape_string, Interpreter};
 
-fn parse_block(parsed: Pair<Rule>) -> Result<Expression> {
-    let rule = parsed.as_rule().to_owned();
-    let sequence = parsed.into_inner()
-        .filter_map(|e| {
-            if e.as_rule() == Rule::EOI { None } 
-            else { Some(parse_rule(e)) }
+impl Interpreter {
+
+    fn parse_block(&self, parsed: Pair<Rule>) -> Result<Expression> {
+        let rule = parsed.as_rule().to_owned();
+        let sequence = parsed.into_inner()
+            .filter_map(|e| {
+                if e.as_rule() == Rule::EOI { None } 
+                else { Some(self.parse_rule(e)) }
+            })
+            .collect::<Result<Vec<Expression>>>()?;
+        Ok(match sequence.len() {
+            0 => ExpressionType::Nil.into(),
+            1 => sequence[0].clone(),
+            _ => match rule { 
+                Rule::block => ExpressionType::Block(sequence).into(),
+                Rule::function_block => ExpressionType::FunctionBlock(sequence).into(),
+                Rule::block_syntax => ExpressionType::Sequence(sequence).into(),
+                Rule::file => ExpressionType::Sequence(sequence).into(),
+                _ => Err(anyhow!("parse error block type: {rule:?}"))?,
+            },
         })
-        .collect::<Result<Vec<Expression>>>()?;
-    Ok(match sequence.len() {
-        0 => ExpressionType::Nil.into(),
-        1 => sequence[0].clone(),
-        _ => match rule { 
-            Rule::block => ExpressionType::Block(sequence).into(),
-            Rule::function_block => ExpressionType::FunctionBlock(sequence).into(),
-            Rule::block_syntax => ExpressionType::Sequence(sequence).into(),
-            Rule::file => ExpressionType::Sequence(sequence).into(),
-            _ => Err(anyhow!("parse error block type: {rule:?}"))?,
-        },
-    })
-}
+    }
 
-fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expression> {
-    Ok(match rule {
-            Rule::expr_infix_id | Rule::expr_infix_pipe | Rule::expr_or | Rule::expr_and | Rule::expr_eq | 
-            Rule::expr_rel | Rule::expr_add | Rule::expr_mul | Rule::expr_exp => {
-                if inner.len() == 1 { return parse_rule(inner[0].clone()) }
-                assert!(inner.len() > 2);
-                assert!(inner.len() % 2 == 1);
-                let left = parse_rule(inner[0].clone())?;
-                inner[1..].chunks_exact(2).try_fold(left, |ast, pair| -> Result<Expression> {
-                    let op = parse_rule(pair[0].clone())?;
-                    let right = parse_rule(pair[1].clone())?;
-                    Ok(ExpressionType::BinOpCall(op, ast, right).into())
-                })?
-            }
-            Rule::expr_post => {
-                if inner.len() == 1 { return parse_rule(inner[0].clone()) }
-                assert!(!inner.is_empty());
-                let expr = parse_rule(inner[0].clone())?;
-                inner[1..].iter().try_fold(expr, |ast, pair| -> Result<Expression> {
-                    let op = parse_rule(pair.clone())?;
-                    Ok(ExpressionType::UnaryOpCall(op, ast).into())
-                })?
-            }
-            Rule::expr_prefix => {
-                if inner.len() == 1 { return parse_rule(inner[0].clone()) }
-                assert!(!inner.is_empty());
-                let mut rinner = inner;
-                rinner.reverse();
-                let expr = parse_rule(rinner[0].clone())?;
-                rinner[1..].iter().try_fold(expr, |ast, pair| -> Result<Expression> {
-                    let op = parse_rule(pair.clone())?;
-                    Ok(ExpressionType::UnaryOpCall(op, ast).into())
-                })?
-            }
-            Rule::expr_apply_or_access => {
-                if inner.len() == 1 { return parse_rule(inner[0].clone()) }
-                assert!(inner.len() > 1);
-                let target = parse_rule(inner[0].clone())?;
-                inner[1..].iter().try_fold(target, |ast, pair| -> Result<Expression> {
-                    match pair.as_rule() {
-                        Rule::apply_args => {
-                            let args = pair.clone().into_inner()
-                                .map(|e| (parse_rule(e.clone()))).collect::<Result<Vec<_>>>()?;
-                            Ok(ExpressionType::FunctionCall(ast, args).into())
-                        }
-                        Rule::array_access => Ok(ExpressionType::ArrayAccess(ast, parse_rule(pair.clone())?).into()),
-                        Rule::field_access => {
-                            let inner : Vec<Pair<Rule>> = pair.clone().into_inner().collect();
-                            assert!(inner.len() == 1);
-                            let field = inner[0].as_str().to_owned();
-                            Ok(ExpressionType::Field(ast, field).into())
-                        }
-                        _ => Err(anyhow!("parse error expr_apply_or_access"))
-                    }
-                })?
-            } 
-            Rule::lambda => {
-                assert!(inner.len() == 2);
-                assert!(inner[0].as_rule() == Rule::function_args);
-                assert!(inner[1].as_rule() == Rule::function_block);
-                let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
-                let body = parse_rule(inner[1].clone())?;
-                ExpressionType::Lambda(args, body).into()
-            }
-            Rule::array => {
-                ExpressionType::Array(RefCell::new(
-                    inner.iter().map(|e| parse_rule(e.to_owned())).collect::<Result<Vec<_>>>()?
-                )).into()
-            } 
-            Rule::context => {
-                assert!(inner.len() == 2);
-                assert!(inner[0].as_rule() == Rule::function_args);
-                let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
-                let body = parse_rule(inner[1].clone())?;
-                ExpressionType::Context(args, body).into()
-            } 
-            Rule::object => {
-                assert!(inner.len() == 1);
-                let body = parse_rule(inner[0].clone())?;
-                ExpressionType::Object(body).into()
-            } 
-            Rule::module => {
-                assert!(inner.len() == 3);
-                let var = inner[0].as_str().to_owned();
-                assert!(inner[1].as_rule() == Rule::function_args);
-                assert!(inner[2].as_rule() == Rule::block_syntax);
-                let args : Vec<_> = inner[1].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
-                let body = parse_rule(inner[2].clone())?;
-                ExpressionType::Module(var, args, body).into()
-            } 
-            Rule::r#if | Rule::unless => {
-                assert!(inner.len() == 2 || inner.len() == 3);
-                let expr = parse_rule(inner[0].clone())?;
-                let cond = if rule == Rule::unless {
-                    ExpressionType::UnaryOpCall(ExpressionType::NotOp.into(),expr).into()
-                } else {
-                    expr
-                };
-                assert!(inner[1].as_rule() == Rule::block);
-                let then = parse_rule(inner[1].clone())?;
-                let r#else = if inner.len() < 3 {
-                    ExpressionType::Nil.into()
-                } else {
-                    parse_rule(inner[2].clone())?
-                };
-                ExpressionType::If(cond, then, r#else).into()
-            } 
-            Rule::bind => {
-                assert!(!inner.is_empty() || inner.len() <= 3);
-                let var = inner[0].as_str().to_owned();
-                if inner.len() == 1 {
-                    let value = ExpressionType::Variable(var.to_owned()).into();
-                    let body = ExpressionType::Variable(var.to_owned()).into();
-                    ExpressionType::BindIn(var, value, body).into()
-                } else if inner.len() == 2 {
-                    let value = ExpressionType::Variable(var.to_owned()).into();
-                    let body = parse_rule(inner[1].clone())?;
-                    ExpressionType::BindIn(var, value, body).into()
-                } else {
-                    let value = parse_rule(inner[1].clone())?;
-                    let body = parse_rule(inner[2].clone())?;
-                    ExpressionType::BindIn(var, value, body).into()
+    fn parse_vec(&self, rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expression> {
+        Ok(match rule {
+                Rule::expr_infix_id | Rule::expr_infix_pipe | Rule::expr_or | Rule::expr_and | Rule::expr_eq | 
+                Rule::expr_rel | Rule::expr_add | Rule::expr_mul | Rule::expr_exp => {
+                    if inner.len() == 1 { return self.parse_rule(inner[0].clone()) }
+                    assert!(inner.len() > 2);
+                    assert!(inner.len() % 2 == 1);
+                    let left = self.parse_rule(inner[0].clone())?;
+                    inner[1..].chunks_exact(2).try_fold(left, |ast, pair| -> Result<Expression> {
+                        let op = self.parse_rule(pair[0].clone())?;
+                        let right = self.parse_rule(pair[1].clone())?;
+                        Ok(ExpressionType::BinOpCall(op, ast, right).into())
+                    })?
                 }
-            } 
-            Rule::r#let => {
-                assert!(inner.len() == 1 || inner.len() == 2);
-                let val = if inner.len() == 2 {
-                    parse_rule(inner[1].clone())?
-                } else {
-                    expression::nil()
-                };
-                match inner[0].as_rule() {
-                    Rule::identifier => {
-                        let var = inner[0].as_str().to_owned();
-                        ExpressionType::Let(var, val).into()
-                    }
-                    Rule::identifier_array => {
-                        let vars = inner[0].clone().into_inner().map(|pair| {
-                            pair.as_str().to_owned()
-                        }).collect();
-                        ExpressionType::LetArray(vars, val).into()
-                    }
-                    _ => Err(anyhow!("bad let syntax {:?}", inner[1].as_rule()))?,
+                Rule::expr_post => {
+                    if inner.len() == 1 { return self.parse_rule(inner[0].clone()) }
+                    assert!(!inner.is_empty());
+                    let expr = self.parse_rule(inner[0].clone())?;
+                    inner[1..].iter().try_fold(expr, |ast, pair| -> Result<Expression> {
+                        let op = self.parse_rule(pair.clone())?;
+                        Ok(ExpressionType::UnaryOpCall(op, ast).into())
+                    })?
                 }
-            } 
-            Rule::defun => {
-                assert!(inner.len() == 3);
-                let var = inner[0].as_str().to_owned();
-                assert!(inner[1].as_rule() == Rule::function_args);
-                assert!(inner[2].as_rule() == Rule::function_block);
-                let args : Vec<_> = inner[1].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
-                let body = parse_rule(inner[2].clone())?;
-                ExpressionType::Defun(var, args, body).into()
-            } 
-            Rule::assign => {
-                assert!(inner.len() >= 2);
-                let var_str = inner[0].as_str().to_owned();
-                let var = ExpressionType::Variable(var_str).into();
-                if inner.len() == 2 {
-                    let val = parse_rule(inner[1].clone())?;
-                    ExpressionType::AssignToExpression(var, val).into()
-                } else {
-                    let chain = inner[1..inner.len()-1].iter().try_fold(var, |acc, pair| {
+                Rule::expr_prefix => {
+                    if inner.len() == 1 { return self.parse_rule(inner[0].clone()) }
+                    assert!(!inner.is_empty());
+                    let mut rinner = inner;
+                    rinner.reverse();
+                    let expr = self.parse_rule(rinner[0].clone())?;
+                    rinner[1..].iter().try_fold(expr, |ast, pair| -> Result<Expression> {
+                        let op = self.parse_rule(pair.clone())?;
+                        Ok(ExpressionType::UnaryOpCall(op, ast).into())
+                    })?
+                }
+                Rule::expr_apply_or_access => {
+                    if inner.len() == 1 { return self.parse_rule(inner[0].clone()) }
+                    assert!(inner.len() > 1);
+                    let target = self.parse_rule(inner[0].clone())?;
+                    inner[1..].iter().try_fold(target, |ast, pair| -> Result<Expression> {
                         match pair.as_rule() {
-                            Rule::array_access => Ok(ExpressionType::ArrayAccess(acc, parse_rule(pair.clone())?).into()),
+                            Rule::apply_args => {
+                                let args = pair.clone().into_inner()
+                                    .map(|e| (self.parse_rule(e.clone()))).collect::<Result<Vec<_>>>()?;
+                                Ok(ExpressionType::FunctionCall(ast, args).into())
+                            }
+                            Rule::array_access => Ok(ExpressionType::ArrayAccess(ast, self.parse_rule(pair.clone())?).into()),
                             Rule::field_access => {
                                 let inner : Vec<Pair<Rule>> = pair.clone().into_inner().collect();
                                 assert!(inner.len() == 1);
-                                let field = inner[0].as_str().to_owned();
-                                Ok(ExpressionType::Field(acc, field).into())
+                                // let field = inner[0].as_str().to_owned();
+                                let field = self.ident(inner[0].as_str());
+                                Ok(ExpressionType::Field(ast, field).into())
                             }
-                            _ => Err(anyhow!("bad assign chain")),
+                            _ => Err(anyhow!("parse error expr_apply_or_access"))
                         }
-                    })?;
-                    let val = parse_rule(inner[inner.len()-1].clone())?;
-                    ExpressionType::AssignToExpression(chain, val).into()
+                    })?
+                } 
+                Rule::lambda => {
+                    assert!(inner.len() == 2);
+                    assert!(inner[0].as_rule() == Rule::function_args);
+                    assert!(inner[1].as_rule() == Rule::function_block);
+                    // let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
+                    let args : Vec<_> = inner[0].clone().into_inner().map(|e| self.ident(e.as_str())).collect();
+                    let body = self.parse_rule(inner[1].clone())?;
+                    ExpressionType::Lambda(args, body).into()
                 }
-            }
-            Rule::r#while => {
-                assert!(inner.len() == 2);
-                let cond = parse_rule(inner[0].clone())?;
-                assert!(inner[1].as_rule() == Rule::block_syntax);
-                let body = parse_rule(inner[1].clone())?;
-                ExpressionType::While(cond, body).into()
-            } 
-            Rule::do_while => {
-                assert!(inner.len() == 2);
-                let cond = parse_rule(inner[1].clone())?;
-                assert!(inner[0].as_rule() == Rule::block_syntax);
-                let body = parse_rule(inner[0].clone())?;
-                ExpressionType::DoWhile(cond, body).into()
-            } 
-            Rule::r#loop => {
-                assert!(inner.len() == 1);
-                assert!(inner[0].as_rule() == Rule::block_syntax);
-                let body = parse_rule(inner[0].clone())?;
-                ExpressionType::Loop(body).into()
-            }
-            Rule::r#for => {
-                assert!(inner.len() == 3);
-                assert!(inner[0].as_rule() == Rule::variable);
-                let var = inner[0].as_str().to_owned();
-                let expr = parse_rule(inner[1].clone())?;
-                assert!(inner[2].as_rule() == Rule::block_syntax);
-                let body = parse_rule(inner[2].clone())?;
-                ExpressionType::For(var, expr, body).into()
-            } 
-            Rule::r#return => { 
-                let body = if inner.len() == 1 {
-                    parse_rule(inner[0].clone())?
+                Rule::array => {
+                    ExpressionType::Array(RefCell::new(
+                        inner.iter().map(|e| self.parse_rule(e.to_owned())).collect::<Result<Vec<_>>>()?
+                    )).into()
+                } 
+                Rule::context => {
+                    assert!(inner.len() == 2);
+                    assert!(inner[0].as_rule() == Rule::function_args);
+                    // let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
+                    let args : Vec<_> = inner[0].clone().into_inner().map(|e| self.ident(e.as_str())).collect();
+                    let body = self.parse_rule(inner[1].clone())?;
+                    ExpressionType::Context(args, body).into()
+                } 
+                Rule::object => {
+                    assert!(inner.len() == 1);
+                    let body = self.parse_rule(inner[0].clone())?;
+                    ExpressionType::Object(body).into()
+                } 
+                Rule::module => {
+                    assert!(inner.len() == 3);
+                    // let var = inner[0].as_str().to_owned();
+                    let var = self.ident(inner[0].as_str());
+                    assert!(inner[1].as_rule() == Rule::function_args);
+                    assert!(inner[2].as_rule() == Rule::block_syntax);
+                    // let args : Vec<_> = inner[1].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
+                    let args : Vec<_> = inner[1].clone().into_inner().map(|e| self.ident(e.as_str())).collect();
+                    let body = self.parse_rule(inner[2].clone())?;
+                    ExpressionType::Module(var, args, body).into()
+                } 
+                Rule::r#if | Rule::unless => {
+                    assert!(inner.len() == 2 || inner.len() == 3);
+                    let expr = self.parse_rule(inner[0].clone())?;
+                    let cond = if rule == Rule::unless {
+                        ExpressionType::UnaryOpCall(ExpressionType::NotOp.into(),expr).into()
+                    } else {
+                        expr
+                    };
+                    assert!(inner[1].as_rule() == Rule::block);
+                    let then = self.parse_rule(inner[1].clone())?;
+                    let r#else = if inner.len() < 3 {
+                        ExpressionType::Nil.into()
+                    } else {
+                        self.parse_rule(inner[2].clone())?
+                    };
+                    ExpressionType::If(cond, then, r#else).into()
+                } 
+                Rule::bind => {
+                    assert!(!inner.is_empty() || inner.len() <= 3);
+                    // let var = inner[0].as_str().to_owned();
+                    let var = self.ident(inner[0].as_str());
+                    if inner.len() == 1 {
+                        // let value = ExpressionType::Variable(var.to_owned()).into();
+                        // let body = ExpressionType::Variable(var.to_owned()).into();
+                        let value = ExpressionType::Variable(var).into();
+                        let body = ExpressionType::Variable(var).into();
+                        ExpressionType::BindIn(var, value, body).into()
+                    } else if inner.len() == 2 {
+                        // let value = ExpressionType::Variable(var.to_owned()).into();
+                        let value = ExpressionType::Variable(var).into();
+                        let body = self.parse_rule(inner[1].clone())?;
+                        ExpressionType::BindIn(var, value, body).into()
+                    } else {
+                        let value = self.parse_rule(inner[1].clone())?;
+                        let body = self.parse_rule(inner[2].clone())?;
+                        ExpressionType::BindIn(var, value, body).into()
+                    }
+                } 
+                Rule::r#let => {
+                    assert!(inner.len() == 1 || inner.len() == 2);
+                    let val = if inner.len() == 2 {
+                        self.parse_rule(inner[1].clone())?
+                    } else {
+                        expression::nil()
+                    };
+                    match inner[0].as_rule() {
+                        Rule::identifier => {
+                            // let var = inner[0].as_str().to_owned();
+                            let var = self.ident(inner[0].as_str());
+                            ExpressionType::Let(var, val).into()
+                        }
+                        Rule::identifier_array => {
+                            let vars = inner[0].clone().into_inner().map(|pair| {
+                                // pair.as_str().to_owned()
+                                self.ident(pair.as_str())
+                            }).collect();
+                            ExpressionType::LetArray(vars, val).into()
+                        }
+                        _ => Err(anyhow!("bad let syntax {:?}", inner[1].as_rule()))?,
+                    }
+                } 
+                Rule::defun => {
+                    assert!(inner.len() == 3);
+                    // let var = inner[0].as_str().to_owned();
+                    let var = self.ident(inner[0].as_str());
+                    assert!(inner[1].as_rule() == Rule::function_args);
+                    assert!(inner[2].as_rule() == Rule::function_block);
+                    // let args : Vec<_> = inner[1].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
+                    let args : Vec<_> = inner[1].clone().into_inner().map(|e| self.ident(e.as_str())).collect();
+                    let body = self.parse_rule(inner[2].clone())?;
+                    ExpressionType::Defun(var, args, body).into()
+                } 
+                Rule::assign => {
+                    assert!(inner.len() >= 2);
+                    let var_str = inner[0].as_str().to_owned();
+                    // let var = ExpressionType::Variable(var_str).into();
+                    let var = ExpressionType::Variable(self.ident(&var_str)).into();
+                    if inner.len() == 2 {
+                        let val = self.parse_rule(inner[1].clone())?;
+                        ExpressionType::AssignToExpression(var, val).into()
+                    } else {
+                        let chain = inner[1..inner.len()-1].iter().try_fold(var, |acc, pair| {
+                            match pair.as_rule() {
+                                Rule::array_access => Ok(ExpressionType::ArrayAccess(acc, self.parse_rule(pair.clone())?).into()),
+                                Rule::field_access => {
+                                    let inner : Vec<Pair<Rule>> = pair.clone().into_inner().collect();
+                                    assert!(inner.len() == 1);
+                                    // let field = inner[0].as_str().to_owned();
+                                    let field = self.ident(inner[0].as_str());
+                                    Ok(ExpressionType::Field(acc, field).into())
+                                }
+                                _ => Err(anyhow!("bad assign chain")),
+                            }
+                        })?;
+                        let val = self.parse_rule(inner[inner.len()-1].clone())?;
+                        ExpressionType::AssignToExpression(chain, val).into()
+                    }
+                }
+                Rule::r#while => {
+                    assert!(inner.len() == 2);
+                    let cond = self.parse_rule(inner[0].clone())?;
+                    assert!(inner[1].as_rule() == Rule::block_syntax);
+                    let body = self.parse_rule(inner[1].clone())?;
+                    ExpressionType::While(cond, body).into()
+                } 
+                Rule::do_while => {
+                    assert!(inner.len() == 2);
+                    let cond = self.parse_rule(inner[1].clone())?;
+                    assert!(inner[0].as_rule() == Rule::block_syntax);
+                    let body = self.parse_rule(inner[0].clone())?;
+                    ExpressionType::DoWhile(cond, body).into()
+                } 
+                Rule::r#loop => {
+                    assert!(inner.len() == 1);
+                    assert!(inner[0].as_rule() == Rule::block_syntax);
+                    let body = self.parse_rule(inner[0].clone())?;
+                    ExpressionType::Loop(body).into()
+                }
+                Rule::r#for => {
+                    assert!(inner.len() == 3);
+                    assert!(inner[0].as_rule() == Rule::variable);
+                    // let var = inner[0].as_str().to_owned();
+                    let var = self.ident(inner[0].as_str());
+                    let expr = self.parse_rule(inner[1].clone())?;
+                    assert!(inner[2].as_rule() == Rule::block_syntax);
+                    let body = self.parse_rule(inner[2].clone())?;
+                    ExpressionType::For(var, expr, body).into()
+                } 
+                Rule::r#return => { 
+                    let body = if inner.len() == 1 {
+                        self.parse_rule(inner[0].clone())?
+                    } else {
+                        ExpressionType::Nil.into()
+                    };
+                    ExpressionType::Return(body).into() 
+                },
+                Rule::r#break => { 
+                    let body = if inner.len() == 1 {
+                        self.parse_rule(inner[0].clone())?
+                    } else {
+                        ExpressionType::Nil.into()
+                    };
+                    ExpressionType::Break(body).into() 
+                },
+                Rule::infix_identifier => { 
+                    assert!(inner.len() == 1);
+                    // let id = inner[0].as_str().to_owned();
+                    let id = self.ident(inner[0].as_str());
+                    ExpressionType::InfixOp(id).into() 
+                },
+                _ => {
+                    Err(anyhow!("TODO: [{:?}] {}",rule,string))?
+                }
+            })
+    }
+
+    pub fn parse_rule(&self, parsed: Pair<Rule>) -> Result<Expression> {
+        Ok(match parsed.as_rule() {
+            Rule::integer => { ExpressionType::Integer(parsed.as_str().parse()?).into() },
+            Rule::float => { ExpressionType::Float(parsed.as_str().parse()?).into() },
+            Rule::string => { ExpressionType::String(unescape_string(parsed.as_str())).into() },
+            Rule::identifier => { 
+                // ExpressionType::Identifier(parsed.as_str().to_owned()).into() 
+                ExpressionType::Identifier(self.ident(parsed.as_str())).into() 
+            },
+            Rule::character => { 
+                assert!(!parsed.as_str().is_empty());
+                ExpressionType::Character(unescape_string(parsed.as_str()).chars().next().unwrap()).into() 
+            },
+            Rule::variable => { 
+                if parsed.as_str().starts_with('@') {
+                    ExpressionType::BuiltinVariable(parsed.as_str().strip_prefix('@').unwrap().to_owned()).into() 
                 } else {
-                    ExpressionType::Nil.into()
-                };
-                ExpressionType::Return(body).into() 
+                    ExpressionType::Variable(self.ident(parsed.as_str())).into() 
+                }
             },
-            Rule::r#break => { 
-                let body = if inner.len() == 1 {
-                    parse_rule(inner[0].clone())?
-                } else {
-                    ExpressionType::Nil.into()
-                };
-                ExpressionType::Break(body).into() 
-            },
-            Rule::infix_identifier => { 
-                assert!(inner.len() == 1);
-                let id = inner[0].as_str().to_owned();
-                ExpressionType::InfixOp(id).into() 
-            },
+            Rule::nil_literal => { ExpressionType::Nil.into() },
+            Rule::nil_implicit => { ExpressionType::Nil.into() },
+            Rule::r#true => { ExpressionType::Boolean(true).into() },
+            Rule::r#false => { ExpressionType::Boolean(false).into() },
+            Rule::r#ref => { ExpressionType::RefOp.into() },
+            Rule::deref => { ExpressionType::DeRefOp.into() },
+            Rule::question => { ExpressionType::QuestionOp.into() },
+            Rule::exclam => { ExpressionType::ExclamOp.into() },
+            Rule::pipe => { ExpressionType::PipeOp.into() },
+            Rule::neg => { ExpressionType::NegOp.into() },
+            Rule::add => { ExpressionType::AddOp.into() },
+            Rule::mult => { ExpressionType::MultOp.into() },
+            Rule::sub => { ExpressionType::SubOp.into() },
+            Rule::div => { ExpressionType::DivOp.into() },
+            Rule::intdiv => { ExpressionType::IntDivOp.into() },
+            Rule::r#mod => { ExpressionType::ModOp.into() },
+            Rule::exp => { ExpressionType::ExpOp.into() },
+            Rule::or => { ExpressionType::OrOp.into() },
+            Rule::and => { ExpressionType::AndOp.into() },
+            Rule::not => { ExpressionType::NotOp.into() },
+            Rule::gt => { ExpressionType::GtOp.into() },
+            Rule::ge => { ExpressionType::GeOp.into() },
+            Rule::lt => { ExpressionType::LtOp.into() },
+            Rule::le => { ExpressionType::LeOp.into() },
+            Rule::ne => { ExpressionType::NeOp.into() },
+            Rule::eq => { ExpressionType::EqOp.into() },
+            Rule::r#continue => { ExpressionType::Continue.into() },
+            Rule::block_syntax | Rule::block | Rule::file | Rule::function_block => { self.parse_block(parsed)? },
+            Rule::string_literal | Rule::char_literal  | Rule::array_access => {
+                let inner = parsed.into_inner().next().ok_or(anyhow!("problem parsing silent rule"))?;
+                self.parse_rule(inner)?
+            }
+            Rule::expr_infix_id | Rule::expr_infix_pipe | Rule::expr_or | Rule::expr_and | 
+            Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
+            Rule::expr_mul | Rule::expr_apply_or_access | Rule::expr_post | 
+            Rule::expr_prefix | Rule::expr_exp | 
+            Rule::context | Rule::module | Rule::defun | 
+            Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
+            Rule::assign | Rule::object | Rule::bind |
+            Rule::r#let | Rule::r#loop | Rule::r#for |
+            Rule::lambda | Rule::r#break |
+            Rule::infix_identifier | Rule::r#return => {
+                let rule = parsed.as_rule();
+                let str = parsed.as_str().to_owned();
+                let inner : Vec<Pair<Rule>> = parsed.into_inner().collect();
+                self.parse_vec(rule,str,inner)?
+            }
             _ => {
-                Err(anyhow!("TODO: [{:?}] {}",rule,string))?
+                Err(anyhow!("TODO: [{:?}] {}",parsed.as_rule(), parsed.as_str()))?
             }
         })
-}
+    }
 
-pub fn parse_rule(parsed: Pair<Rule>) -> Result<Expression> {
-    Ok(match parsed.as_rule() {
-        Rule::integer => { ExpressionType::Integer(parsed.as_str().parse()?).into() },
-        Rule::float => { ExpressionType::Float(parsed.as_str().parse()?).into() },
-        Rule::string => { ExpressionType::String(unescape_string(parsed.as_str())).into() },
-        Rule::identifier => { ExpressionType::Identifier(parsed.as_str().to_owned()).into() },
-        Rule::character => { 
-            assert!(!parsed.as_str().is_empty());
-            ExpressionType::Character(unescape_string(parsed.as_str()).chars().next().unwrap()).into() 
-        },
-        Rule::variable => { ExpressionType::Variable(parsed.as_str().to_owned()).into() },
-        Rule::nil_literal => { ExpressionType::Nil.into() },
-        Rule::nil_implicit => { ExpressionType::Nil.into() },
-        Rule::r#true => { ExpressionType::Boolean(true).into() },
-        Rule::r#false => { ExpressionType::Boolean(false).into() },
-        Rule::r#ref => { ExpressionType::RefOp.into() },
-        Rule::deref => { ExpressionType::DeRefOp.into() },
-        Rule::question => { ExpressionType::QuestionOp.into() },
-        Rule::exclam => { ExpressionType::ExclamOp.into() },
-        Rule::pipe => { ExpressionType::PipeOp.into() },
-        Rule::neg => { ExpressionType::NegOp.into() },
-        Rule::add => { ExpressionType::AddOp.into() },
-        Rule::mult => { ExpressionType::MultOp.into() },
-        Rule::sub => { ExpressionType::SubOp.into() },
-        Rule::div => { ExpressionType::DivOp.into() },
-        Rule::intdiv => { ExpressionType::IntDivOp.into() },
-        Rule::r#mod => { ExpressionType::ModOp.into() },
-        Rule::exp => { ExpressionType::ExpOp.into() },
-        Rule::or => { ExpressionType::OrOp.into() },
-        Rule::and => { ExpressionType::AndOp.into() },
-        Rule::not => { ExpressionType::NotOp.into() },
-        Rule::gt => { ExpressionType::GtOp.into() },
-        Rule::ge => { ExpressionType::GeOp.into() },
-        Rule::lt => { ExpressionType::LtOp.into() },
-        Rule::le => { ExpressionType::LeOp.into() },
-        Rule::ne => { ExpressionType::NeOp.into() },
-        Rule::eq => { ExpressionType::EqOp.into() },
-        Rule::r#continue => { ExpressionType::Continue.into() },
-        Rule::block_syntax | Rule::block | Rule::file | Rule::function_block => { parse_block(parsed)? },
-        Rule::string_literal | Rule::char_literal  | Rule::array_access => {
-            let inner = parsed.into_inner().next().ok_or(anyhow!("problem parsing silent rule"))?;
-            parse_rule(inner)?
-        }
-        Rule::expr_infix_id | Rule::expr_infix_pipe | Rule::expr_or | Rule::expr_and | 
-        Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
-        Rule::expr_mul | Rule::expr_apply_or_access | Rule::expr_post | 
-        Rule::expr_prefix | Rule::expr_exp | 
-        Rule::context | Rule::module | Rule::defun | 
-        Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
-        Rule::assign | Rule::object | Rule::bind |
-        Rule::r#let | Rule::r#loop | Rule::r#for |
-        Rule::lambda | Rule::r#break |
-        Rule::infix_identifier | Rule::r#return => {
-            let rule = parsed.as_rule();
-            let str = parsed.as_str().to_owned();
-            let inner : Vec<Pair<Rule>> = parsed.into_inner().collect();
-            parse_vec(rule,str,inner)?
-        }
-        _ => {
-            Err(anyhow!("TODO: [{:?}] {}",parsed.as_rule(), parsed.as_str()))?
-        }
-    })
 }
-

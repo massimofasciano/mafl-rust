@@ -10,6 +10,9 @@ pub struct MfelParser;
 pub type Expression = Rc<ExpressionType>;
 pub type Expressions = Vec<Expression>;
 pub type Strings = Vec<String>;
+// pub type Ident = String;
+pub type Ident = usize;
+pub type Idents = Vec<Ident>;
 
 #[derive(Debug,Clone)]
 pub enum ExpressionType {
@@ -18,17 +21,18 @@ pub enum ExpressionType {
     Character(char),
     Boolean(bool),
     String(String),
-    Identifier(String),
+    Identifier(Ident),
     Error(String),
-    Variable(String),
-    InfixOp(String),
+    Variable(Ident),
+    BuiltinVariable(String),
+    InfixOp(Ident),
     BuiltinFunction(String),
     Nil,
     Block(Expressions),
     FunctionBlock(Expressions),
     Sequence(Expressions),
     FunctionCall(Expression,Expressions),
-    Field(Expression,String),
+    Field(Expression,Ident),
     BinOpCall(Expression,Expression,Expression),
     UnaryOpCall(Expression,Expression),
     AddOp, MultOp, SubOp, DivOp, IntDivOp, ExpOp, ModOp,
@@ -38,27 +42,27 @@ pub enum ExpressionType {
     If(Expression,Expression,Expression),
     While(Expression,Expression),
     DoWhile(Expression,Expression),
-    For(String,Expression,Expression),
-    Let(String,Expression),
-    LetArray(Strings,Expression),
-    BindIn(String,Expression,Expression),
+    For(Ident,Expression,Expression),
+    Let(Ident,Expression),
+    LetArray(Idents,Expression),
+    BindIn(Ident,Expression,Expression),
     AssignToExpression(Expression,Expression),
     ArrayAccess(Expression,Expression),
     Loop(Expression),
     Object(Expression),
-    Context(Strings,Expression),
-    Module(String,Strings,Expression),
-    Defun(String,Strings,Expression),
-    Lambda(Strings,Expression),
-    Closure(Context,Strings,Expression),
-    ClosurePrintable(Expression,Strings,Expression),
+    Context(Idents,Expression),
+    Module(Ident,Idents,Expression),
+    Defun(Ident,Idents,Expression),
+    Lambda(Idents,Expression),
+    Closure(Context,Idents,Expression),
+    ClosurePrintable(Expression,Idents,Expression),
     Array(RefCell<Expressions>),
     ArrayPrintable(Expressions),
     Return(Expression),
     Break(Expression),
     Continue, 
     Ref(Rc<MemCell>),
-    Scope(ScopeID,HashMap<String,Expression>),
+    Scope(ScopeID,HashMap<Ident,Expression>),
     ScopeCycle(ScopeID),
 }
 
@@ -208,7 +212,7 @@ pub fn nil() -> Expression {
     ExpressionType::Nil.into()
 }
 
-pub fn closure(ctx: Context, args: Strings, body: Expression) -> Expression {
+pub fn closure(ctx: Context, args: Idents, body: Expression) -> Expression {
     ExpressionType::Closure(ctx,args,body).into()
 }
 

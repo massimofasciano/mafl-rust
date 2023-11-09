@@ -1,0 +1,15 @@
+module O () {
+    function new(x,y) {
+        object {
+            function __str__() {
+                "x="+x+",y="+y
+            }
+            function both() {
+                [x,y]
+            }
+        }
+    }
+};
+
+O.new(3,9)
+

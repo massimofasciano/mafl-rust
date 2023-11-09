@@ -1,6 +1,6 @@
-use std::env::Args;
+use std::{env::Args, cell::{RefCell, Cell}, collections::HashMap};
 use context::Context;
-use expression::Expression;
+use expression::{Expression, Ident};
 use pest::Parser;
 use crate::expression::{MfelParser, Rule};
 use anyhow::{anyhow, Result};
@@ -15,6 +15,8 @@ pub struct Interpreter {
     pub env: Expression,
     pub std: Expression,
     ctx: Context,
+    vars: RefCell<HashMap<String,usize>>,
+    last_var: Cell<usize>,
 }
 
 static _STD_STR : &str = include_str!("std.mfel");
@@ -34,8 +36,8 @@ impl Interpreter {
         Ok(interpreter)
     }
     pub fn run(&self, source: &str) -> Result<Expression> {
-        let expr = parse_source(source)?;
-        // println!("{ast:#?}");
+        let expr = self.parse_source(source)?;
+        println!("{expr:#?}");
         self.eval(&self.ctx,&expr)
     }
     pub fn print(&self, e: Expression) -> Result<Expression> {
@@ -44,6 +46,28 @@ impl Interpreter {
     pub fn println(&self, e: Expression) -> Result<Expression> {
         self.builtin_fn(&self.ctx, "println", &[e])
     }
+    pub fn parse_source(&self, source: &str) -> Result<Expression> {
+        let parsed = MfelParser::parse(Rule::file, source)?
+            .next().ok_or(anyhow!("parse error"))?; 
+        self.parse_rule(parsed)
+    }
+    pub fn var_num(&self, id: &str) -> usize {
+        let num = self.vars.borrow().get(id).map(|x|x.to_owned());
+        if let Some(num) = num {
+            num
+        } else {
+            let num = self.last_var.get();
+            self.vars.borrow_mut().insert(id.to_owned(), num);
+            self.last_var.set(num+1);
+            num
+        }
+    }
+    pub fn ident(&self, id: &str) -> Ident {
+        // format!("_{}",self.var_num(id))
+        // format!("_{}_{id}",self.var_num(id))
+        // id.to_owned()
+        self.var_num(id)
+    } 
 }
 
 impl Default for Interpreter {
@@ -52,16 +76,12 @@ impl Default for Interpreter {
             env: expression::array(vec![]),
             std: expression::nil(),
             ctx: Context::new(),
+            vars: RefCell::new(HashMap::new()),
+            last_var: Cell::new(0),
         }
     }
 }
 
-pub fn parse_source(source: &str) -> Result<Expression> {
-    let parsed = MfelParser::parse(Rule::file, source)?
-        .next().ok_or(anyhow!("parse error"))?; 
-    // println!("{:#?}",parsed);
-    parse::parse_rule(parsed)
-}
 
 pub fn unescape_string(sr: &str) -> String {
     // this is incomplete
