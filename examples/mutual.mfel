@@ -71,3 +71,27 @@ let f2 = f2c;
 #@println(f1);
 #@println(f2);
 
+###
+### a simpler way using only let and lambda
+###
+
+let f = context () { # a simple block works too but captures the outside context too
+    let rec;
+    let rec2;
+    rec = lambda (x) {
+        if x > 10 { rec2(x) }
+        else { rec(x+1) }
+    };
+    rec2 = lambda(x) {
+        if x > 20 {
+            rec(x // 10)
+        } else {
+            x * 10
+        }
+    };
+    rec
+};
+
+@test("f(1)",110);
+@test("f(50)",110);
+#@println(f);

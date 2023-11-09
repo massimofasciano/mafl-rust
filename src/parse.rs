@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use pest::iterators::Pair;
 use anyhow::{anyhow, Result};
-use crate::{expression::{Rule, ExpressionType, Expression}, unescape_string};
+use crate::{expression::{Rule, ExpressionType, Expression, self}, unescape_string};
 
 fn parse_block(parsed: Pair<Rule>) -> Result<Expression> {
     let rule = parsed.as_rule().to_owned();
@@ -149,8 +149,12 @@ fn parse_vec(rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Expre
                 }
             } 
             Rule::r#let => {
-                assert!(inner.len() == 2);
-                let val = parse_rule(inner[1].clone())?;
+                assert!(inner.len() == 1 || inner.len() == 2);
+                let val = if inner.len() == 2 {
+                    parse_rule(inner[1].clone())?
+                } else {
+                    expression::nil()
+                };
                 match inner[0].as_rule() {
                     Rule::identifier => {
                         let var = inner[0].as_str().to_owned();

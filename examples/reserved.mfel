@@ -2,6 +2,7 @@
 
 let returning = 10;
 let breaker = 20;
+let lettuce = 30;
 
 let ing = 1000;
 let er = 2000;
@@ -9,6 +10,11 @@ let er = 2000;
 let bindings = [["x",1],["y",2]];
 
 @println(bindings);
+@println(lettuce);
+
+let tuce;
+tuce = 300;
+@println(tuce);
 
 let ings = lambda(x) {
     if x < 0 {

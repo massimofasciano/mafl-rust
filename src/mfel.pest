@@ -112,12 +112,10 @@ for = {
 identifier_array = { "[" ~ (identifier ~ ("," ~ identifier)*)? ~ "]"}
 
 let = {
-    "let" ~ (identifier | identifier_array) ~ "=" ~ expr
+    "let" ~ (identifier | identifier_array) ~ ("=" ~ expr)?
 }
 
 bind = {
-    // "bind" ~ WHITESPACE ~ identifier ~ (("=" ~ expr)? ~ "in" ~ expr)?
-    // "bind" ~ identifier ~ ("=" ~ expr)? ~ "in" ~ expr
     "bind" ~ identifier ~ (("=" ~ expr)? ~ "in" ~ expr)?
 }
 
@@ -194,10 +192,10 @@ expr_base = _{
     "(" ~ expr ~ ")" | nil_literal | 
     array | block | if | 
     while | unless | do_while | loop | for |
-    let | defun | lambda | assign | context | module | object | 
+    defun | lambda | assign | context | module | object | 
     continue | 
     boolean | float | integer | string_literal | char_literal | 
-    variable | return | break | bind
+    variable | let | return | break | bind
 }
 
 // expressions that behave like blocks
