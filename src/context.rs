@@ -268,14 +268,19 @@ impl Default for Scope {
 
 #[cfg(test)]
 mod tests {
-    use crate::expression::integer;
+    use crate::{expression::integer, Interpreter};
     use super::Context;
 
     #[test]
     fn ref_test() {
-        let (v1,v2,v3,v4,v10,v11, v12) = (1,2,3,4,10,11,12);
-        // let (v1,v2,v3,v4,v10,v11, v12) = 
-        //     ("1".to_string(),"2".to_string(),"3".to_string(),"4".to_string(),"10".to_string(),"11".to_string(),"12".to_string());
+        let interpreter = Interpreter::new(std::env::args()).unwrap();
+        let v1 = interpreter.ident("v1");
+        let v2 = interpreter.ident("v2");
+        let v3 = interpreter.ident("v3");
+        let v4 = interpreter.ident("v4");
+        let v10 = interpreter.ident("v10");
+        let v11 = interpreter.ident("v11");
+        let v12 = interpreter.ident("v12");
         let ctx1 = Context::new();
         ctx1.add_binding(v1.to_owned(), integer(1));
         let ctx2 = ctx1.with_new_context();

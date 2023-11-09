@@ -37,7 +37,7 @@ impl Interpreter {
     }
     pub fn run(&self, source: &str) -> Result<Expression> {
         let expr = self.parse_source(source)?;
-        println!("{expr:#?}");
+        // println!("{expr:#?}");
         self.eval(&self.ctx,&expr)
     }
     pub fn print(&self, e: Expression) -> Result<Expression> {
@@ -65,8 +65,8 @@ impl Interpreter {
     pub fn ident(&self, id: &str) -> Ident {
         // format!("_{}",self.var_num(id))
         // format!("_{}_{id}",self.var_num(id))
-        // id.to_owned()
-        self.var_num(id)
+        id.to_owned()
+        // self.var_num(id)
     } 
 }
 

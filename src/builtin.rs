@@ -1,15 +1,12 @@
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::io::{self, BufRead, stdout, Write};
 use std::fmt::Write as _;
-use std::rc::Rc;
 use std::time::{SystemTime, UNIX_EPOCH, Duration};
-
-use crate::context::{MemCell, Bindings};
-use crate::expression::Ident;
-use crate::{expression::{Expression, self, nil, closure, ExpressionType}, context::Context, Interpreter};
 use anyhow::{Result,anyhow};
 use log::debug;
+
+use crate::context::{MemCell, Bindings};
+use crate::{expression::{Expression, self, nil, closure, ExpressionType}, context::Context, Interpreter};
 
 pub fn pow(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs.as_ref(), rhs.as_ref()) {

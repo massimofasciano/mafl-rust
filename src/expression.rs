@@ -10,8 +10,8 @@ pub struct MfelParser;
 pub type Expression = Rc<ExpressionType>;
 pub type Expressions = Vec<Expression>;
 pub type Strings = Vec<String>;
-// pub type Ident = String;
-pub type Ident = usize;
+pub type Ident = String;
+// pub type Ident = usize;
 pub type Idents = Vec<Ident>;
 
 #[derive(Debug,Clone)]
