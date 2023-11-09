@@ -176,8 +176,8 @@ module TestSelf () {
 @println(TestSelf.o.f());
 
 let f = context () {
-    let rec = nil;
-    let rec2 = nil;
+    let rec;
+    let rec2;
     rec = lambda (x) {
         if x > 10 { rec2(x) }
         else { rec(x+1) }
@@ -194,4 +194,4 @@ let f = context () {
 
 @test("f(1)",110);
 @test("f(50)",110);
-@println(f);
+#@println(f);
