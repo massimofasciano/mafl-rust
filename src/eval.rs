@@ -532,9 +532,18 @@ impl Interpreter {
             } 
             ExpressionType::Array(vals) => {
                 debug!("eval array");
-                expression::array(
-                    vals.borrow().iter().map(|v|self.eval(ctx,v)).collect::<Result<Vec<_>>>()?
-                )
+                expression::array({
+                    let mut new = vec![];
+                    for v in vals.borrow().iter() {
+                        let value = self.eval(ctx,v)?;
+                        // propagate exception
+                        if let ExpressionType::Throw(val) = value.as_ref() {
+                            return Ok(ExpressionType::Throw(val.to_owned()).into());
+                        }
+                        new.push(value);
+                    }
+                    new
+                })
             }
             _ => ast.to_error()?,
         })

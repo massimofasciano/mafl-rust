@@ -192,7 +192,7 @@ impl std::fmt::Display for ExpressionType {
 }
 
 pub fn error(msg: String) -> Expression {
-    ExpressionType::Error(msg).into()
+    ExpressionType::Throw(ExpressionType::Error(msg).into()).into()
 }
 
 pub fn integer(i: i64) -> Expression {
