@@ -23,18 +23,18 @@ static _STD_STR : &str = include_str!("std.mfel");
 
 impl Interpreter {
     pub fn new() -> Result<Self> {
-        let ctx = Context::new();
-        let mut interpreter = Self {
-            ctx, 
-            ..Default::default()
-        };
-        let ctx = Context::new();
-        builtin::include_str(&interpreter, &ctx, _STD_STR)?;
-        interpreter.std = expression::closure(ctx, vec![], expression::nil());
+        let mut interpreter = Self::default();
+        interpreter.init_std()?;
         Ok(interpreter)
     }
     pub fn set_env(&mut self, env: Vec<String>) {
         self.env = expression::array(env.into_iter().map(expression::string).collect());
+    }
+    pub fn init_std(&mut self) -> Result<()> {
+        let ctx = Context::new();
+        builtin::include_str(self, &ctx, _STD_STR)?;
+        self.std = expression::closure(ctx, vec![], expression::nil());
+        Ok(())
     }
     pub fn run(&self, source: &str) -> Result<Expression> {
         let expr = self.parse_source(source)?;

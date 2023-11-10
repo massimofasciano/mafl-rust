@@ -4,6 +4,14 @@
 ### it is visisible through the @std module (ex: @std.array.map)
 ###
 
+## time calculations
+module time () {
+    let start = @now();
+    function elapsed() {
+        @now() - start
+    } 
+}
+
 ## iterators and iterator functions
 module iter () {
     function range(start,end) {

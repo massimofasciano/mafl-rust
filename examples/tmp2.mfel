@@ -1,0 +1,5 @@
+let elapsed = @std.time.elapsed;
+@println(elapsed());
+@println(elapsed());
+@println(elapsed());
+@self
