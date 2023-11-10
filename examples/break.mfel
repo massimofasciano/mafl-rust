@@ -10,6 +10,8 @@ function f1(x,a,b) {
     for i in range(a,b) {
         if i > x { 
             # also works inside a second block...
+            # because the block returns a "Break" result to the if and
+            # this propagates to the for
             { 
                 let r2 = f2(i); # the break inside f2 does not affect us
                 @println("in f1: f2 returned ",r2);

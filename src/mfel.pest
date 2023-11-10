@@ -16,7 +16,7 @@ block_comment = @{
 
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
-    "return" | "break" | "continue" |
+    "return" | "break" | "continue" | "throw" | 
     "let" | "function" | "lambda" | "in" | "bind" |
     "context" | "module" | "object" |
     "true" | "false" | "nil" |
@@ -133,6 +133,13 @@ continue = { "continue" }
 break = { 
     "break" ~ expr?
 }
+throw = {
+    "throw" ~ expr?
+}
+
+catch = {
+    "catch" ~ "{" ~ sequence ~ "}"
+}
 
 block = {
     "{" ~ sequence ~ "}"
@@ -195,7 +202,7 @@ expr_base = _{
     defun | lambda | assign | context | module | object | 
     continue | 
     boolean | float | integer | string_literal | char_literal | 
-    variable | let | return | break | bind
+    variable | let | return | break | throw | bind
 }
 
 // expressions that behave like blocks

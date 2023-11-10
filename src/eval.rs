@@ -17,6 +17,8 @@ impl Interpreter {
                 ExpressionType::Break(self.eval(ctx, br)?).into(),
             ExpressionType::Return(br) =>
                 ExpressionType::Return(self.eval(ctx, br)?).into(),
+            ExpressionType::Throw(br) =>
+                ExpressionType::Throw(self.eval(ctx, br)?).into(),
             ExpressionType::Continue => ExpressionType::Continue.into(),
             ExpressionType::Block(exprs) => {
                 debug!("eval block");
@@ -24,14 +26,12 @@ impl Interpreter {
                 let mut last_value = expression::nil();
                 for expr in exprs {
                     last_value = self.eval(ctx,expr)?;
-                    if let ExpressionType::Break(_) = last_value.as_ref() {
-                        break
-                    }
-                    if let ExpressionType::Return(_) = last_value.as_ref() {
-                        break
-                    }
-                    if let ExpressionType::Continue = last_value.as_ref() {
-                        break
+                    match last_value.as_ref() {
+                        ExpressionType::Return(_) |
+                        ExpressionType::Break(_) |
+                        ExpressionType::Throw(_) |
+                        ExpressionType::Continue => break,
+                        _ => {},
                     }
                 }
                 last_value
@@ -42,17 +42,18 @@ impl Interpreter {
                 let mut last_value = expression::nil();
                 for expr in exprs {
                     last_value = self.eval(ctx,expr)?;
-                    if let ExpressionType::Break(bval) = last_value.as_ref() {
-                        last_value = bval.to_owned();
-                        break
-                    }
-                    if let ExpressionType::Return(rval) = last_value.as_ref() {
-                        last_value = rval.to_owned();
-                        break
-                    }
-                    if let ExpressionType::Continue = last_value.as_ref() {
-                        last_value = expression::nil();
-                        break
+                    match last_value.as_ref() {
+                        ExpressionType::Throw(_) => break,
+                        ExpressionType::Break(val) |
+                        ExpressionType::Return(val) => {
+                            last_value = val.to_owned();
+                            break
+                        }
+                        ExpressionType::Continue => {
+                            last_value = expression::nil();
+                            break
+                        }
+                        _ => {},
                     }
                 }
                 last_value
@@ -62,14 +63,12 @@ impl Interpreter {
                 let mut last_value = expression::nil();
                 for expr in exprs {
                     last_value = self.eval(ctx,expr)?;
-                    if let ExpressionType::Break(_) = last_value.as_ref() {
-                        break
-                    }
-                    if let ExpressionType::Return(_) = last_value.as_ref() {
-                        break
-                    }
-                    if let ExpressionType::Continue = last_value.as_ref() {
-                        break
+                    match last_value.as_ref() {
+                        ExpressionType::Return(_) |
+                        ExpressionType::Break(_) |
+                        ExpressionType::Throw(_) |
+                        ExpressionType::Continue => break,
+                        _ => {},
                     }
                 }
                 last_value
@@ -255,16 +254,18 @@ impl Interpreter {
                     match self.eval(ctx,cond)?.as_ref() {
                         ExpressionType::Boolean(b) => if *b {
                             body_value = self.eval(ctx,body)?;
-                            if let ExpressionType::Break(bval) = body_value.as_ref() {
-                                body_value = bval.to_owned();
-                                break
-                            }
-                            if let ExpressionType::Continue = body_value.as_ref() {
-                                body_value = expression::nil();
-                                continue
-                            }
-                            if let ExpressionType::Return(_) = body_value.as_ref() {
-                                break
+                            match body_value.as_ref() {
+                                ExpressionType::Break(val) => {
+                                    body_value = val.to_owned();
+                                    break
+                                }
+                                ExpressionType::Continue => {
+                                    body_value = expression::nil();
+                                    continue
+                                }
+                                ExpressionType::Return(_) | 
+                                ExpressionType::Throw(_) => break,
+                                _ => {},
                             }
                         } else {
                             break;
@@ -281,15 +282,15 @@ impl Interpreter {
                 #[allow(clippy::while_let_loop)]
                 loop {
                     body_value = self.eval(ctx,body)?;
-                    if let ExpressionType::Break(bval) = body_value.as_ref() {
-                        body_value = bval.to_owned();
-                        break
-                    }
-                    if let ExpressionType::Return(_) = body_value.as_ref() {
-                        break
-                    }
-                    if let ExpressionType::Continue = body_value.as_ref() {
-                        continue
+                    match body_value.as_ref() {
+                        ExpressionType::Break(val) => {
+                            body_value = val.to_owned();
+                            break
+                        }
+                        ExpressionType::Continue => continue,
+                        ExpressionType::Return(_) | 
+                        ExpressionType::Throw(_) => break,
+                        _ => {},
                     }
                     match self.eval(ctx,cond)?.as_ref() {
                         ExpressionType::Boolean(b) => if !b { break; },
@@ -305,15 +306,15 @@ impl Interpreter {
                 #[allow(clippy::while_let_loop)]
                 loop {
                     body_value = self.eval(ctx,body)?;
-                    if let ExpressionType::Break(bval) = body_value.as_ref() {
-                        body_value = bval.to_owned();
-                        break
-                    }
-                    if let ExpressionType::Return(_) = body_value.as_ref() {
-                        break
-                    }
-                    if let ExpressionType::Continue = body_value.as_ref() {
-                        continue
+                    match body_value.as_ref() {
+                        ExpressionType::Break(val) => {
+                            body_value = val.to_owned();
+                            break
+                        }
+                        ExpressionType::Continue => continue,
+                        ExpressionType::Return(_) | 
+                        ExpressionType::Throw(_) => break,
+                        _ => {},
                     }
                 }
                 body_value
@@ -329,16 +330,15 @@ impl Interpreter {
                         for v in arr.borrow().iter() {
                             ctx.set_binding(var.to_owned(), v.to_owned());
                             body_value = self.eval(ctx,body)?;
-                            if let ExpressionType::Break(bval) = body_value.as_ref() {
-                                body_value = bval.to_owned();
-                                break
-                            }
-                            if let ExpressionType::Return(_) = body_value.as_ref() {
-                                break
-                            }
-                            if let ExpressionType::Continue = body_value.as_ref() {
-                                body_value = expression::nil();
-                                continue
+                            match body_value.as_ref() {
+                                ExpressionType::Break(val) => {
+                                    body_value = val.to_owned();
+                                    break
+                                }
+                                ExpressionType::Continue => continue,
+                                ExpressionType::Return(_) | 
+                                ExpressionType::Throw(_) => break,
+                                _ => {},
                             }
                         }
                     },
@@ -349,16 +349,15 @@ impl Interpreter {
                             if next == expression::nil() { break; }
                             ctx.set_binding(var.to_owned(), next.to_owned());
                             body_value = self.eval(ctx,body)?;
-                            if let ExpressionType::Break(bval) = body_value.as_ref() {
-                                body_value = bval.to_owned();
-                                break
-                            }
-                            if let ExpressionType::Return(_) = body_value.as_ref() {
-                                break
-                            }
-                            if let ExpressionType::Continue = body_value.as_ref() {
-                                body_value = expression::nil();
-                                continue
+                            match body_value.as_ref() {
+                                ExpressionType::Break(val) => {
+                                    body_value = val.to_owned();
+                                    break
+                                }
+                                ExpressionType::Continue => continue,
+                                ExpressionType::Return(_) | 
+                                ExpressionType::Throw(_) => break,
+                                _ => {},
                             }
                         }
                     },
@@ -494,6 +493,15 @@ impl Interpreter {
                     ExpressionType::NegOp => builtin::neg(ctx,&expr)?,
                     ExpressionType::NotOp => builtin::not(ctx,&expr)?,
                     ExpressionType::DeRefOp => self.eval(ctx,&expr)?,
+                    ExpressionType::ExclamOp => {
+                        // unwraps a thrown value
+                        match expr.as_ref() {
+                            ExpressionType::Throw(val) => {
+                                val.to_owned()
+                            }
+                            _ => expr,
+                        }
+                    }
                     _ => ast.to_error()?,
                 }
             }

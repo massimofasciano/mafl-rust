@@ -265,6 +265,14 @@ impl Interpreter {
                     };
                     ExpressionType::Break(body).into() 
                 },
+                Rule::throw => { 
+                    let body = if inner.len() == 1 {
+                        self.parse_rule(inner[0].clone())?
+                    } else {
+                        ExpressionType::Nil.into()
+                    };
+                    ExpressionType::Throw(body).into() 
+                },
                 Rule::infix_identifier => { 
                     assert!(inner.len() == 1);
                     // let id = inner[0].as_str().to_owned();
@@ -324,7 +332,8 @@ impl Interpreter {
             Rule::ne => { ExpressionType::NeOp.into() },
             Rule::eq => { ExpressionType::EqOp.into() },
             Rule::r#continue => { ExpressionType::Continue.into() },
-            Rule::block_syntax | Rule::block | Rule::file | Rule::function_block => { self.parse_block(parsed)? },
+            Rule::block_syntax | Rule::block | Rule::file | 
+            Rule::function_block  => { self.parse_block(parsed)? },
             Rule::string_literal | Rule::char_literal  | Rule::array_access => {
                 let inner = parsed.into_inner().next().ok_or(anyhow!("problem parsing silent rule"))?;
                 self.parse_rule(inner)?
@@ -337,7 +346,7 @@ impl Interpreter {
             Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
             Rule::assign | Rule::object | Rule::bind |
             Rule::r#let | Rule::r#loop | Rule::r#for |
-            Rule::lambda | Rule::r#break |
+            Rule::lambda | Rule::r#break | Rule::throw |
             Rule::infix_identifier | Rule::r#return => {
                 let rule = parsed.as_rule();
                 let str = parsed.as_str().to_owned();

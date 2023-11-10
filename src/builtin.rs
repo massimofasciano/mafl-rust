@@ -388,6 +388,10 @@ pub fn type_of(_: &Context, expr: &Expression) -> Result<Expression> {
         ExpressionType::Error(_) => "Error",
         ExpressionType::Closure(_,_,_) => "Closure",
         ExpressionType::Ref(_) => "Ref",
+        ExpressionType::Break(_) |
+        ExpressionType::Continue |
+        ExpressionType::Return(_) |
+        ExpressionType::Throw(_) => "Exception",
         _ => Err(anyhow!("type of {expr:?}"))?,
     }.to_owned()).into())
 }
