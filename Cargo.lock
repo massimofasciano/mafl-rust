@@ -156,6 +156,7 @@ dependencies = [
  "log",
  "pest",
  "pest_derive",
+ "regex",
 ]
 
 [[package]]

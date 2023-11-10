@@ -612,6 +612,9 @@ impl Interpreter {
             ("now", []) => builtin::now(ctx),
             ("sleep", [seconds]) => builtin::sleep(ctx, seconds),
             ("context", []) => builtin::capture_context(ctx),
+            ("split", [source, pattern]) => builtin::split(self, ctx, source, pattern),
+            ("trim", [source]) => builtin::trim(self, ctx, source),
+            ("matches", [source, regex]) => builtin::matches(self, ctx, source, regex),
             _ => Err(anyhow!("builtin {name}")),
         }
     }

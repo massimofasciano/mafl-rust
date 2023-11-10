@@ -4,6 +4,7 @@ use std::fmt::Write as _;
 use std::time::{SystemTime, UNIX_EPOCH, Duration};
 use anyhow::{Result,anyhow};
 use log::debug;
+use regex::Regex;
 
 use crate::context::{MemCell, Bindings};
 use crate::{expression::{Expression, self, nil, closure, ExpressionType}, context::Context, Interpreter};
@@ -622,3 +623,36 @@ pub fn call(interpreter: &Interpreter, ctx: &Context, callable: &Expression, arg
     }
 }
 
+pub fn split(_: &Interpreter, _: &Context, string: &Expression, pattern: &Expression) -> Result<Expression> {
+    Ok(match (string.as_ref(),pattern.as_ref()) {
+        (ExpressionType::String(s),ExpressionType::String(reg)) => {
+            let re = Regex::new(reg)?;
+            let parts = re.split(s)
+                .map(|p| expression::string(p.to_owned())).collect();
+            // let parts = s.split(pat).map(|p| expression::string(p.to_owned())).collect();
+            expression::array(parts)
+        }
+        _ => Err(anyhow!("split with non-string arguments"))?,
+    })
+}
+
+pub fn trim(_: &Interpreter, _: &Context, string: &Expression) -> Result<Expression> {
+    Ok(match string.as_ref() {
+        ExpressionType::String(s) => {
+            expression::string(s.trim().to_owned())
+        }
+        _ => Err(anyhow!("trim on non-string argument"))?,
+    })
+}
+
+pub fn matches(_: &Interpreter, _: &Context, string: &Expression, regex: &Expression) -> Result<Expression> {
+    Ok(match (string.as_ref(),regex.as_ref()) {
+        (ExpressionType::String(s),ExpressionType::String(reg)) => {
+            let re = Regex::new(reg)?;
+            let parts = re.find_iter(s)
+                .map(|p| expression::string(p.as_str().to_owned())).collect();
+            expression::array(parts)
+        }
+        _ => Err(anyhow!("match with non-string arguments"))?,
+    })
+}

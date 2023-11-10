@@ -87,10 +87,9 @@ impl Default for Interpreter {
     }
 }
 
-
 pub fn unescape_string(sr: &str) -> String {
     // this is incomplete
-    let s = str::replace(sr, "\\n", "\n");
-    let s = str::replace(&s, "\\t", "\t");
-    str::replace(&s, "\\\"", "\"")
+    let s = str::replace(sr, r"\n", "\n");
+    let s = str::replace(&s, r"\t", "\t");
+    str::replace(&s, r"\\", r"\")
 }
