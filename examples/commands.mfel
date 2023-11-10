@@ -8,7 +8,7 @@ let out_ls = @command("ls","-al");
 let hours = @std.iter.map(
     lambda(time) {
         let [hours, minutes] = @split(time,":");
-        @eval(hours)+@eval(minutes)/60
+        @integer(hours)+@integer(minutes)/60
     },
     @matches(out_ls,"\\d\\d:\\d\\d")
 );
@@ -35,7 +35,7 @@ let hours = @std.iter.map(
 ] #)
 
 # run the unix "expr" command to add 1 and 3
-# parse the resulting string via eval to get a number
+# parse the resulting string via @float to get a number
 # divide it by 2
-let two = @eval(@command("expr",1,"+",3)) / 2;
+let two = @float(@command("expr",1,"+",3)) / 2;
 @test("two",2);

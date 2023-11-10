@@ -696,3 +696,43 @@ pub fn sort(interpreter: &Interpreter, ctx: &Context, target: &Expression, compa
     })
 }
 
+pub fn integer(interpreter: &Interpreter, ctx: &Context, val: &Expression) -> Result<Expression> {
+    Ok(match val.as_ref() {
+        ExpressionType::Float(a) => ExpressionType::Integer(*a as i64).into(),
+        ExpressionType::Integer(a) => ExpressionType::Integer(*a).into(),
+        ExpressionType::String(_) => {
+            let r = eval_string_as_source(interpreter, ctx, val)?;
+            if let ExpressionType::Integer(_) = r.as_ref() {
+                r
+            } else if let ExpressionType::Float(f) = r.as_ref() {
+                expression::integer(*f as i64)
+            } else {
+                expression::error("can't parse as a float".to_owned())
+            }
+        }
+        _ => Err(anyhow!("integer {val:?}"))?,
+    })
+}
+
+pub fn float(interpreter: &Interpreter, ctx: &Context, val: &Expression) -> Result<Expression> {
+    Ok(match val.as_ref() {
+        ExpressionType::Float(a) => ExpressionType::Float(*a).into(),
+        ExpressionType::Integer(a) => ExpressionType::Float(*a as f64).into(),
+        ExpressionType::String(_) => {
+            let r = eval_string_as_source(interpreter, ctx, val)?;
+            if let ExpressionType::Float(_) = r.as_ref() {
+                r
+            } else if let ExpressionType::Integer(i) = r.as_ref() {
+                expression::float(*i as f64)
+            } else {
+                expression::error("can't parse as a float".to_owned())
+            }
+        }
+        _ => Err(anyhow!("float {val:?}"))?,
+    })
+}
+
+pub fn string(_: &Interpreter, _: &Context, val: &Expression) -> Result<Expression> {
+    Ok(expression::string(format!("{val}")))
+}
+
