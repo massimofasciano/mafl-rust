@@ -8,6 +8,15 @@ FEATURES:
 
 TODO:
 
+- try a tree structure for contexts
+- walker for expression and context with cycle detection
+
+- clean up the expression type (atoms, operators, code, input, etc...)
+
+- weak references ? gc ?
+
+- lookup table for builtins ?
+
 - String as array of characters ? mutable.
 
 - ref and deref: refs as objects, what syntax to deref on assign ?
@@ -16,8 +25,6 @@ p^ or *p derefs
 p^ = 10 or p ^= 10 to deref assign
 
 - *=, +=, etc...
-
-- @split, @regex, @command
 
 - propagate anyhow errors into the language as Error types ?
 
