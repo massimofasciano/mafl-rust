@@ -1,4 +1,4 @@
-use std::{env::Args, cell::{RefCell, Cell}, collections::HashMap};
+use std::{cell::{RefCell, Cell}, collections::HashMap};
 use context::Context;
 use expression::{Expression, Ident};
 use pest::Parser;
@@ -22,18 +22,19 @@ pub struct Interpreter {
 static _STD_STR : &str = include_str!("std.mfel");
 
 impl Interpreter {
-    pub fn new(env: Args) -> Result<Self> {
+    pub fn new() -> Result<Self> {
         let ctx = Context::new();
-        let env = env.map(expression::string).collect();
-        let env = expression::array(env);
         let mut interpreter = Self {
-            env, ctx, 
+            ctx, 
             ..Default::default()
         };
         let ctx = Context::new();
         builtin::include_str(&interpreter, &ctx, _STD_STR)?;
         interpreter.std = expression::closure(ctx, vec![], expression::nil());
         Ok(interpreter)
+    }
+    pub fn set_env(&mut self, env: Vec<String>) {
+        self.env = expression::array(env.into_iter().map(expression::string).collect());
     }
     pub fn run(&self, source: &str) -> Result<Expression> {
         let expr = self.parse_source(source)?;

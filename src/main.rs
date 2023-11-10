@@ -13,7 +13,8 @@ fn main() -> Result<()> {
     } else {
         std::io::read_to_string(stdin())?
     };
-    let interpreter = Interpreter::new(env)?;
+    let mut interpreter = Interpreter::new()?;
+    interpreter.set_env(env.map(|x|x.to_string()).collect());
     let result = interpreter.run(&source)?;
     println!();
     println!("*** DEBUG INFO: full program evaluates to:");

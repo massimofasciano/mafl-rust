@@ -273,7 +273,7 @@ mod tests {
 
     #[test]
     fn ref_test() {
-        let interpreter = Interpreter::new(std::env::args()).unwrap();
+        let interpreter = Interpreter::new().unwrap();
         let v1 = interpreter.ident("v1");
         let v2 = interpreter.ident("v2");
         let v3 = interpreter.ident("v3");
