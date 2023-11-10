@@ -389,12 +389,22 @@ impl Interpreter {
                     ExpressionType::BuiltinFunction(name) => {
                         let eval_args = arg_values.iter()
                             .map(|e|self.eval(ctx,e)).collect::<Result<Vec<_>>>()?;
+                        for value in &eval_args {
+                            // propagate exception
+                            if let ExpressionType::Throw(val) = value.as_ref() {
+                                return Ok(ExpressionType::Throw(val.to_owned()).into());
+                            }
+                        }
                         self.builtin_fn(ctx, name, &eval_args)?
                     }
                     ExpressionType::Closure(closure_ctx, arg_names, body) => {
                         let function_ctx = ctx.with_context(closure_ctx.to_owned());
                         for (name,value) in arg_names.iter().zip(arg_values) {
                             let value = self.eval(ctx,value)?;
+                            // propagate exception
+                            if let ExpressionType::Throw(val) = value.as_ref() {
+                                return Ok(ExpressionType::Throw(val.to_owned()).into());
+                            }
                             match value.as_ref() {
                                 ExpressionType::Ref(rc) => {
                                     function_ctx.add_binding_ref(name.to_owned(), rc.to_owned());
@@ -461,6 +471,14 @@ impl Interpreter {
                 }
                 let left = self.eval(ctx,left)?;
                 let right = self.eval(ctx,right)?;
+                // propagate exception
+                if let ExpressionType::Throw(val) = left.as_ref() {
+                    return Ok(ExpressionType::Throw(val.to_owned()).into());
+                }
+                // propagate exception
+                if let ExpressionType::Throw(val) = right.as_ref() {
+                    return Ok(ExpressionType::Throw(val.to_owned()).into());
+                }
                 match op {
                     ExpressionType::InfixOp(fname) => {
                         let fvar = ExpressionType::Variable(fname.to_owned()).into();
@@ -489,6 +507,9 @@ impl Interpreter {
                     return builtin::ref_var(ctx,&expr.to_owned());
                 }
                 let expr = self.eval(ctx,expr)?;
+                if let ExpressionType::Throw(val) = expr.as_ref() {
+                    return Ok(val.to_owned());
+                }
                 match op.as_ref() {
                     ExpressionType::NegOp => builtin::neg(ctx,&expr)?,
                     ExpressionType::NotOp => builtin::not(ctx,&expr)?,

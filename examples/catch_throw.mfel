@@ -1,35 +1,18 @@
 ### throw pushes up an exception (like break, return and continue)
-### it will be passed up by all blocks of code (but not function calls and operator expressions)
+### it will be passed up by most code expressions (TODO: arrays ?)
 ### the only way to catch and unwrap it is with the ! operator
 
-# this version unwraps f1(x) and multiplies by 10
-# so it returns 10 * (the result of f1 or the value of the caught exception)
-function f100(x) {
-    f1(x)! * 10
+function unwrap_before_mult(x) {
+    f1(x)! * 3
 }
 
-# this version will bind r to the result of f1 and multiply by 10.
-# but if f1 returns an exception, it will be pushed out from the nested block.
-# the exclam operator will unwrap the value of the block
-# so it returns (10 * the result of f1) or the value of the caught exception
-function f10(x) {
-    { let r = f1(x); r * 10 }!
+function unwrap_after_mult(x) {
+    (f1(x) * 3)!
 }
-# we can't write (f1(x) * 10)! directly (see below for explanation)
 
 function f1(x) {
-    # let expression evaluates to the right part of the =
-    # so it will propagate the exception up the chain
-    let rf2 = f2(x);
-    # we only get here if r is not a thrown value
-    rf2 * 10
+    f2(x) * 5
 }
-
-# this alternate code for f1 doesn't work (as of MFEL 0.2.0) because infix expressions and function calls
-# don't know how to handle exception types (throw, return, break, continue)
-#function f1(x) {
-#    f2(x) * 10 # the multiplication op can't handle an exception
-#}
 
 function f2(x) {
     if x >= 10 {
@@ -40,8 +23,8 @@ function f2(x) {
     }
 }
 
-@test("f100(2)",200);
-@test("f100(15)",100);
+@test("unwrap_before_mult(8)",120);
+@test("unwrap_before_mult(10)",30);
 
-@test("f10(2)",200);
-@test("f10(15)",10);
+@test("unwrap_after_mult(8)",120);
+@test("unwrap_after_mult(10)",10);

@@ -1,1 +1,9 @@
-(throw 10!)!
+function e(b) {
+    throw b;
+}
+
+function f (a,b,c) {
+    a + b + c
+}
+
+[1,e(2),3]

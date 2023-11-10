@@ -61,7 +61,7 @@ pub enum ExpressionType {
     Return(Expression),
     Break(Expression),
     Throw(Expression),
-    Exception(Expression),
+    ExceptionPrintable(Expression),
     Continue, 
     Ref(Rc<MemCell>),
     Scope(ScopeID,HashMap<Ident,Expression>),
@@ -113,11 +113,11 @@ impl ExpressionType {
 fn decycle(e: Expression, env: &mut HashSet<ScopeID>) -> Expression {
     match e.as_ref() {
         ExpressionType::Break(rc) =>
-            ExpressionType::Exception(decycle(rc.to_owned(),env)).into(),
+            ExpressionType::ExceptionPrintable(decycle(rc.to_owned(),env)).into(),
         ExpressionType::Return(rc) => 
-            ExpressionType::Exception(decycle(rc.to_owned(),env)).into(),
+            ExpressionType::ExceptionPrintable(decycle(rc.to_owned(),env)).into(),
         ExpressionType::Throw(rc) =>
-            ExpressionType::Exception(decycle(rc.to_owned(),env)).into(),
+            ExpressionType::ExceptionPrintable(decycle(rc.to_owned(),env)).into(),
         ExpressionType::Array(arr) => {
             let mut safe = vec![];
             for rc in arr.borrow().iter() {
@@ -179,7 +179,7 @@ impl std::fmt::Display for ExpressionType {
             ExpressionType::Error(a) => write!(f,"Error: {a}"),
             ExpressionType::ArrayPrintable(a) =>
                 write!(f,"[{}]",a.iter().map(|x|x.to_string()).collect::<Vec<_>>().join(",")),
-            ExpressionType::Exception(a) => write!(f,"Exception: {a}"),
+            ExpressionType::ExceptionPrintable(a) => write!(f,"Throw/Return/Break/Continue: {a}"),
             ExpressionType::Throw(_) | 
             ExpressionType::Return(_) | 
             ExpressionType::Break(_) | 
@@ -230,4 +230,3 @@ pub fn context(ctx: Context) -> Expression {
 pub fn array(vals: Expressions) -> Expression {
     ExpressionType::Array(RefCell::new(vals)).into()
 }
-

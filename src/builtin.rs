@@ -119,11 +119,19 @@ pub fn or(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression>
 pub fn and_lazy(interpreter: &Interpreter, ctx: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     let lhs = interpreter.eval(ctx,lhs)?;
     match lhs.as_ref() {
+        // propagate exception
+        ExpressionType::Throw(val) => {
+            return Ok(ExpressionType::Throw(val.to_owned()).into());
+        }
         ExpressionType::Boolean(b) => if !b { return Ok(ExpressionType::Boolean(false).into()) },
         _ => Err(anyhow!("and_lazy lhs not boolean: {lhs:?}"))?,
     };
     let rhs = interpreter.eval(ctx,rhs)?;
     match rhs.as_ref() {
+        // propagate exception
+        ExpressionType::Throw(val) => {
+            return Ok(ExpressionType::Throw(val.to_owned()).into());
+        }
         ExpressionType::Boolean(b) => if !b { return Ok(ExpressionType::Boolean(false).into()) },
         _ => Err(anyhow!("and_lazy rhs not boolean: {rhs:?}"))?,
     };
@@ -133,11 +141,19 @@ pub fn and_lazy(interpreter: &Interpreter, ctx: &Context, lhs: &Expression, rhs:
 pub fn or_lazy(interpreter: &Interpreter, ctx: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     let lhs = interpreter.eval(ctx,lhs)?;
     match lhs.as_ref() {
+        // propagate exception
+        ExpressionType::Throw(val) => {
+            return Ok(ExpressionType::Throw(val.to_owned()).into());
+        }
         ExpressionType::Boolean(b) => if *b { return Ok(ExpressionType::Boolean(true).into()) },
         _ => Err(anyhow!("or_lazy lhs not boolean: {lhs:?}"))?,
     };
     let rhs = interpreter.eval(ctx,rhs)?;
     match rhs.as_ref() {
+        // propagate exception
+        ExpressionType::Throw(val) => {
+            return Ok(ExpressionType::Throw(val.to_owned()).into());
+        }
         ExpressionType::Boolean(b) => if *b { return Ok(ExpressionType::Boolean(true).into()) },
         _ => Err(anyhow!("or_lazy rhs not boolean: {rhs:?}"))?,
     };
