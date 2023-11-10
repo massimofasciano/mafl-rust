@@ -387,13 +387,14 @@ impl Interpreter {
                 debug!("eval function call");
                 match self.eval(ctx,lambda)?.as_ref() {
                     ExpressionType::BuiltinFunction(name) => {
-                        let eval_args = arg_values.iter()
-                            .map(|e|self.eval(ctx,e)).collect::<Result<Vec<_>>>()?;
-                        for value in &eval_args {
+                        let mut eval_args = vec![];
+                        for v in arg_values.iter() {
+                            let value = self.eval(ctx,v)?;
                             // propagate exception
                             if let ExpressionType::Throw(val) = value.as_ref() {
                                 return Ok(ExpressionType::Throw(val.to_owned()).into());
                             }
+                            eval_args.push(value);
                         }
                         self.builtin_fn(ctx, name, &eval_args)?
                     }
