@@ -11,7 +11,7 @@ module test (z) {
 }
 
 function bindings(mod) {
-    let arr = @array(mod);
+    let arr = @array(mod)!; # exclam catches and unwraps an exception
     if @type(arr) == "Error" {
         @print(mod)
     } else {
@@ -48,7 +48,7 @@ let test2 = @copy(test);
 
 @bind(test,"q",300);
 @println(test.q);
-@println(test2.q);
+@println(test2.q!);
 
 let a = [1,2,3,[4,5,6,[7,8,9]]];
 let b = @copy(a);

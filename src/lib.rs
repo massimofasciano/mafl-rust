@@ -69,6 +69,10 @@ impl Interpreter {
         id.to_owned()
         // self.var_num(id)
     } 
+    pub fn ident_to_string(id: &Ident) -> String {
+        // format!("_{}",id)
+        id.to_owned()
+    }
 }
 
 impl Default for Interpreter {

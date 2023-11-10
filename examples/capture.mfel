@@ -9,19 +9,24 @@ let x = 1;
 let y = 2;
 
 @println("test 1");
+
 @set(@context(),"y",y+x);
 @set(@context(),"y",@get(@context(),"y")+@get(@context(),"x"));
 # y is changed because the capture is by reference
 @test("@get(@context(),\"y\")",4);
 @test("y",4);
+
 @insert(@context(),"z",3);
-@test("@type(z)","Error");
+@test("@type(z!)","Error"); # exclam catches and unwraps an exception
 # z not found (it was inserted in the captured context that is gone now)
+
 @insert(@self,"zz",3);
 @test("zz",3);
 # @self manipulates the current context
 # @context() returns a new context with pointers to existing values
+
 @println();
+
 
 @println("test 2");
 let c = @context(); # captured to c

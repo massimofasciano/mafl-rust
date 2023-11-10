@@ -6,7 +6,7 @@ let o = @dict();
 
 @println(@get(o,"x"));
 @println(@get(o,"y"));
-@println(@get(o,"z"));
+@println(@get(o,"z")!); # exclam catches and unwraps an exception
 
 let p = @dict(o);  # p extends o (like inheritance)
 @insert(p,"y",12);
@@ -18,9 +18,9 @@ let p = @dict(o);  # p extends o (like inheritance)
 
 @println(@get(o,"x"));
 @println(@get(o,"y"));
-@println(@get(o,"z"));
+@println(@get(o,"z")!); # exclam catches and unwraps an exception
 
-if @type(@get(o,"z")) == "Error" {
+if @type(@get(o,"z")!) == "Error" {
     @println("we can catch errors!");
 }
 

@@ -176,10 +176,10 @@ impl std::fmt::Display for ExpressionType {
             ExpressionType::Integer(a) => write!(f,"{a}"),
             ExpressionType::Character(a) => write!(f,"{a}"),
             ExpressionType::String(a) => write!(f,"{a}"),
-            ExpressionType::Error(a) => write!(f,"Error: {a}"),
+            ExpressionType::Error(a) => write!(f,"Error<{a}>"),
             ExpressionType::ArrayPrintable(a) =>
                 write!(f,"[{}]",a.iter().map(|x|x.to_string()).collect::<Vec<_>>().join(",")),
-            ExpressionType::ExceptionPrintable(a) => write!(f,"Throw/Return/Break/Continue: {a}"),
+            ExpressionType::ExceptionPrintable(a) => write!(f,"Exception<{a}>"),
             ExpressionType::Throw(_) | 
             ExpressionType::Return(_) | 
             ExpressionType::Break(_) | 
