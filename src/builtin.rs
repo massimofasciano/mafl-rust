@@ -409,6 +409,13 @@ pub fn capture_context(ctx: &Context) -> Result<Expression> {
     Ok(expression::context(ctx.capture()))
 }
 
+pub fn is_error(_: &Interpreter, _: &Context, expr: &Expression) -> Result<Expression> {
+    if let ExpressionType::Error(_) = expr.as_ref() {
+        return Ok(expression::boolean(true));
+    }
+    Ok(expression::boolean(false))
+}
+
 pub fn type_of(_: &Context, expr: &Expression) -> Result<Expression> {
     debug!("type of");
     Ok(ExpressionType::String(match expr.as_ref() {

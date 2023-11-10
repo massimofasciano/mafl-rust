@@ -11,6 +11,8 @@ TODO:
 - try a tree structure for contexts
 - walker for expression and context with cycle detection
 
+- review exceptions, the ! and ? operators and the catch/throw system
+
 - clean up the expression type (atoms, operators, code, input, etc...)
 
 - weak references ? gc ?

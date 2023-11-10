@@ -1,0 +1,24 @@
+# we have 2 types of errors:
+# - language errors: an error type is thrown and can be caught with !, usually non-fatal and well-managed
+# - interpreter errors: they are implementation-specific and fatal (the program will crash)
+
+function test1(x) {
+    1 + test2(x)
+}
+
+function test2(x) {
+    1 / x
+}
+
+function test3(x) {
+    "hello" < x
+}
+
+function test4(x) {
+    # the ? operator converts an interpreter error into a language error
+    test3(x)? and x < 4
+}
+
+@test("test1(2)",1.5);
+@test("@is_error(test1(0)!)",true);
+@test("@is_error(test4(0)!)",true);

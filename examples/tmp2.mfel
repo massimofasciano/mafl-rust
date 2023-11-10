@@ -1,13 +1,2 @@
-function e(b) {
-    if b < 10 {
-        throw b;
-    }
-    b
-}
-
-function f (a,b,c) {
-    a + b + c
-}
-
-@println(1+10,2+e(2),1/0);
-
+#(1.0 * "allo")?
+@is_error((1/0)!)

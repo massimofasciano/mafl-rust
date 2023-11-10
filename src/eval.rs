@@ -507,6 +507,14 @@ impl Interpreter {
                 if let ExpressionType::RefOp = op.as_ref() {
                     return builtin::ref_var(ctx,&expr.to_owned());
                 }
+                if let ExpressionType::QuestionOp = op.as_ref() {
+                    return Ok(
+                        match self.eval(ctx,expr) {
+                            Ok(r) => r,
+                            Err(e) => expression::error(e.to_string()),
+                        }
+                    );
+                }
                 let expr = self.eval(ctx,expr)?;
                 if let ExpressionType::Throw(val) = expr.as_ref() {
                     return Ok(val.to_owned());
@@ -582,6 +590,7 @@ impl Interpreter {
             ("neg", [val]) => builtin::neg(ctx, val),
             ("not", [val]) => builtin::not(ctx, val),
             ("len", [val]) => builtin::len(ctx, val),
+            ("is_error", [expr]) => builtin::is_error(self, ctx, expr),
             ("integer", [val]) => builtin::integer(self, ctx, val),
             ("float", [val]) => builtin::float(self, ctx, val),
             ("string", [val]) => builtin::string(self, ctx, val),
