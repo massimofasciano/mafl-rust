@@ -615,6 +615,11 @@ impl Interpreter {
             ("split", [source, pattern]) => builtin::split(self, ctx, source, pattern),
             ("trim", [source]) => builtin::trim(self, ctx, source),
             ("matches", [source, regex]) => builtin::matches(self, ctx, source, regex),
+            ("command", cmd_args) if cmd_args.len() > 1 => { 
+                builtin::command(self, ctx, &cmd_args[0], &cmd_args[1..]) 
+            },
+            ("sort", [target]) => builtin::sort(self, ctx, target, None),
+            ("sort", [target, compare]) => builtin::sort(self, ctx, target, Some(compare)),
             _ => Err(anyhow!("builtin {name}")),
         }
     }

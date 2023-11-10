@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::io::{self, BufRead, stdout, Write};
 use std::fmt::Write as _;
+use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH, Duration};
 use anyhow::{Result,anyhow};
 use log::debug;
@@ -165,6 +166,8 @@ pub fn gt(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression>
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
         (ExpressionType::Float(a), ExpressionType::Float(b)) => ExpressionType::Boolean(a>b),
         (ExpressionType::Integer(a), ExpressionType::Integer(b)) => ExpressionType::Boolean(a>b),
+        (ExpressionType::Float(a), ExpressionType::Integer(b)) => ExpressionType::Boolean((*a) > (*b as f64)),
+        (ExpressionType::Integer(a), ExpressionType::Float(b)) => ExpressionType::Boolean((*a as f64) > (*b)),
         (ExpressionType::String(a), ExpressionType::String(b)) => ExpressionType::Boolean(a>b),
         (ExpressionType::Boolean(a), ExpressionType::Boolean(b)) => ExpressionType::Boolean(a>b),
         (ExpressionType::Nil, ExpressionType::Nil) => ExpressionType::Boolean(false),
@@ -176,6 +179,8 @@ pub fn lt(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression>
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
         (ExpressionType::Float(a), ExpressionType::Float(b)) => ExpressionType::Boolean(a<b),
         (ExpressionType::Integer(a), ExpressionType::Integer(b)) => ExpressionType::Boolean(a<b),
+        (ExpressionType::Float(a), ExpressionType::Integer(b)) => ExpressionType::Boolean((*a) < (*b as f64)),
+        (ExpressionType::Integer(a), ExpressionType::Float(b)) => ExpressionType::Boolean((*a as f64) < (*b)),
         (ExpressionType::String(a), ExpressionType::String(b)) => ExpressionType::Boolean(a<b),
         (ExpressionType::Boolean(a), ExpressionType::Boolean(b)) => ExpressionType::Boolean(a<b),
         (ExpressionType::Nil, ExpressionType::Nil) => ExpressionType::Boolean(false),
@@ -236,6 +241,18 @@ pub fn print(interpreter: &Interpreter, ctx: &Context, args: &[Expression]) -> R
     }
     stdout().flush()?;
     Ok(nil())
+}
+
+pub fn command(_: &Interpreter, _: &Context, cmd: &Expression, args: &[Expression]) -> Result<Expression> {
+    if let ExpressionType::String(cmd) = cmd.as_ref() {
+        let mut cmd = Command::new(cmd);
+        for arg in args { 
+            cmd.arg(format!("{arg}"));
+        }
+        Ok(expression::string(String::from_utf8_lossy(&cmd.output()?.stdout).to_string()))
+    } else {
+        Err(anyhow!("command must be a string"))?
+    }
 }
 
 pub fn println(interpreter: &Interpreter, ctx: &Context, args: &[Expression]) -> Result<Expression> {
@@ -656,3 +673,26 @@ pub fn matches(_: &Interpreter, _: &Context, string: &Expression, regex: &Expres
         _ => Err(anyhow!("match with non-string arguments"))?,
     })
 }
+
+pub fn sort(interpreter: &Interpreter, ctx: &Context, target: &Expression, compare: Option<&Expression>) -> Result<Expression> {
+    Ok(match target.as_ref() {
+        ExpressionType::Array(a) => {
+            a.borrow_mut().sort_by(|lhs,rhs| {
+                let res = if let Some(compare) = compare {
+                    interpreter.eval(ctx, 
+                        &ExpressionType::FunctionCall(compare.to_owned(), vec![lhs.to_owned(), rhs.to_owned()]).into())
+                } else {
+                    lt(ctx, lhs, rhs)
+                };
+                match res.as_deref() {
+                    Ok(ExpressionType::Boolean(true)) => std::cmp::Ordering::Less,
+                    Ok(ExpressionType::Boolean(false)) => std::cmp::Ordering::Greater,
+                    _ => std::cmp::Ordering::Equal,
+                }
+            });
+            expression::nil()
+        }
+        _ => Err(anyhow!("sort on non-array"))?,
+    })
+}
+

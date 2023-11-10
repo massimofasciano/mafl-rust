@@ -73,6 +73,8 @@ impl PartialEq for ExpressionType {
         match (self,other) {
             (ExpressionType::Integer(a),ExpressionType::Integer(b)) => a == b,
             (ExpressionType::Float(a),ExpressionType::Float(b)) => a == b,
+            (ExpressionType::Float(a), ExpressionType::Integer(b)) => (*a) == (*b as f64),
+            (ExpressionType::Integer(a), ExpressionType::Float(b)) => (*a as f64) == (*b),
             (ExpressionType::Character(a),ExpressionType::Character(b)) => a == b,
             (ExpressionType::String(a),ExpressionType::String(b)) => a == b,
             (ExpressionType::Error(a),ExpressionType::Error(b)) => a == b,
