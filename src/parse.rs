@@ -95,12 +95,22 @@ impl Interpreter {
                 Rule::lambda => {
                     assert!(inner.len() == 2 || inner.len() == 1);
                     if inner.len() == 2 {
-                        assert!(inner[0].as_rule() == Rule::function_args);
-                        assert!(inner[1].as_rule() == Rule::function_block);
-                        let args : Vec<_> = inner[0].clone().into_inner().map(|e| self.ident(e.as_str())).collect();
-                        let body = self.parse_rule(inner[1].clone())?;
-                        ExpressionType::Lambda(args, body).into()
+                        if inner[0].as_rule() == Rule::function_args {
+                            // lambda (x,...) { ... }
+                            assert!(inner[1].as_rule() == Rule::function_block);
+                            let args : Vec<_> = inner[0].clone().into_inner().map(|e| self.ident(e.as_str())).collect();
+                            let body = self.parse_rule(inner[1].clone())?;
+                            ExpressionType::Lambda(args, body).into()
+                        } else {
+                            // lambda x { ... }
+                            assert!(inner[0].as_rule() == Rule::identifier);
+                            assert!(inner[1].as_rule() == Rule::function_block);
+                            let args : Vec<_> = vec![self.ident(inner[0].as_str())];
+                            let body = self.parse_rule(inner[1].clone())?;
+                            ExpressionType::Lambda(args, body).into()
+                        }
                     } else {
+                        // lambda { ... }
                         assert!(inner[0].as_rule() == Rule::function_block);
                         let body = self.parse_rule(inner[0].clone())?;
                         ExpressionType::Lambda(vec![], body).into()

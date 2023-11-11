@@ -8,8 +8,6 @@ FEATURES:
 
 TODO:
 
-- short lambdas ?    x:y:x*y   x:x+1
-
 - field (object) based builtins like .copy() .string() .map() ?
 
 - try a tree structure for contexts: NO! a stack of stacks (list of lists) is a better analogy.

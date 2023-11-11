@@ -1,5 +1,5 @@
 let x = 1;
-let f1 = lambda() {x};
+let f1 = \{x};
 let y = 2;
 @println(@self); # show out current environment
 @println(f1); # f1 only captured x

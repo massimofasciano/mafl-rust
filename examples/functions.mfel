@@ -4,11 +4,16 @@
 let global = 0;
 @println("global = ",global);
 
+# you can use \ instead of the lambda keyword
+# the argument list is optional (when empty simply omit: \{...})
+# when only 1 argument, parens are optional
 let f1 = lambda (x) { x + 10 + global };
+let f1 = lambda x { x + 10 + global };
+let f1 = \(x) { x + 10 + global };
+let f1 = \x { x + 10 + global };
 
 ### note that "let" is not self-delimiting so it needs a semicolon
 ###  when used as a statement
-
 
 ### a function definition is a syntactic shortcut for
 ###  assigning a lambda to a variable

@@ -78,11 +78,11 @@ let f2 = f2c;
 let f = context () { # a simple block works too but captures the outside context too
     let rec;
     let rec2;
-    rec = lambda (x) {
+    rec = \x { # alternate lambda syntax
         if x > 10 { rec2(x) }
         else { rec(x+1) }
     };
-    rec2 = lambda(x) {
+    rec2 = \(x) { # alternate lambda syntax
         if x > 20 {
             rec(x // 10)
         } else {

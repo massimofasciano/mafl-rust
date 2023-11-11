@@ -1,4 +1,4 @@
-let f = \{ \(x,y,z) { x + y * a + z } };
+let f = \{ \x { \(y,z) { x + y * a + z } } };
 
 {
     let a = 30;

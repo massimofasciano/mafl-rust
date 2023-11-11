@@ -13,10 +13,10 @@ let y = 30;
 module mod (y) {
     # y gets shadowed by the module
     let x = 10;
-    let get_x = lambda() {x}; 
-    let get_y = lambda() {y};
+    let get_x = \{x}; # alternate lambda syntax
+    let get_y = \() {y}; # alternate lambda syntax
     let set_x = lambda(new_x) {x = new_x};
-    let set_y = lambda(new_y) {y = new_y};
+    let set_y = \new_y {y = new_y}; # alternate lambda syntax
 }
 
 @println(mod.get_x());
@@ -28,7 +28,7 @@ mod.set_y(mod.y + 5);
 @println(y);
 @insert(mod,"z",50); # adds z to mod from outside
 @println(mod.z);
-@println(z); # not found
+@println(z!); # not found
 @set(mod,"x",100);
 @println(mod.get_x());
 

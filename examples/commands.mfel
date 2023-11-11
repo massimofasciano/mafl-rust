@@ -6,7 +6,7 @@
 # and collected into an array
 let out_ls = @command("ls","-al");
 let hours = @std.iter.map(
-    lambda(time) {
+    \time {
         let [hours, minutes] = @split(time,":");
         @integer(hours)+@integer(minutes)/60
     },
@@ -27,7 +27,7 @@ let hours = @std.iter.map(
 ] #)
 
 # sort the array by descending order
-@sort(hours, lambda(a,b){a>b});
+@sort(hours, \(a,b){a>b});
 @println(hours);
 (# [
     18.066666666666666,15.533333333333333,15.216666666666667,14.483333333333333,14.466666666666667,

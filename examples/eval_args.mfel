@@ -19,5 +19,5 @@ function f(args) {
         [f(x),args]
     }
 };
-f({let eval = lambda(str) {@eval(str)}; map(eval,@env)})
+f({let eval = \str {@eval(str)}; map(eval,@env)})
 

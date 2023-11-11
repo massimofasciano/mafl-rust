@@ -24,7 +24,8 @@ let fibo1 = lambda (x) { 0 };
 
 # lambda captures context at definition (so it can't directly call itself)
 # but symbol lookups fall back to the calling context
-let fibo2 = lambda (x) {
+# alternate lambda syntax with \ and single argument
+let fibo2 = \x {
     if x < 2 {
         x
     } else {

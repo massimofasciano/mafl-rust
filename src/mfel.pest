@@ -68,7 +68,8 @@ function_args = { (identifier ~ ("," ~ identifier)*)? }
 
 lambda = {
     ( ("lambda" | "\\") ~ "(" ~ function_args ~ ")" ~ function_block ) |
-    ( ("lambda" | "\\") ~ function_block )
+    ( ("lambda" | "\\") ~ function_block ) |
+    ( ("lambda" | "\\") ~ identifier ~ function_block )
 }
 
 defun = {

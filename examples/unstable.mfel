@@ -8,10 +8,10 @@ let z = 30;
 module test (z) {
     let x = 10;
     let y = 20;
-    let f = \() { x + y };
+    let f = \{ x + y };
     module m (x,y,z) {
         # shadows x and y (by value)
-        let f = \() { x + y + z };
+        let f = \{ x + y + z };
     }
 }
 
@@ -88,7 +88,7 @@ r = r + 100;
 
 @println(v," ",c," ",r);
 
-let reftest = lambda (r) {
+let reftest = \r {
     r = r + 1;
     @println("inside: ",r);
 };
@@ -183,11 +183,11 @@ module TestSelf () {
 let f = context () {
     let rec;
     let rec2;
-    rec = lambda (x) {
+    rec = lambda x {
         if x > 10 { rec2(x) }
         else { rec(x+1) }
     };
-    rec2 = lambda(x) {
+    rec2 = \x {
         if x > 20 {
             rec(x // 10)
         } else {
