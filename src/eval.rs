@@ -13,6 +13,7 @@ impl Interpreter {
             ExpressionType::Boolean(_) |
             ExpressionType::String(_)
                 => ast.to_owned(),
+
             ExpressionType::Break(br) =>
                 ExpressionType::Break(self.eval(ctx, br)?).into(),
             ExpressionType::Return(br) =>
@@ -20,8 +21,8 @@ impl Interpreter {
             ExpressionType::Throw(br) =>
                 ExpressionType::Throw(self.eval(ctx, br)?).into(),
             ExpressionType::Continue => ExpressionType::Continue.into(),
+
             ExpressionType::Block(exprs) => {
-                debug!("eval block");
                 let ctx = &ctx.with_new_context();
                 let mut last_value = expression::nil();
                 for expr in exprs {
@@ -37,7 +38,6 @@ impl Interpreter {
                 last_value
             }
             ExpressionType::FunctionBlock(exprs) => {
-                debug!("eval function block");
                 let ctx = &ctx.with_new_context();
                 let mut last_value = expression::nil();
                 for expr in exprs {
@@ -59,7 +59,6 @@ impl Interpreter {
                 last_value
             }
             ExpressionType::Sequence(exprs) => {
-                debug!("eval sequence");
                 let mut last_value = expression::nil();
                 for expr in exprs {
                     last_value = self.eval(ctx,expr)?;
@@ -74,11 +73,9 @@ impl Interpreter {
                 last_value
             }
             ExpressionType::Ref(rc) => {
-                debug!("eval ref");
                 rc.get()
             }
             ExpressionType::BindIn(id, value, container) => {
-                debug!("bind in declaration: {id}");
                 let container = self.eval(ctx,container)?;
                 let value = self.eval(ctx,value)?;
                 match container.as_ref() {
@@ -90,7 +87,6 @@ impl Interpreter {
                 }
             }
             ExpressionType::Let(id, val) => {
-                debug!("eval var declaration: {id}");
                 let val = self.eval(ctx,val)?;
                 match val.as_ref() {
                     ExpressionType::Ref(rc) => {
@@ -104,7 +100,6 @@ impl Interpreter {
                 }
             }
             ExpressionType::LetArray(ids, val) => {
-                debug!("eval var array declaration: {ids:?}");
                 let val = self.eval(ctx,val)?;
                 match val.as_ref() {
                     ExpressionType::Array(rc) => {
@@ -120,7 +115,6 @@ impl Interpreter {
                 }
             }
             ExpressionType::Defun(fname, arg_names, body) => {
-                debug!("eval function definition {fname} {arg_names:?}");
                 let cctx = ctx.capture();
                 let val : Expression = ExpressionType::Closure(cctx.to_owned(), arg_names.to_owned(), body.to_owned()).into();
                 cctx.add_binding(fname.to_owned(), val.to_owned());
@@ -128,7 +122,6 @@ impl Interpreter {
                 val
             }
             ExpressionType::ArrayAccess(target, index) => {
-            debug!("array access with index {index}");
             let target = self.eval(ctx, target)?;
                 match target.as_ref() {
                     ExpressionType::Array(arr) => {
@@ -137,7 +130,7 @@ impl Interpreter {
                             if let Some(result) = arr.borrow().get(index) {
                                 result.to_owned()
                             } else {
-                                expression::error(format!("index {index} out of bounds"))
+                                Err(anyhow!("index out of bounds: {index}"))?
                             }
                         } else {
                             Err(anyhow!("index by non-integer"))?
@@ -149,7 +142,7 @@ impl Interpreter {
                             if let Some(result) = s.chars().nth(index) {
                                 expression::character(result)
                             } else {
-                                expression::error(format!("index {index} out of bounds"))
+                                Err(anyhow!("index out of bounds: {index}"))?
                             }
                         } else {
                             Err(anyhow!("index by non-integer"))?
@@ -206,10 +199,9 @@ impl Interpreter {
                                     let index = (if *index >= 0 { *index } else { arr.borrow().len() as i64 + *index}) as usize;
                                     if let Some(result) = arr.borrow_mut().get_mut(index) {
                                         *result = val;
-                                        debug!("array set index {index} to {result:?}");
                                         result.to_owned()
                                     } else {
-                                        expression::error(format!("index {index} out of bounds"))
+                                        Err(anyhow!("index out of bounds: {index}"))?
                                     }
                                 } else {
                                     Err(anyhow!("index assign by non-integer"))?
@@ -232,11 +224,10 @@ impl Interpreter {
                 if let Some(value) = ctx.get_binding(s) {
                     value.to_owned()
                 } else {
-                    expression::error(format!("binding not found {s}"))
+                    Err(anyhow!("binding not found: {s}"))?
                 }
             }
             ExpressionType::If(cond, then, r#else) => {
-                debug!("eval if");
                 let cond = self.eval(ctx,cond)?;
                 match cond.as_ref() {
                     ExpressionType::Boolean(b) =>
@@ -246,7 +237,6 @@ impl Interpreter {
                 }
             }
             ExpressionType::While(cond, body) => {
-                debug!("eval while");
                 let mut body_value = expression::nil();
                 let ctx = &ctx.with_new_context();
                 #[allow(clippy::while_let_loop)]
@@ -276,7 +266,6 @@ impl Interpreter {
                 body_value
             }
             ExpressionType::DoWhile(cond, body) => {
-                debug!("eval do while");
                 let mut body_value;
                 let ctx = &ctx.with_new_context();
                 #[allow(clippy::while_let_loop)]
@@ -300,7 +289,6 @@ impl Interpreter {
                 body_value
             }
             ExpressionType::Loop(body) => {
-                debug!("eval loop");
                 let mut body_value;
                 let ctx = &ctx.with_new_context();
                 #[allow(clippy::while_let_loop)]
@@ -320,19 +308,26 @@ impl Interpreter {
                 body_value
             }
             ExpressionType::TryCatch(expr, var, body) => {
-                debug!("eval try_catch");
-                let expr = self.eval(ctx, expr)?;
-                match expr.as_ref() {
-                    ExpressionType::Throw(val) => {
+                let result = self.eval(ctx, expr);
+                match result {
+                    Err(err) => {
                         let ctx = &ctx.with_new_context();
-                        ctx.add_binding(var.to_owned(), val.to_owned());
+                        ctx.add_binding(var.to_owned(), ExpressionType::Error(err.to_string()).into());
                         self.eval(ctx,body)?
                     }
-                    _ => expr,
+                    Ok(expr) => {
+                        match expr.as_ref() {
+                            ExpressionType::Throw(val) => {
+                                let ctx = &ctx.with_new_context();
+                                ctx.add_binding(var.to_owned(), val.to_owned());
+                                self.eval(ctx,body)?
+                            }
+                            _ => expr,     
+                        }
+                    }
                 }
             }
             ExpressionType::For(var, iterator, body) => {
-                debug!("eval for");
                 let iterator = self.eval(ctx, iterator)?;
                 let mut body_value = expression::nil();
                 let ctx = &ctx.with_new_context();
@@ -378,25 +373,22 @@ impl Interpreter {
                 body_value
             }
             ExpressionType::Field(target, field) => {
-                debug!("eval field: .{field}");
                 let target = self.eval(ctx, target)?;
                 match target.as_ref() {
                     ExpressionType::Closure(closure_ctx, _arg_names, _body) => {
                         if let Some(value) = closure_ctx.get_binding(field) {
                             value.to_owned()
                         } else {
-                            expression::error(format!("field binding not found {field}"))
+                            Err(anyhow!("field binding not found: {field}"))?
                         }
                     }
                     _ => ast.to_error()?,
                 }
             }
             ExpressionType::Lambda(arg_names, body) => {
-                debug!("eval function closure");
                 ExpressionType::Closure(ctx.capture(), arg_names.to_owned(), body.to_owned()).into()
             }
             ExpressionType::FunctionCall(lambda, arg_values) => {
-                debug!("eval function call");
                 match self.eval(ctx,lambda)?.as_ref() {
                     ExpressionType::BuiltinFunction(name) => {
                         let mut eval_args = vec![];
@@ -443,7 +435,6 @@ impl Interpreter {
                 }
             }
             ExpressionType::Object(body) => {
-                debug!("eval object");
                 let ctx = &ctx.with_new_context();
                 self.eval(ctx, body)?;
                 // we capture the context from the body in a closure
@@ -451,7 +442,6 @@ impl Interpreter {
                 expression::context(cap_ctx.to_owned())
             }
             ExpressionType::Context(arg_names, body) => {
-                debug!("eval context: {arg_names:?}");
                 let local_ctx = Context::new();
                 for name in arg_names {
                     if let Some(val) = ctx.get_binding(name) { 
@@ -461,7 +451,6 @@ impl Interpreter {
                 self.eval(&local_ctx, body)?
             }
             ExpressionType::Module(modname, arg_names, body) => {
-                debug!("eval module: {arg_names:?}");
                 let local_ctx = Context::new();
                 for name in arg_names {
                     if let Some(val) = ctx.get_binding(name) { 
@@ -474,7 +463,6 @@ impl Interpreter {
                 val
             }
             ExpressionType::BinOpCall(op, left, right) => {
-                debug!("eval bin op call");
                 let op = op.as_ref();
                 if let ExpressionType::AndOp = op {
                     return builtin::and_lazy(self,ctx,left,right);
@@ -515,18 +503,17 @@ impl Interpreter {
                 }
             }
             ExpressionType::UnaryOpCall(op, expr) => {
-                debug!("eval unary op call");
                 if let ExpressionType::RefOp = op.as_ref() {
                     return builtin::ref_var(ctx,&expr.to_owned());
                 }
-                if let ExpressionType::QuestionOp = op.as_ref() {
-                    return Ok(
-                        match self.eval(ctx,expr) {
-                            Ok(r) => r,
-                            Err(e) => expression::error(e.to_string()),
-                        }
-                    );
-                }
+                // if let ExpressionType::QuestionOp = op.as_ref() {
+                //     return Ok(
+                //         match self.eval(ctx,expr) {
+                //             Ok(r) => r,
+                //             Err(_) => expression::nil(),
+                //         }
+                //     );
+                // }
                 let expr = self.eval(ctx,expr)?;
                 if let ExpressionType::Throw(val) = expr.as_ref() {
                     return Ok(val.to_owned());

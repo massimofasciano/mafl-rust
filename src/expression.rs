@@ -194,10 +194,6 @@ impl std::fmt::Display for ExpressionType {
     }
 }
 
-pub fn error(msg: String) -> Expression {
-    ExpressionType::Throw(ExpressionType::Error(msg).into()).into()
-}
-
 pub fn integer(i: i64) -> Expression {
     ExpressionType::Integer(i).into()
 }
@@ -232,8 +228,4 @@ pub fn context(ctx: Context) -> Expression {
 
 pub fn array(vals: Expressions) -> Expression {
     ExpressionType::Array(RefCell::new(vals)).into()
-}
-
-pub fn error_div0() -> Expression {
-    error("division by 0".to_owned())
 }

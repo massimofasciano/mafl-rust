@@ -78,22 +78,24 @@ pub fn mul(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression
 }
 
 pub fn div(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+    let error_div0 = Err(anyhow!("division by zero"));
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
-        (_, ExpressionType::Float(b)) if b == &0.0 => expression::error_div0(),
-        (_, ExpressionType::Integer(0)) => expression::error_div0(),
+        (_, ExpressionType::Float(b)) if b == &0.0 => error_div0?,
+        (_, ExpressionType::Integer(0)) => error_div0?,
         (ExpressionType::Float(a), ExpressionType::Float(b)) => ExpressionType::Float(a/b).into(),
         (ExpressionType::Float(a), ExpressionType::Integer(b)) => ExpressionType::Float(a / (*b as f64)).into(),
         (ExpressionType::Integer(a), ExpressionType::Float(b)) => ExpressionType::Float((*a as f64) / b).into(),
         (ExpressionType::Integer(a), ExpressionType::Integer(b)) => ExpressionType::Float((*a as f64) / (*b as f64)).into(),
-        _ => expression::error("div requires 2 integers or floats".to_string()),
+        _ => Err(anyhow!("div requires 2 integers or floats"))?,
     })
 }
 
 pub fn intdiv(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
+    let error_div0 = Err(anyhow!("division by zero"));
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
-        (_, ExpressionType::Integer(0)) => expression::error_div0(),
+        (_, ExpressionType::Integer(0)) => error_div0?,
         (ExpressionType::Integer(a), ExpressionType::Integer(b)) => ExpressionType::Integer(a/b).into(),
-        _ => expression::error("intdiv requires 2 integers".to_string()),
+        _ => Err(anyhow!("intdiv requires 2 integers"))?,
     })
 }
 
@@ -324,7 +326,7 @@ pub fn to_array(ctx: &Context, init: &Expression) -> Result<Expression> {
         ExpressionType::Array(_) => {
             deep_copy(ctx, init)
         } 
-        _ => Ok(expression::error(format!("to array {init:?}")))
+        _ => Ok(Err(anyhow!("to array {init:?}"))?)
     }
 }
 
@@ -459,7 +461,7 @@ pub fn get(interpreter: &Interpreter, _ctx: &Context, container: &Expression, ke
         ExpressionType::Closure(c,_,_) => {
             match key.as_ref() {
                 ExpressionType::String(s) => 
-                    c.get_binding(&interpreter.ident(s)).unwrap_or(expression::error(format!("binding not found {s}"))),
+                    c.get_binding(&interpreter.ident(s)).unwrap_or(Err(anyhow!("binding not found: {s}"))?),
                 _ => Err(anyhow!("get on closure with non-string key {key:?}"))?,
             }
         }
@@ -485,7 +487,7 @@ pub fn set(interpreter: &Interpreter, _ctx: &Context, container: &Expression, ke
             match key.as_ref() {
                 ExpressionType::String(s) => 
                     c.set_binding(interpreter.ident(s), value.to_owned())
-                        .unwrap_or(expression::error(format!("binding not found {s}"))),
+                        .unwrap_or(Err(anyhow!("binding not found: {s}"))?),
                 _ => Err(anyhow!("set on closure with non-string key {key:?}"))?,
             }
         }
@@ -527,14 +529,14 @@ pub fn error_from_strings(_: &Context, args: &[Expression]) -> Result<Expression
     debug!("error");
     let mut output = String::new();
     for arg in args { write!(output,"{arg}")?; }
-    Ok(expression::error(output))
+    Err(anyhow!(output))
 }
 
 pub fn get_var(interpreter: &Interpreter, ctx: &Context, key: &Expression) -> Result<Expression> {
     debug!("get_var {key:?}");
     Ok(match key.as_ref() {
         ExpressionType::String(s) => 
-            ctx.get_binding(&interpreter.ident(s)).unwrap_or(expression::error(format!("binding not found {s}"))),
+            ctx.get_binding(&interpreter.ident(s)).unwrap_or(Err(anyhow!("binding not found: {s}"))?),
         _ => Err(anyhow!("get on closure with non-string key {key:?}"))?,
     })
 }
@@ -544,7 +546,7 @@ pub fn assign_var(interpreter: &Interpreter, ctx: &Context, key: &Expression, va
     Ok(match key.as_ref() {
         ExpressionType::String(s) => 
             ctx.set_binding(interpreter.ident(s), value.to_owned())
-                .unwrap_or(expression::error(format!("binding not found {s}"))),
+                .unwrap_or(Err(anyhow!("binding not found: {s}"))?),
         _ => Err(anyhow!("set on closure with non-string key {key:?}"))?,
     })
 }
@@ -603,7 +605,7 @@ pub fn ref_var(ctx: &Context, var: &Expression) -> Result<Expression> {
             if let Some(rc) = ctx.get_binding_ref(s) {
                 ExpressionType::Ref(rc).into()
             } else {
-                expression::error(format!("binding not found {s}"))
+                Err(anyhow!("binding not found: {s}"))?
             }
         }
         _ => Err(anyhow!("ref on non-variable {var}"))?,
@@ -714,7 +716,7 @@ pub fn integer(interpreter: &Interpreter, ctx: &Context, val: &Expression) -> Re
             } else if let ExpressionType::Float(f) = r.as_ref() {
                 expression::integer(*f as i64)
             } else {
-                expression::error("can't parse as a float".to_owned())
+                Err(anyhow!("can't parse as an integer"))?
             }
         }
         _ => Err(anyhow!("integer {val:?}"))?,
@@ -732,7 +734,7 @@ pub fn float(interpreter: &Interpreter, ctx: &Context, val: &Expression) -> Resu
             } else if let ExpressionType::Integer(i) = r.as_ref() {
                 expression::float(*i as f64)
             } else {
-                expression::error("can't parse as a float".to_owned())
+                Err(anyhow!("can't parse as a float"))?
             }
         }
         _ => Err(anyhow!("float {val:?}"))?,
