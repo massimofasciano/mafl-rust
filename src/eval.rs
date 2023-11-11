@@ -1,4 +1,4 @@
-use crate::{expression::{ExpressionType, Expression, self}, builtin::{self}, context::Context, Interpreter};
+use crate::{expression::{ExpressionType, Expression, self, Operator}, builtin::{self}, context::Context, Interpreter};
 use anyhow::{Result,anyhow};
 use log::debug;
 
@@ -463,11 +463,10 @@ impl Interpreter {
                 val
             }
             ExpressionType::BinOpCall(op, left, right) => {
-                let op = op.as_ref();
-                if let ExpressionType::AndOp = op {
+                if let Operator::And = op {
                     return builtin::and_lazy(self,ctx,left,right);
                 }
-                if let ExpressionType::OrOp = op {
+                if let Operator::Or = op {
                     return builtin::or_lazy(self,ctx,left,right);
                 }
                 let left = self.eval(ctx,left)?;
@@ -481,32 +480,32 @@ impl Interpreter {
                     return Ok(ExpressionType::Throw(val.to_owned()).into());
                 }
                 match op {
-                    ExpressionType::InfixOp(fname) => {
+                    Operator::Identifier(fname) => {
                         let fvar = ExpressionType::Variable(fname.to_owned()).into();
                         self.eval(ctx,&ExpressionType::FunctionCall(fvar, vec![left,right]).into())?
                     },
-                    ExpressionType::PipeOp => self.eval(ctx,&ExpressionType::FunctionCall(right, vec![left]).into())?,
-                    ExpressionType::AddOp => builtin::add(ctx,&left,&right)?,
-                    ExpressionType::SubOp => builtin::sub(ctx,&left,&right)?,
-                    ExpressionType::MultOp => builtin::mul(ctx,&left,&right)?,
-                    ExpressionType::DivOp => builtin::div(ctx,&left,&right)?,
-                    ExpressionType::IntDivOp => builtin::intdiv(ctx,&left,&right)?,
-                    ExpressionType::ModOp => builtin::modulo(ctx,&left,&right)?,
-                    ExpressionType::ExpOp => builtin::pow(ctx, &left, &right)?,
-                    ExpressionType::GtOp => builtin::gt(ctx, &left, &right)?,
-                    ExpressionType::GeOp => builtin::ge(ctx, &left, &right)?,
-                    ExpressionType::LtOp => builtin::lt(ctx, &left, &right)?,
-                    ExpressionType::LeOp => builtin::le(ctx, &left, &right)?,
-                    ExpressionType::EqOp => builtin::eq(ctx, &left, &right)?,
-                    ExpressionType::NeOp => builtin::ne(ctx, &left, &right)?,
+                    Operator::Pipe => self.eval(ctx,&ExpressionType::FunctionCall(right, vec![left]).into())?,
+                    Operator::Add => builtin::add(ctx,&left,&right)?,
+                    Operator::Sub => builtin::sub(ctx,&left,&right)?,
+                    Operator::Mul => builtin::mul(ctx,&left,&right)?,
+                    Operator::Div => builtin::div(ctx,&left,&right)?,
+                    Operator::IntDiv => builtin::intdiv(ctx,&left,&right)?,
+                    Operator::Mod => builtin::modulo(ctx,&left,&right)?,
+                    Operator::Exp => builtin::pow(ctx, &left, &right)?,
+                    Operator::Gt => builtin::gt(ctx, &left, &right)?,
+                    Operator::Ge => builtin::ge(ctx, &left, &right)?,
+                    Operator::Lt => builtin::lt(ctx, &left, &right)?,
+                    Operator::Le => builtin::le(ctx, &left, &right)?,
+                    Operator::Eq => builtin::eq(ctx, &left, &right)?,
+                    Operator::Ne => builtin::ne(ctx, &left, &right)?,
                     _ => ast.to_error()?,
                 }
             }
             ExpressionType::UnaryOpCall(op, expr) => {
-                if let ExpressionType::RefOp = op.as_ref() {
+                if let Operator::Ref = op {
                     return builtin::ref_var(ctx,&expr.to_owned());
                 }
-                if let ExpressionType::ExclamOp = op.as_ref() {
+                if let Operator::Exclam = op {
                     // unwraps a thrown value
                     let result = self.eval(ctx, expr);
                     return Ok(match result {
@@ -527,10 +526,10 @@ impl Interpreter {
                 if let ExpressionType::Throw(val) = expr.as_ref() {
                     return Ok(val.to_owned());
                 }
-                match op.as_ref() {
-                    ExpressionType::NegOp => builtin::neg(ctx,&expr)?,
-                    ExpressionType::NotOp => builtin::not(ctx,&expr)?,
-                    ExpressionType::DeRefOp => self.eval(ctx,&expr)?,
+                match op {
+                    Operator::Neg => builtin::neg(ctx,&expr)?,
+                    Operator::Not => builtin::not(ctx,&expr)?,
+                    Operator::DeRef => self.eval(ctx,&expr)?,
                     _ => ast.to_error()?,
                 }
             }

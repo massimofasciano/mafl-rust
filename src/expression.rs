@@ -14,6 +14,15 @@ pub type Ident = String;
 // pub type Ident = usize;
 pub type Idents = Vec<Ident>;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Operator {
+    Add, Mul, Sub, Div, IntDiv, Exp, Mod,
+    Not, And, Or, Pipe,
+    Gt, Ge, Lt, Le, Ne, Eq,
+    Neg, Ref, DeRef, Question, Exclam,
+    Identifier(Ident)
+}
+
 #[derive(Debug,Clone)]
 pub enum ExpressionType {
     Integer(i64),
@@ -21,24 +30,18 @@ pub enum ExpressionType {
     Character(char),
     Boolean(bool),
     String(String),
-    Identifier(Ident),
+    Nil,
     Error(String),
     Variable(Ident),
     BuiltinVariable(String),
-    InfixOp(Ident),
     BuiltinFunction(String),
-    Nil,
     Block(Expressions),
     FunctionBlock(Expressions),
     Sequence(Expressions),
     FunctionCall(Expression,Expressions),
     Field(Expression,Ident),
-    BinOpCall(Expression,Expression,Expression),
-    UnaryOpCall(Expression,Expression),
-    AddOp, MultOp, SubOp, DivOp, IntDivOp, ExpOp, ModOp,
-    NotOp, AndOp, OrOp, PipeOp,
-    GtOp, GeOp, LtOp, LeOp, NeOp, EqOp,
-    NegOp, RefOp, DeRefOp, QuestionOp, ExclamOp,
+    BinOpCall(Operator,Expression,Expression),
+    UnaryOpCall(Operator,Expression),
     If(Expression,Expression,Expression),
     While(Expression,Expression),
     DoWhile(Expression,Expression),
@@ -56,17 +59,19 @@ pub enum ExpressionType {
     Defun(Ident,Idents,Expression),
     Lambda(Idents,Expression),
     Closure(Context,Idents,Expression),
-    ClosurePrintable(Expression,Idents,Expression),
     Array(RefCell<Expressions>),
-    ArrayPrintable(Expressions),
     Return(Expression),
     Break(Expression),
     Throw(Expression),
-    ExceptionPrintable(Expression),
     Continue, 
     Ref(Rc<MemCell>),
     Scope(ScopeID,HashMap<Ident,Expression>),
     ScopeCycle(ScopeID),
+    ClosurePrintable(Expression,Idents,Expression),
+    ArrayPrintable(Expressions),
+    ExceptionPrintable(Expression),
+    ParsedOperator(Operator),
+    ParsedIdentifier(Ident),
 }
 
 impl PartialEq for ExpressionType {
@@ -82,26 +87,7 @@ impl PartialEq for ExpressionType {
             (ExpressionType::Boolean(a),ExpressionType::Boolean(b)) => a == b,
             (ExpressionType::Nil,ExpressionType::Nil) => true,
             (ExpressionType::Array(a),ExpressionType::Array(b)) => a == b,
-            (ExpressionType::GtOp,ExpressionType::GtOp) => true,
-            (ExpressionType::GeOp,ExpressionType::GeOp) => true,
-            (ExpressionType::LtOp,ExpressionType::LtOp) => true,
-            (ExpressionType::LeOp,ExpressionType::LeOp) => true,
-            (ExpressionType::EqOp,ExpressionType::EqOp) => true,
-            (ExpressionType::NeOp,ExpressionType::NeOp) => true,
-            (ExpressionType::NotOp,ExpressionType::NotOp) => true,
-            (ExpressionType::NegOp,ExpressionType::NegOp) => true,
-            (ExpressionType::AndOp,ExpressionType::AndOp) => true,
-            (ExpressionType::AddOp,ExpressionType::AddOp) => true,
-            (ExpressionType::SubOp,ExpressionType::SubOp) => true,
-            (ExpressionType::MultOp,ExpressionType::MultOp) => true,
-            (ExpressionType::DivOp,ExpressionType::DivOp) => true,
-            (ExpressionType::IntDivOp,ExpressionType::IntDivOp) => true,
-            (ExpressionType::PipeOp,ExpressionType::PipeOp) => true,
-            (ExpressionType::RefOp,ExpressionType::RefOp) => true,
-            (ExpressionType::DeRefOp,ExpressionType::DeRefOp) => true,
-            (ExpressionType::QuestionOp,ExpressionType::QuestionOp) => true,
-            (ExpressionType::ModOp,ExpressionType::ModOp) => true,
-            (ExpressionType::ExpOp,ExpressionType::ExpOp) => true,
+            (ExpressionType::ParsedOperator(a),ExpressionType::ParsedOperator(b)) => a == b,
             _ => false,
         }
     }

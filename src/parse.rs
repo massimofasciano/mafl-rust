@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use pest::iterators::Pair;
 use anyhow::{anyhow, Result};
-use crate::{expression::{Rule, ExpressionType, Expression, self}, unescape_string, Interpreter};
+use crate::{expression::{Rule, ExpressionType, Expression, self, Operator}, unescape_string, Interpreter};
 
 impl Interpreter {
 
@@ -37,7 +37,11 @@ impl Interpreter {
                     inner[1..].chunks_exact(2).try_fold(left, |ast, pair| -> Result<Expression> {
                         let op = self.parse_rule(pair[0].clone())?;
                         let right = self.parse_rule(pair[1].clone())?;
-                        Ok(ExpressionType::BinOpCall(op, ast, right).into())
+                        if let ExpressionType::ParsedOperator(op) = op.as_ref() {
+                            Ok(ExpressionType::BinOpCall(op.to_owned(), ast, right).into())
+                        } else {
+                            Err(anyhow!("parse error: operator expected"))
+                        }
                     })?
                 }
                 Rule::expr_post => {
@@ -46,7 +50,11 @@ impl Interpreter {
                     let expr = self.parse_rule(inner[0].clone())?;
                     inner[1..].iter().try_fold(expr, |ast, pair| -> Result<Expression> {
                         let op = self.parse_rule(pair.clone())?;
-                        Ok(ExpressionType::UnaryOpCall(op, ast).into())
+                        if let ExpressionType::ParsedOperator(op) = op.as_ref() {
+                            Ok(ExpressionType::UnaryOpCall(op.to_owned(), ast).into())
+                        } else {
+                            Err(anyhow!("parse error: operator expected"))
+                        }
                     })?
                 }
                 Rule::expr_prefix => {
@@ -57,7 +65,11 @@ impl Interpreter {
                     let expr = self.parse_rule(rinner[0].clone())?;
                     rinner[1..].iter().try_fold(expr, |ast, pair| -> Result<Expression> {
                         let op = self.parse_rule(pair.clone())?;
-                        Ok(ExpressionType::UnaryOpCall(op, ast).into())
+                        if let ExpressionType::ParsedOperator(op) = op.as_ref() {
+                            Ok(ExpressionType::UnaryOpCall(op.to_owned(), ast).into())
+                        } else {
+                            Err(anyhow!("parse error: operator expected"))
+                        }
                     })?
                 }
                 Rule::expr_apply_or_access => {
@@ -149,7 +161,7 @@ impl Interpreter {
                     assert!(inner.len() == 2 || inner.len() == 3);
                     let expr = self.parse_rule(inner[0].clone())?;
                     let cond = if rule == Rule::unless {
-                        ExpressionType::UnaryOpCall(ExpressionType::NotOp.into(),expr).into()
+                        ExpressionType::UnaryOpCall(Operator::Not,expr).into()
                     } else {
                         expr
                     };
@@ -308,9 +320,8 @@ impl Interpreter {
                 },
                 Rule::infix_identifier => { 
                     assert!(inner.len() == 1);
-                    // let id = inner[0].as_str().to_owned();
                     let id = self.ident(inner[0].as_str());
-                    ExpressionType::InfixOp(id).into() 
+                    ExpressionType::ParsedOperator(Operator::Identifier(id)).into() 
                 },
                 _ => {
                     Err(anyhow!("TODO: [{:?}] {}",rule,string))?
@@ -325,7 +336,7 @@ impl Interpreter {
             Rule::string => { ExpressionType::String(unescape_string(parsed.as_str())).into() },
             Rule::identifier => { 
                 // ExpressionType::Identifier(parsed.as_str().to_owned()).into() 
-                ExpressionType::Identifier(self.ident(parsed.as_str())).into() 
+                ExpressionType::ParsedIdentifier(self.ident(parsed.as_str())).into() 
             },
             Rule::character => { 
                 assert!(!parsed.as_str().is_empty());
@@ -342,28 +353,28 @@ impl Interpreter {
             Rule::nil_implicit => { ExpressionType::Nil.into() },
             Rule::r#true => { ExpressionType::Boolean(true).into() },
             Rule::r#false => { ExpressionType::Boolean(false).into() },
-            Rule::r#ref => { ExpressionType::RefOp.into() },
-            Rule::deref => { ExpressionType::DeRefOp.into() },
-            Rule::question => { ExpressionType::QuestionOp.into() },
-            Rule::exclam => { ExpressionType::ExclamOp.into() },
-            Rule::pipe => { ExpressionType::PipeOp.into() },
-            Rule::neg => { ExpressionType::NegOp.into() },
-            Rule::add => { ExpressionType::AddOp.into() },
-            Rule::mult => { ExpressionType::MultOp.into() },
-            Rule::sub => { ExpressionType::SubOp.into() },
-            Rule::div => { ExpressionType::DivOp.into() },
-            Rule::intdiv => { ExpressionType::IntDivOp.into() },
-            Rule::r#mod => { ExpressionType::ModOp.into() },
-            Rule::exp => { ExpressionType::ExpOp.into() },
-            Rule::or => { ExpressionType::OrOp.into() },
-            Rule::and => { ExpressionType::AndOp.into() },
-            Rule::not => { ExpressionType::NotOp.into() },
-            Rule::gt => { ExpressionType::GtOp.into() },
-            Rule::ge => { ExpressionType::GeOp.into() },
-            Rule::lt => { ExpressionType::LtOp.into() },
-            Rule::le => { ExpressionType::LeOp.into() },
-            Rule::ne => { ExpressionType::NeOp.into() },
-            Rule::eq => { ExpressionType::EqOp.into() },
+            Rule::r#ref => { ExpressionType::ParsedOperator(Operator::Ref).into() },
+            Rule::deref => { ExpressionType::ParsedOperator(Operator::DeRef).into() },
+            Rule::question => { ExpressionType::ParsedOperator(Operator::Question).into() },
+            Rule::exclam => { ExpressionType::ParsedOperator(Operator::Exclam).into() },
+            Rule::pipe => { ExpressionType::ParsedOperator(Operator::Pipe).into() },
+            Rule::neg => { ExpressionType::ParsedOperator(Operator::Neg).into() },
+            Rule::add => { ExpressionType::ParsedOperator(Operator::Add).into() },
+            Rule::mult => { ExpressionType::ParsedOperator(Operator::Mul).into() },
+            Rule::sub => { ExpressionType::ParsedOperator(Operator::Sub).into() },
+            Rule::div => { ExpressionType::ParsedOperator(Operator::Div).into() },
+            Rule::intdiv => { ExpressionType::ParsedOperator(Operator::IntDiv).into() },
+            Rule::r#mod => { ExpressionType::ParsedOperator(Operator::Mod).into() },
+            Rule::exp => { ExpressionType::ParsedOperator(Operator::Exp).into() },
+            Rule::or => { ExpressionType::ParsedOperator(Operator::Or).into() },
+            Rule::and => { ExpressionType::ParsedOperator(Operator::And).into() },
+            Rule::not => { ExpressionType::ParsedOperator(Operator::Not).into() },
+            Rule::gt => { ExpressionType::ParsedOperator(Operator::Gt).into() },
+            Rule::ge => { ExpressionType::ParsedOperator(Operator::Ge).into() },
+            Rule::lt => { ExpressionType::ParsedOperator(Operator::Lt).into() },
+            Rule::le => { ExpressionType::ParsedOperator(Operator::Le).into() },
+            Rule::ne => { ExpressionType::ParsedOperator(Operator::Ne).into() },
+            Rule::eq => { ExpressionType::ParsedOperator(Operator::Eq).into() },
             Rule::r#continue => { ExpressionType::Continue.into() },
             Rule::block_syntax | Rule::block | Rule::file | 
             Rule::function_block  => { self.parse_block(parsed)? },
