@@ -12,7 +12,7 @@ TODO:
 
 - field (object) based builtins like .copy() .string() .map() ?
 
-- try a tree structure for contexts
+- try a tree structure for contexts: NO! a stack of stacks (list of lists) is a better analogy.
 - walker for expression and context with cycle detection
 
 - clean up the expression type (atoms, operators, code, input, etc...)

@@ -1,3 +1,8 @@
+###
+### this example shows some experimental/unstable features
+### of the language that are not finalized yet
+###
+
 let z = 30;
 
 module test (z) {
