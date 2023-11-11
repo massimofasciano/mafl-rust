@@ -742,6 +742,19 @@ pub fn float(interpreter: &Interpreter, ctx: &Context, val: &Expression) -> Resu
 pub fn string(_: &Interpreter, _: &Context, val: &Expression) -> Result<Expression> {
     Ok(match val.as_ref() {
         ExpressionType::Error(e) => expression::string(e.to_owned()),
+        ExpressionType::Array(arr) => {
+            let all_chars = arr.borrow().iter().all(|e| {
+                matches!(e.as_ref(), ExpressionType::Character(_))
+            });
+            if all_chars { 
+                expression::string(arr.borrow().iter().filter_map(|e| {
+                    if let ExpressionType::Character(c) = e.as_ref() { Some(*c) } 
+                    else { None }
+                }).collect())
+            } else {
+                expression::string(format!("{val}"))   
+            }
+        }
         _ => expression::string(format!("{val}")),
     })
 }
