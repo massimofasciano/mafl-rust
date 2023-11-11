@@ -506,14 +506,23 @@ impl Interpreter {
                 if let ExpressionType::RefOp = op.as_ref() {
                     return builtin::ref_var(ctx,&expr.to_owned());
                 }
-                // if let ExpressionType::QuestionOp = op.as_ref() {
-                //     return Ok(
-                //         match self.eval(ctx,expr) {
-                //             Ok(r) => r,
-                //             Err(_) => expression::nil(),
-                //         }
-                //     );
-                // }
+                if let ExpressionType::ExclamOp = op.as_ref() {
+                    // unwraps a thrown value
+                    let result = self.eval(ctx, expr);
+                    return Ok(match result {
+                        Err(err) => {
+                            ExpressionType::Error(err.to_string()).into()
+                        }
+                        Ok(expr) => {
+                            match expr.as_ref() {
+                                ExpressionType::Throw(val) => {
+                                    val.to_owned()
+                                }
+                                _ => expr,     
+                            }
+                        }
+                    })
+                }
                 let expr = self.eval(ctx,expr)?;
                 if let ExpressionType::Throw(val) = expr.as_ref() {
                     return Ok(val.to_owned());
@@ -522,15 +531,6 @@ impl Interpreter {
                     ExpressionType::NegOp => builtin::neg(ctx,&expr)?,
                     ExpressionType::NotOp => builtin::not(ctx,&expr)?,
                     ExpressionType::DeRefOp => self.eval(ctx,&expr)?,
-                    ExpressionType::ExclamOp => {
-                        // unwraps a thrown value
-                        match expr.as_ref() {
-                            ExpressionType::Throw(val) => {
-                                val.to_owned()
-                            }
-                            _ => expr,
-                        }
-                    }
                     _ => ast.to_error()?,
                 }
             }
@@ -574,6 +574,7 @@ impl Interpreter {
             ("debugln", args) => { builtin::debugln(ctx, args) },
             ("debug", args) => { builtin::debug(ctx, args) },
             ("error", args) => { builtin::error_from_strings(ctx, args) },
+            ("make_error", [msg]) => { builtin::make_error(msg) },
             ("eval", [arg]) => { builtin::eval_string_as_source(self, ctx, arg) },
             ("include", [file_expr]) => builtin::include(self, ctx, file_expr),
             ("readfile", [file_expr]) => builtin::read_file(ctx, file_expr),

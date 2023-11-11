@@ -1,3 +1,3 @@
-try 1 < "tree" catch e {
-    @println(e);
-}
+let o = @dict();
+@insert(o,"x",1);
+@get(o,"x")

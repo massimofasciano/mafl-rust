@@ -461,7 +461,7 @@ pub fn get(interpreter: &Interpreter, _ctx: &Context, container: &Expression, ke
         ExpressionType::Closure(c,_,_) => {
             match key.as_ref() {
                 ExpressionType::String(s) => 
-                    c.get_binding(&interpreter.ident(s)).unwrap_or(Err(anyhow!("binding not found: {s}"))?),
+                    c.get_binding(&interpreter.ident(s)).ok_or(anyhow!("binding not found: {s}"))?,
                 _ => Err(anyhow!("get on closure with non-string key {key:?}"))?,
             }
         }
@@ -487,7 +487,7 @@ pub fn set(interpreter: &Interpreter, _ctx: &Context, container: &Expression, ke
             match key.as_ref() {
                 ExpressionType::String(s) => 
                     c.set_binding(interpreter.ident(s), value.to_owned())
-                        .unwrap_or(Err(anyhow!("binding not found: {s}"))?),
+                        .ok_or(anyhow!("binding not found: {s}"))?,
                 _ => Err(anyhow!("set on closure with non-string key {key:?}"))?,
             }
         }
@@ -526,17 +526,23 @@ pub fn dict_extend(_ctx: &Context, parent: &Expression) -> Result<Expression> {
 }
 
 pub fn error_from_strings(_: &Context, args: &[Expression]) -> Result<Expression> {
-    debug!("error");
     let mut output = String::new();
     for arg in args { write!(output,"{arg}")?; }
     Err(anyhow!(output))
+}
+
+pub fn make_error(msg: &Expression) -> Result<Expression> {
+    Ok(match msg.as_ref() {
+        ExpressionType::String(s) => ExpressionType::Error(s.to_owned()).into(),
+        _ => Err(anyhow!("make-error with non-string message"))?,
+    })
 }
 
 pub fn get_var(interpreter: &Interpreter, ctx: &Context, key: &Expression) -> Result<Expression> {
     debug!("get_var {key:?}");
     Ok(match key.as_ref() {
         ExpressionType::String(s) => 
-            ctx.get_binding(&interpreter.ident(s)).unwrap_or(Err(anyhow!("binding not found: {s}"))?),
+            ctx.get_binding(&interpreter.ident(s)).ok_or(anyhow!("binding not found: {s}"))?,
         _ => Err(anyhow!("get on closure with non-string key {key:?}"))?,
     })
 }
@@ -546,7 +552,7 @@ pub fn assign_var(interpreter: &Interpreter, ctx: &Context, key: &Expression, va
     Ok(match key.as_ref() {
         ExpressionType::String(s) => 
             ctx.set_binding(interpreter.ident(s), value.to_owned())
-                .unwrap_or(Err(anyhow!("binding not found: {s}"))?),
+                .ok_or(anyhow!("binding not found: {s}"))?,
         _ => Err(anyhow!("set on closure with non-string key {key:?}"))?,
     })
 }
