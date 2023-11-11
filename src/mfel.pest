@@ -67,7 +67,8 @@ array = { "[" ~ (expr ~ ("," ~ expr)*)? ~ "]"}
 function_args = { (identifier ~ ("," ~ identifier)*)? }
 
 lambda = {
-    ("lambda" | "\\") ~ "(" ~ function_args ~ ")" ~ function_block
+    ( ("lambda" | "\\") ~ "(" ~ function_args ~ ")" ~ function_block ) |
+    ( ("lambda" | "\\") ~ function_block )
 }
 
 defun = {

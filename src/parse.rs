@@ -83,14 +83,28 @@ impl Interpreter {
                         }
                     })?
                 } 
+                // Rule::lambda => {
+                //     assert!(inner.len() == 2);
+                //     assert!(inner[0].as_rule() == Rule::function_args);
+                //     assert!(inner[1].as_rule() == Rule::function_block);
+                //     // let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
+                //     let args : Vec<_> = inner[0].clone().into_inner().map(|e| self.ident(e.as_str())).collect();
+                //     let body = self.parse_rule(inner[1].clone())?;
+                //     ExpressionType::Lambda(args, body).into()
+                // }
                 Rule::lambda => {
-                    assert!(inner.len() == 2);
-                    assert!(inner[0].as_rule() == Rule::function_args);
-                    assert!(inner[1].as_rule() == Rule::function_block);
-                    // let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
-                    let args : Vec<_> = inner[0].clone().into_inner().map(|e| self.ident(e.as_str())).collect();
-                    let body = self.parse_rule(inner[1].clone())?;
-                    ExpressionType::Lambda(args, body).into()
+                    assert!(inner.len() == 2 || inner.len() == 1);
+                    if inner.len() == 2 {
+                        assert!(inner[0].as_rule() == Rule::function_args);
+                        assert!(inner[1].as_rule() == Rule::function_block);
+                        let args : Vec<_> = inner[0].clone().into_inner().map(|e| self.ident(e.as_str())).collect();
+                        let body = self.parse_rule(inner[1].clone())?;
+                        ExpressionType::Lambda(args, body).into()
+                    } else {
+                        assert!(inner[0].as_rule() == Rule::function_block);
+                        let body = self.parse_rule(inner[0].clone())?;
+                        ExpressionType::Lambda(vec![], body).into()
+                    }
                 }
                 Rule::array => {
                     ExpressionType::Array(RefCell::new(

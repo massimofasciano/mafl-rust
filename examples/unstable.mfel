@@ -8,10 +8,10 @@ let z = 30;
 module test (z) {
     let x = 10;
     let y = 20;
-    let f = lambda() { x + y };
+    let f = \() { x + y };
     module m (x,y,z) {
         # shadows x and y (by value)
-        let f = lambda() { x + y + z };
+        let f = \() { x + y + z };
     }
 }
 
