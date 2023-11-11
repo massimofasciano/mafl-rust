@@ -249,6 +249,15 @@ impl Interpreter {
                     let body = self.parse_rule(inner[2].clone())?;
                     ExpressionType::For(var, expr, body).into()
                 } 
+                Rule::try_catch => {
+                    assert!(inner.len() == 3);
+                    let expr = self.parse_rule(inner[0].clone())?;
+                    assert!(inner[1].as_rule() == Rule::variable);
+                    let var = self.ident(inner[1].as_str());
+                    assert!(inner[2].as_rule() == Rule::block_syntax);
+                    let body = self.parse_rule(inner[2].clone())?;
+                    ExpressionType::TryCatch(expr, var, body).into()
+                } 
                 Rule::r#return => { 
                     let body = if inner.len() == 1 {
                         self.parse_rule(inner[0].clone())?
@@ -345,7 +354,7 @@ impl Interpreter {
             Rule::context | Rule::module | Rule::defun | 
             Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
             Rule::assign | Rule::object | Rule::bind |
-            Rule::r#let | Rule::r#loop | Rule::r#for |
+            Rule::r#let | Rule::r#loop | Rule::r#for | Rule::try_catch |
             Rule::lambda | Rule::r#break | Rule::throw |
             Rule::infix_identifier | Rule::r#return => {
                 let rule = parsed.as_rule();

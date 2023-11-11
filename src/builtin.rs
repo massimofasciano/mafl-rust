@@ -79,8 +79,8 @@ pub fn mul(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression
 
 pub fn div(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
-        (_, ExpressionType::Float(b)) if b == &0.0 => expression::error("division by 0.0".to_string()),
-        (_, ExpressionType::Integer(0)) => expression::error("division by 0".to_string()),
+        (_, ExpressionType::Float(b)) if b == &0.0 => expression::error_div0(),
+        (_, ExpressionType::Integer(0)) => expression::error_div0(),
         (ExpressionType::Float(a), ExpressionType::Float(b)) => ExpressionType::Float(a/b).into(),
         (ExpressionType::Float(a), ExpressionType::Integer(b)) => ExpressionType::Float(a / (*b as f64)).into(),
         (ExpressionType::Integer(a), ExpressionType::Float(b)) => ExpressionType::Float((*a as f64) / b).into(),
@@ -91,7 +91,7 @@ pub fn div(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression
 
 pub fn intdiv(_: &Context, lhs: &Expression, rhs: &Expression) -> Result<Expression> {
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
-        (_, ExpressionType::Integer(0)) => expression::error("division by 0".to_string()),
+        (_, ExpressionType::Integer(0)) => expression::error_div0(),
         (ExpressionType::Integer(a), ExpressionType::Integer(b)) => ExpressionType::Integer(a/b).into(),
         _ => expression::error("intdiv requires 2 integers".to_string()),
     })
@@ -740,6 +740,9 @@ pub fn float(interpreter: &Interpreter, ctx: &Context, val: &Expression) -> Resu
 }
 
 pub fn string(_: &Interpreter, _: &Context, val: &Expression) -> Result<Expression> {
-    Ok(expression::string(format!("{val}")))
+    Ok(match val.as_ref() {
+        ExpressionType::Error(e) => expression::string(e.to_owned()),
+        _ => expression::string(format!("{val}")),
+    })
 }
 

@@ -43,6 +43,7 @@ pub enum ExpressionType {
     While(Expression,Expression),
     DoWhile(Expression,Expression),
     For(Ident,Expression,Expression),
+    TryCatch(Expression,Ident,Expression),
     Let(Ident,Expression),
     LetArray(Idents,Expression),
     BindIn(Ident,Expression,Expression),
@@ -231,4 +232,8 @@ pub fn context(ctx: Context) -> Expression {
 
 pub fn array(vals: Expressions) -> Expression {
     ExpressionType::Array(RefCell::new(vals)).into()
+}
+
+pub fn error_div0() -> Expression {
+    error("division by 0".to_owned())
 }

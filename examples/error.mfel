@@ -1,9 +1,17 @@
 # we have 2 types of errors:
-# - language errors: an error type is thrown and can be caught with !, usually non-fatal and well-managed
+# - language errors: an error type is thrown and can be caught
+#   with ! or try ... catch, usually non-fatal and well-managed
 # - interpreter errors: they are implementation-specific and fatal (the program will crash)
 
-function test1(x) {
-    1 + test2(x)
+function test1(f,x) {
+    try 1 + f(x) catch z {
+        @println("- I caught this exception: ",z);
+        if @is_error(z) {
+            @println("- It's an error");
+            @println("- The value of the error is: ",@string(z));
+            "test1 catch"
+        }
+    }
 }
 
 function test2(x) {
@@ -15,10 +23,11 @@ function test3(x) {
 }
 
 function test4(x) {
-    # the ? operator converts an interpreter error into a language error
+    # the ? operator converts a fatal interpreter error into a catchable language error
     test3(x)? and x < 4
 }
 
-@test("test1(2)",1.5);
-@test("@is_error(test1(0)!)",true);
-@test("@is_error(test4(0)!)",true);
+@test("test1(test2,2)",1.5);
+@test("test1(test2,0)","test1 catch");
+#@test("test1(test3,10)","test1 catch"); # if you uncomment this, it will crash the interpreter
+@test("test1(test4,10)","test1 catch");

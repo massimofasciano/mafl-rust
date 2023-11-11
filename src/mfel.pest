@@ -19,6 +19,7 @@ reserved = _{
     "return" | "break" | "continue" | "throw" | 
     "let" | "function" | "lambda" | "in" | "bind" |
     "context" | "module" | "object" |
+    "try" | "catch" |
     "true" | "false" | "nil" |
     "and" | "or" | "not"
 }
@@ -107,6 +108,10 @@ loop = {
 
 for = {
     "for" ~ variable ~ "in" ~ expr ~ block_syntax
+}
+
+try_catch = {
+    "try" ~ expr ~ "catch" ~ variable ~ block_syntax
 }
 
 identifier_array = { "[" ~ (identifier ~ ("," ~ identifier)*)? ~ "]"}
@@ -198,7 +203,7 @@ expr_prefix = { (not|neg|ref|deref)* ~ expr_base }
 expr_base = _{
     "(" ~ expr ~ ")" | nil_literal | 
     array | block | if | 
-    while | unless | do_while | loop | for |
+    while | unless | do_while | loop | for | try_catch |
     defun | lambda | assign | context | module | object | 
     continue | 
     boolean | float | integer | string_literal | char_literal | 
@@ -206,7 +211,7 @@ expr_base = _{
 }
 
 // expressions that behave like blocks
-expr_block = _{ block | if | while | unless | loop | for | defun | module }
+expr_block = _{ block | if | while | unless | loop | for | defun | module | try_catch }
 
 semicolons = _{ ";" ~ semicolons | ";" }
 nil_implicit = { "" }

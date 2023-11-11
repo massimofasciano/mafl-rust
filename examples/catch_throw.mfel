@@ -1,6 +1,8 @@
 ### throw pushes up an exception (like break, return and continue)
 ### it will be passed up by most code expressions (TODO: arrays ?)
 ### the only way to catch and unwrap it is with the ! operator
+### or the try ... catch construct.
+### (x!) is equivalent to (try x catch e { e })
 
 function unwrap_before_mult(x) {
     f1(x)! * 3
@@ -8,6 +10,12 @@ function unwrap_before_mult(x) {
 
 function unwrap_after_mult(x) {
     (f1(x) * 3)!
+}
+
+function try_catch(x) {
+    try f1(x) * 3 catch y {
+        y + 1
+    }
 }
 
 function f1(x) {
@@ -28,3 +36,6 @@ function f2(x) {
 
 @test("unwrap_after_mult(8)",120);
 @test("unwrap_after_mult(10)",10);
+
+@test("try_catch(8)",120);
+@test("try_catch(10)",11);

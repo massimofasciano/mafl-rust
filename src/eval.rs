@@ -319,6 +319,18 @@ impl Interpreter {
                 }
                 body_value
             }
+            ExpressionType::TryCatch(expr, var, body) => {
+                debug!("eval try_catch");
+                let expr = self.eval(ctx, expr)?;
+                match expr.as_ref() {
+                    ExpressionType::Throw(val) => {
+                        let ctx = &ctx.with_new_context();
+                        ctx.add_binding(var.to_owned(), val.to_owned());
+                        self.eval(ctx,body)?
+                    }
+                    _ => expr,
+                }
+            }
             ExpressionType::For(var, iterator, body) => {
                 debug!("eval for");
                 let iterator = self.eval(ctx, iterator)?;
