@@ -8,6 +8,10 @@ FEATURES:
 
 TODO:
 
+- short lambdas ?    x:y:x*y   x:x+1
+
+- field (object) based builtins like .copy() .string() .map() ?
+
 - try a tree structure for contexts
 - walker for expression and context with cycle detection
 
@@ -24,7 +28,7 @@ p^ = 10 or p ^= 10 to deref assign
 
 - *=, +=, etc...
 
-- context inheritance syntax
+- context inheritance syntax (maybe context (a,b,c) <: parent {})
 - use statement or @use builtin to import contexts (ex: @use(@std.iter)). maybe @import ?
 
 
