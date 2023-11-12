@@ -11,6 +11,7 @@ TODO:
 - field (object) based builtins like .copy() .string() .map() ?
 
 - curry @builtin and op (LUT for builtins with fixed arg list, op syntax maybe ?)
+- builtins and ops should behave like lambdas
 
 - try a tree structure for contexts: NO! a stack of stacks (list of lists) is a better analogy.
 - walker for expression and context with cycle detection
@@ -20,8 +21,7 @@ TODO:
 - weak references ? gc ?
 
 - lookup table for builtins ?
-
-- *=, +=, etc...
+- put all builtins inside the interpreter struct
 
 - context inheritance syntax (maybe context (a,b,c) <: parent {})
 - use statement or @use builtin to import contexts (ex: @use(@std.iter)). maybe @import ?

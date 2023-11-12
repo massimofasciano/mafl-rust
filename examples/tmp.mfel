@@ -1,2 +1,4 @@
-
-"hey\t" + "\"there!\"" + "\n" + "\u0041"  
+let line;
+while (line = @readline()) != nil {
+    @println(@eval(line))
+}

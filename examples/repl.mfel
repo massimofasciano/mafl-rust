@@ -1,8 +1,8 @@
+let lines = \{ @readline() };
+
 @print("MFEL> ");
-let line = nil;
-let result = nil;
-while (line = @readline()) != nil {
+for line in lines {
     @println(@eval(line));
     @print("MFEL> ");
-};
+}
 @println();
