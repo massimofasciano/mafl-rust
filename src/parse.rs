@@ -57,7 +57,7 @@ impl Interpreter {
                         }
                     })?
                 }
-                Rule::expr_prefix => {
+                Rule::expr_prefix | Rule::expr_ref => {
                     if inner.len() == 1 { return self.parse_rule(inner[0].clone()) }
                     assert!(!inner.is_empty());
                     let mut rinner = inner;
@@ -381,7 +381,7 @@ impl Interpreter {
             Rule::expr_infix_id | Rule::expr_infix_pipe | Rule::expr_or | Rule::expr_and | 
             Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
             Rule::expr_mul | Rule::expr_apply_or_access | Rule::expr_post | 
-            Rule::expr_prefix | Rule::expr_exp | 
+            Rule::expr_prefix | Rule::expr_exp | Rule::expr_ref |
             Rule::context | Rule::module | Rule::defun | 
             Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
             Rule::assign | Rule::deref_assign | Rule::object | Rule::bind |

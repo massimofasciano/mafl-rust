@@ -65,7 +65,7 @@ let o = object {
     let __str__ = \{"(" + x + "," + y + ")"}
 };
 # we can also take a ref on an object field
-let p = &(o.x);
+let p = &o.x;
 @println(o);
 p <- 3;
 @println(o);

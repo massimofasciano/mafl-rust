@@ -203,9 +203,10 @@ expr_rel = { expr_add ~ ((ge|le|gt|lt) ~ expr_add)* }
 expr_add = { expr_mul ~ ((add|sub) ~ expr_mul)* }
 expr_mul = { expr_exp ~ ((mult|div|intdiv|mod) ~ expr_exp)* }
 expr_exp = { expr_post ~ (exp ~ expr_post)* }
-expr_post = { expr_apply_or_access ~ (question|exclam)* }
+expr_post = { expr_ref ~ (question|exclam)* }
+expr_ref = { ref* ~ expr_apply_or_access }
 expr_apply_or_access = { expr_prefix ~ (apply_args | field_access | array_access )* }
-expr_prefix = { (not|neg|ref|deref)* ~ expr_base }
+expr_prefix = { (not|neg|deref)* ~ expr_base }
 expr_base = _{
     "(" ~ expr ~ ")" | nil_literal | 
     array | block | if | 
