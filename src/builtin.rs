@@ -611,8 +611,8 @@ pub fn deep_copy(ctx: &Context, val: &Expression) -> Result<Expression> {
     })
 }
 
-pub fn ref_var(ctx: &Context, var: &Expression) -> Result<Expression> {
-    Ok(match var.as_ref() {
+pub fn get_ref(interpreter: &Interpreter, ctx: &Context, ref_target: &Expression) -> Result<Expression> {
+    Ok(match ref_target.as_ref() {
         ExpressionType::Variable(s) => {
             if let Some(rc) = ctx.get_binding_ref(s) {
                 ExpressionType::Ref(rc).into()
@@ -620,7 +620,20 @@ pub fn ref_var(ctx: &Context, var: &Expression) -> Result<Expression> {
                 Err(anyhow!("binding not found: {s}"))?
             }
         }
-        _ => Err(anyhow!("ref on non-variable {var}"))?,
+        ExpressionType::Field(field_target, field) => {
+            let field_target = interpreter.eval(ctx, field_target)?;
+            match field_target.as_ref() {
+                ExpressionType::Closure(closure_ctx, _arg_names, _body) => {
+                    if let Some(rc) = closure_ctx.get_binding_ref(field) {
+                        ExpressionType::Ref(rc).into()
+                    } else {
+                        Err(anyhow!("field binding not found: {field}"))?
+                    }
+                }
+                _ => Err(anyhow!("field lookup on non-object/dict: {field}"))?,
+            }
+        }
+        _ => Err(anyhow!("taking ref of incompatible value"))?,
     })
 }
 

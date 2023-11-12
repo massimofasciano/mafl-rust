@@ -58,3 +58,16 @@ reftest(&v);
 # so r is not a reference anymore...
 r = $r + 50;
 @println(v," ",c," ",r);
+
+let o = object {
+    let x = 1;
+    let y = 2;
+    let __str__ = \{"(" + x + "," + y + ")"}
+};
+# we can also take a ref on an object field
+let p = &(o.x);
+@println(o);
+p <- 3;
+@println(o);
+# but not on array elements (as of MFEL 0.3.2)
+

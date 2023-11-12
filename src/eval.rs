@@ -382,7 +382,7 @@ impl Interpreter {
                             Err(anyhow!("field binding not found: {field}"))?
                         }
                     }
-                    _ => ast.to_error()?,
+                    _ => Err(anyhow!("field lookup on non-object/dict: {field}"))?,
                 }
             }
             ExpressionType::Lambda(arg_names, body) => {
@@ -496,7 +496,7 @@ impl Interpreter {
             }
             ExpressionType::UnaryOpCall(op, expr) => {
                 if let Operator::Ref = op {
-                    return builtin::ref_var(ctx,&expr.to_owned());
+                    return builtin::get_ref(self, ctx,&expr.to_owned());
                 }
                 if let Operator::Exclam = op {
                     // unwraps a thrown value
