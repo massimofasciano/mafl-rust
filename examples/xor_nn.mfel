@@ -24,15 +24,15 @@ module Model() {
                 let grad_out_lr = learning_rate * grad_out;
                 let grad_h1_lr = learning_rate * grad_h1;
                 let grad_h2_lr = learning_rate * grad_h2;
-                w_x1_h1 = w_x1_h1 + grad_h1_lr * x1;
-                w_x1_h2 = w_x1_h2 + grad_h2_lr * x1;
-                w_x2_h1 = w_x2_h1 + grad_h1_lr * x2;
-                w_x2_h2 = w_x2_h2 + grad_h2_lr * x2;
-                w_b1_h1 = w_b1_h1 + grad_h1_lr;
-                w_b1_h2 = w_b1_h2 + grad_h2_lr;
-                w_h1_out = w_h1_out + grad_out_lr * h1;
-                w_h2_out = w_h2_out + grad_out_lr * h2;
-                w_b2_out = w_b2_out + grad_out_lr;
+                w_x1_h1 += grad_h1_lr * x1;
+                w_x1_h2 += grad_h2_lr * x1;
+                w_x2_h1 += grad_h1_lr * x2;
+                w_x2_h2 += grad_h2_lr * x2;
+                w_b1_h1 += grad_h1_lr;
+                w_b1_h2 += grad_h2_lr;
+                w_h1_out += grad_out_lr * h1;
+                w_h2_out += grad_out_lr * h2;
+                w_b2_out += grad_out_lr;
                 let diff = y - out;
                 let loss = 0.5*diff*diff;
                 loss

@@ -52,6 +52,7 @@ pub enum ExpressionType {
     BindIn(Ident,Expression,Expression),
     AssignToExpression(Expression,Expression),
     AssignToDeRefExpression(Expression,Expression),
+    OpAssignToExpression(Operator,Expression,Expression),
     ArrayAccess(Expression,Expression),
     Loop(Expression),
     Object(Expression),

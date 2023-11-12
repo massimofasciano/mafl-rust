@@ -1,4 +1,4 @@
-@debugln("1\n2\t3\n4");
+@debugln("1\n2\t3\n4\u0020\u0041 \u1234");
 @debugln('\n');
 
 let filename = "Cargo.toml";

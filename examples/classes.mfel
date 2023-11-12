@@ -15,8 +15,8 @@ module Point () {
                 Point.new(x + point.x,y + point.y)
             }
             function add_assign(point) {
-                x = x + point.x;
-                y = y + point.y;
+                x += point.x;
+                y += point.y;
             }
             function __str__() {
                 "Point("+x+","+y+")"
@@ -34,7 +34,7 @@ function Counter(start, end) {
                 return nil;
             }
             count = start;
-            start = start + 1;
+            start += 1;
             count
         }
     }

@@ -87,7 +87,6 @@ impl Interpreter {
                             Rule::field_access => {
                                 let inner : Vec<Pair<Rule>> = pair.clone().into_inner().collect();
                                 assert!(inner.len() == 1);
-                                // let field = inner[0].as_str().to_owned();
                                 let field = self.ident(inner[0].as_str());
                                 Ok(ExpressionType::Field(ast, field).into())
                             }
@@ -127,7 +126,6 @@ impl Interpreter {
                 Rule::context => {
                     assert!(inner.len() == 2);
                     assert!(inner[0].as_rule() == Rule::function_args);
-                    // let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
                     let args : Vec<_> = inner[0].clone().into_inner().map(|e| self.ident(e.as_str())).collect();
                     let body = self.parse_rule(inner[1].clone())?;
                     ExpressionType::Context(args, body).into()
@@ -139,11 +137,9 @@ impl Interpreter {
                 } 
                 Rule::module => {
                     assert!(inner.len() == 3);
-                    // let var = inner[0].as_str().to_owned();
                     let var = self.ident(inner[0].as_str());
                     assert!(inner[1].as_rule() == Rule::function_args);
                     assert!(inner[2].as_rule() == Rule::block_syntax);
-                    // let args : Vec<_> = inner[1].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
                     let args : Vec<_> = inner[1].clone().into_inner().map(|e| self.ident(e.as_str())).collect();
                     let body = self.parse_rule(inner[2].clone())?;
                     ExpressionType::Module(var, args, body).into()
@@ -167,16 +163,12 @@ impl Interpreter {
                 } 
                 Rule::bind => {
                     assert!(!inner.is_empty() || inner.len() <= 3);
-                    // let var = inner[0].as_str().to_owned();
                     let var = self.ident(inner[0].as_str());
                     if inner.len() == 1 {
-                        // let value = ExpressionType::Variable(var.to_owned()).into();
-                        // let body = ExpressionType::Variable(var.to_owned()).into();
                         let value = ExpressionType::Variable(var.to_owned()).into();
                         let body = ExpressionType::Variable(var.to_owned()).into();
                         ExpressionType::BindIn(var, value, body).into()
                     } else if inner.len() == 2 {
-                        // let value = ExpressionType::Variable(var.to_owned()).into();
                         let value = ExpressionType::Variable(var.to_owned()).into();
                         let body = self.parse_rule(inner[1].clone())?;
                         ExpressionType::BindIn(var, value, body).into()
@@ -218,19 +210,27 @@ impl Interpreter {
                     let body = self.parse_rule(inner[2].clone())?;
                     ExpressionType::Defun(var, args, body).into()
                 } 
-                Rule::assign | Rule::deref_assign => {
-                    assert!(inner.len() >= 2);
+                Rule::assign => {
+                    assert!(inner.len() >= 3);
                     let var_str = inner[0].as_str().to_owned();
                     let var = ExpressionType::Variable(self.ident(&var_str)).into();
-                    if inner.len() == 2 {
-                        let val = self.parse_rule(inner[1].clone())?;
-                        if rule == Rule::assign {
-                            ExpressionType::AssignToExpression(var, val).into()
-                        } else {
-                            ExpressionType::AssignToDeRefExpression(var, val).into()
+                    if inner.len() == 3 {
+                        let val = self.parse_rule(inner[2].clone())?;
+                        match inner[1].as_rule() {
+                            Rule::equal => ExpressionType::AssignToExpression(var, val).into(),
+                            Rule::left_arrow => ExpressionType::AssignToDeRefExpression(var, val).into(),
+                            _ => {
+                                let op = 
+                                    self.parse_rule(inner[1].clone().into_inner().next().ok_or(anyhow!("problem parsing silent rule"))?)?;
+                                if let ExpressionType::ParsedOperator(op) = op.as_ref() {
+                                    ExpressionType::OpAssignToExpression(op.to_owned(), var, val).into()
+                                } else {
+                                    Err(anyhow!("parse error: operator expected"))?
+                                }
+                            }
                         }
                     } else {
-                        let chain = inner[1..inner.len()-1].iter().try_fold(var, |acc, pair| {
+                        let chain = inner[1..inner.len()-2].iter().try_fold(var, |acc, pair| {
                             match pair.as_rule() {
                                 Rule::array_access => Ok(ExpressionType::ArrayAccess(acc, self.parse_rule(pair.clone())?).into()),
                                 Rule::field_access => {
@@ -244,10 +244,18 @@ impl Interpreter {
                             }
                         })?;
                         let val = self.parse_rule(inner[inner.len()-1].clone())?;
-                        if rule == Rule::assign {
-                            ExpressionType::AssignToExpression(chain, val).into()
-                        } else {
-                            ExpressionType::AssignToDeRefExpression(chain, val).into()
+                        match inner[inner.len()-2].as_rule() {
+                            Rule::equal => ExpressionType::AssignToExpression(chain, val).into(),
+                            Rule::left_arrow => ExpressionType::AssignToDeRefExpression(chain, val).into(),
+                            _ => {
+                                let op = 
+                                    self.parse_rule(inner[inner.len()-2].clone().into_inner().next().ok_or(anyhow!("problem parsing silent rule"))?)?;
+                                if let ExpressionType::ParsedOperator(op) = op.as_ref() {
+                                    ExpressionType::OpAssignToExpression(op.to_owned(), chain, val).into()
+                                } else {
+                                    Err(anyhow!("parse error: operator expected"))?
+                                }
+                            }
                         }
                     }
                 }
@@ -329,14 +337,13 @@ impl Interpreter {
         Ok(match parsed.as_rule() {
             Rule::integer => { ExpressionType::Integer(parsed.as_str().parse()?).into() },
             Rule::float => { ExpressionType::Float(parsed.as_str().parse()?).into() },
-            Rule::string => { ExpressionType::String(unescape_string(parsed.as_str())).into() },
+            Rule::string => { ExpressionType::String(unescape_string(parsed.as_str())?).into() },
             Rule::identifier => { 
-                // ExpressionType::Identifier(parsed.as_str().to_owned()).into() 
                 ExpressionType::ParsedIdentifier(self.ident(parsed.as_str())).into() 
             },
             Rule::character => { 
                 assert!(!parsed.as_str().is_empty());
-                ExpressionType::Character(unescape_string(parsed.as_str()).chars().next().unwrap()).into() 
+                ExpressionType::Character(unescape_string(parsed.as_str())?.chars().next().unwrap()).into() 
             },
             Rule::variable => { 
                 if parsed.as_str().starts_with('@') {
@@ -384,7 +391,7 @@ impl Interpreter {
             Rule::expr_prefix | Rule::expr_exp | Rule::expr_ref |
             Rule::context | Rule::module | Rule::defun | 
             Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
-            Rule::assign | Rule::deref_assign | Rule::object | Rule::bind |
+            Rule::assign | Rule::object | Rule::bind |
             Rule::r#let | Rule::r#loop | Rule::r#for | Rule::try_catch |
             Rule::lambda | Rule::r#break | Rule::throw |
             Rule::infix_identifier | Rule::r#return => {

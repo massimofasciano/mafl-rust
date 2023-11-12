@@ -43,7 +43,7 @@ let c = @context(); # captured to c
 
 @println("test 4");
 # the global x is changed but the one inside x has been shadowed above
-x = x + 1;
+x += 1;
 @test("x",2);
 @test("c.x",100);
 @println();

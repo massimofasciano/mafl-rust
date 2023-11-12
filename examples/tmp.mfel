@@ -1,15 +1,2 @@
-let x = 10;
-let y = &x;
-x = 11;
-@println([x,$y]);
-y <- 20;
-@println([x,$y]);
 
-let a = [1,2,3,&x,4,5,6,y,7,8,9];
-a[2] = 30;
-a[7] <- 40;
-@println(a);
-
-y <- $y + 20;
-y
-
+"hey\t" + "\"there!\"" + "\n" + "\u0041"  

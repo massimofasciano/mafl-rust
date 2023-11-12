@@ -1,6 +1,6 @@
 [package]
 name = "mfel"
-version = "0.3.2"
+version = "0.3.3"
 edition = "2021"
 
 [dependencies]
@@ -10,3 +10,4 @@ log = "0.4.20"
 pest = "2.7.5"
 pest_derive = "2.7.5"
 regex = "1.10.2"
+unescape = "0.1.0"

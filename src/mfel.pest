@@ -130,11 +130,7 @@ field_access = { "." ~ identifier }
 array_access = { "[" ~ expr ~ "]" }
 
 assign = {
-    identifier ~ (array_access | field_access)* ~ "=" ~ expr
-}
-
-deref_assign = {
-    identifier ~ (array_access | field_access)* ~ "<-" ~ expr
+    identifier ~ (array_access | field_access)* ~ (equal | left_arrow | op_equal) ~ expr
 }
 
 return = {
@@ -170,6 +166,10 @@ apply_args = {
 
 variable = { identifier | builtin }
 
+op_equal = ${
+    (add|sub|mult|div|intdiv|mod|exp) ~ "="
+}
+
 question = @{ "?" }
 exclam = @{ "!" ~ !"=" }
 neg = @{ "-" }
@@ -190,8 +190,10 @@ eq = @{ "==" }
 ne = @{ "!=" | "<>" }
 and = @{ "and" }
 or = @{ "or" }
-exp = @{ "**" | "^" ~ !"=" }
+exp = @{ "**" | "^"  }
 pipe = @{ "|" }
+equal = @{ "=" }
+left_arrow = @{ "<-" }
 
 expr = _{ expr_infix_pipe }
 expr_infix_pipe = { expr_infix_id ~ (pipe ~ expr_infix_id)* }
@@ -211,7 +213,7 @@ expr_base = _{
     "(" ~ expr ~ ")" | nil_literal | 
     array | block | if | 
     while | unless | do_while | loop | for | try_catch |
-    defun | lambda | deref_assign | assign | context | module | object | 
+    defun | lambda | assign | context | module | object | 
     continue | 
     boolean | float | integer | string_literal | char_literal | 
     variable | let | return | break | throw | bind

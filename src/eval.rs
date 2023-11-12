@@ -162,6 +162,11 @@ impl Interpreter {
                     _ => Err(anyhow!("deref on non-ref"))?
                 }
             }
+            ExpressionType::OpAssignToExpression(op, target, val) => {
+                self.eval(ctx,&ExpressionType::AssignToExpression(target.to_owned(), 
+                    ExpressionType::BinOpCall(op.to_owned(), target.to_owned(), val.to_owned()).into()
+                ).into())?
+            }
             ExpressionType::AssignToExpression(target, val) => {
                 let val = self.eval(ctx,val)?;
                 match target.as_ref() {
