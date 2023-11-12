@@ -95,15 +95,6 @@ impl Interpreter {
                         }
                     })?
                 } 
-                // Rule::lambda => {
-                //     assert!(inner.len() == 2);
-                //     assert!(inner[0].as_rule() == Rule::function_args);
-                //     assert!(inner[1].as_rule() == Rule::function_block);
-                //     // let args : Vec<_> = inner[0].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
-                //     let args : Vec<_> = inner[0].clone().into_inner().map(|e| self.ident(e.as_str())).collect();
-                //     let body = self.parse_rule(inner[1].clone())?;
-                //     ExpressionType::Lambda(args, body).into()
-                // }
                 Rule::lambda => {
                     assert!(inner.len() == 2 || inner.len() == 1);
                     if inner.len() == 2 {
@@ -220,23 +211,24 @@ impl Interpreter {
                 } 
                 Rule::defun => {
                     assert!(inner.len() == 3);
-                    // let var = inner[0].as_str().to_owned();
                     let var = self.ident(inner[0].as_str());
                     assert!(inner[1].as_rule() == Rule::function_args);
                     assert!(inner[2].as_rule() == Rule::function_block);
-                    // let args : Vec<_> = inner[1].clone().into_inner().map(|e| e.as_str().to_owned()).collect();
                     let args : Vec<_> = inner[1].clone().into_inner().map(|e| self.ident(e.as_str())).collect();
                     let body = self.parse_rule(inner[2].clone())?;
                     ExpressionType::Defun(var, args, body).into()
                 } 
-                Rule::assign => {
+                Rule::assign | Rule::deref_assign => {
                     assert!(inner.len() >= 2);
                     let var_str = inner[0].as_str().to_owned();
-                    // let var = ExpressionType::Variable(var_str).into();
                     let var = ExpressionType::Variable(self.ident(&var_str)).into();
                     if inner.len() == 2 {
                         let val = self.parse_rule(inner[1].clone())?;
-                        ExpressionType::AssignToExpression(var, val).into()
+                        if rule == Rule::assign {
+                            ExpressionType::AssignToExpression(var, val).into()
+                        } else {
+                            ExpressionType::AssignToDeRefExpression(var, val).into()
+                        }
                     } else {
                         let chain = inner[1..inner.len()-1].iter().try_fold(var, |acc, pair| {
                             match pair.as_rule() {
@@ -252,7 +244,11 @@ impl Interpreter {
                             }
                         })?;
                         let val = self.parse_rule(inner[inner.len()-1].clone())?;
-                        ExpressionType::AssignToExpression(chain, val).into()
+                        if rule == Rule::assign {
+                            ExpressionType::AssignToExpression(chain, val).into()
+                        } else {
+                            ExpressionType::AssignToDeRefExpression(chain, val).into()
+                        }
                     }
                 }
                 Rule::r#while => {
@@ -388,7 +384,7 @@ impl Interpreter {
             Rule::expr_prefix | Rule::expr_exp | 
             Rule::context | Rule::module | Rule::defun | 
             Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
-            Rule::assign | Rule::object | Rule::bind |
+            Rule::assign | Rule::deref_assign | Rule::object | Rule::bind |
             Rule::r#let | Rule::r#loop | Rule::r#for | Rule::try_catch |
             Rule::lambda | Rule::r#break | Rule::throw |
             Rule::infix_identifier | Rule::r#return => {

@@ -418,6 +418,13 @@ pub fn is_error(_: &Interpreter, _: &Context, expr: &Expression) -> Result<Expre
     Ok(expression::boolean(false))
 }
 
+pub fn is_ref(_: &Interpreter, _: &Context, expr: &Expression) -> Result<Expression> {
+    if let ExpressionType::Ref(_) = expr.as_ref() {
+        return Ok(expression::boolean(true));
+    }
+    Ok(expression::boolean(false))
+}
+
 pub fn type_of(_: &Context, expr: &Expression) -> Result<Expression> {
     debug!("type of");
     Ok(ExpressionType::String(match expr.as_ref() {
@@ -605,7 +612,6 @@ pub fn deep_copy(ctx: &Context, val: &Expression) -> Result<Expression> {
 }
 
 pub fn ref_var(ctx: &Context, var: &Expression) -> Result<Expression> {
-    debug!("ref_var {var}");
     Ok(match var.as_ref() {
         ExpressionType::Variable(s) => {
             if let Some(rc) = ctx.get_binding_ref(s) {

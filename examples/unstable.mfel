@@ -74,22 +74,24 @@ let v = 200;
 let r = &v;
 let c = v;
 
-#r = &v;
-
 @println(v," ",c," ",r);
 c = c + 1;
 @println(v," ",c," ",r);
 v = v + 10;
 @println(v," ",c," ",r);
-r = r + 100;
+r <- $r + 100;
 @println(v," ",c," ",r);
 
-{ let q = &c; q = q + 1; }
+{ let q = &c; q <- $q + 1; }
 
 @println(v," ",c," ",r);
 
 let reftest = \r {
-    r = r + 1;
+    if @is_ref(r) {
+        r <- $r + 1;
+    } else {
+        r = r + 1;
+    }
     @println("inside: ",r);
 };
 

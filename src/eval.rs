@@ -72,9 +72,9 @@ impl Interpreter {
                 }
                 last_value
             }
-            ExpressionType::Ref(rc) => {
-                rc.get()
-            }
+            // ExpressionType::Ref(rc) => {
+            //     rc.get()
+            // }
             ExpressionType::BindIn(id, value, container) => {
                 let container = self.eval(ctx,container)?;
                 let value = self.eval(ctx,value)?;
@@ -88,16 +88,16 @@ impl Interpreter {
             }
             ExpressionType::Let(id, val) => {
                 let val = self.eval(ctx,val)?;
-                match val.as_ref() {
-                    ExpressionType::Ref(rc) => {
-                        ctx.add_binding_ref(id.to_owned(), rc.to_owned());
-                        val
-                    }
-                    _ => {
+                // match val.as_ref() {
+                //     ExpressionType::Ref(rc) => {
+                //         ctx.add_binding_ref(id.to_owned(), rc.to_owned());
+                //         val
+                //     }
+                //     _ => {
                         ctx.add_binding(id.to_owned(), val.to_owned());
                         val
-                    }
-                }
+                //     }
+                // }
             }
             ExpressionType::LetArray(ids, val) => {
                 let val = self.eval(ctx,val)?;
@@ -151,27 +151,27 @@ impl Interpreter {
                     _ => Err(anyhow!("index on non-array/string"))?
                 }
             }
+            ExpressionType::AssignToDeRefExpression(target, val) => {
+                let deref = self.eval(ctx,target)?;
+                let val = self.eval(ctx,val)?;
+                match deref.as_ref() {
+                    ExpressionType::Ref(mc) => {
+                        mc.set(val.to_owned());
+                        val
+                    }
+                    _ => Err(anyhow!("deref on non-ref"))?
+                }
+            }
             ExpressionType::AssignToExpression(target, val) => {
                 let val = self.eval(ctx,val)?;
                 match target.as_ref() {
                     ExpressionType::Variable(id) => {
                         debug!("eval assign to identifier: {id}");
                         let val = self.eval(ctx,&val)?;
-                        match val.as_ref() {
-                            ExpressionType::Ref(rc) => {
-                                if ctx.set_binding_ref(id.to_owned(), rc.to_owned()).is_none() {
-                                    Err(anyhow!("binding not found {id}"))?
-                                } else {
-                                    val
-                                }
-                            }
-                            _ => {
-                                if ctx.set_binding(id.to_owned(), val.to_owned()).is_none() {
-                                    Err(anyhow!("binding not found {id}"))?
-                                } else {
-                                    val
-                                }
-                            }
+                        if ctx.set_binding(id.to_owned(), val.to_owned()).is_none() {
+                            Err(anyhow!("binding not found {id}"))?
+                        } else {
+                            val
                         }
                     },
                     ExpressionType::Field(target, field) => {
@@ -410,14 +410,7 @@ impl Interpreter {
                             if let ExpressionType::Throw(val) = value.as_ref() {
                                 return Ok(ExpressionType::Throw(val.to_owned()).into());
                             }
-                            match value.as_ref() {
-                                ExpressionType::Ref(rc) => {
-                                    function_ctx.add_binding_ref(name.to_owned(), rc.to_owned());
-                                }
-                                _ => {
-                                    function_ctx.add_binding(name.to_owned(), value.to_owned());
-                                }
-                            }
+                            function_ctx.add_binding(name.to_owned(), value.to_owned());
                         }
                         #[allow(clippy::comparison_chain)]
                         if arg_names.len() > arg_values.len() {
@@ -529,16 +522,21 @@ impl Interpreter {
                 match op {
                     Operator::Neg => builtin::neg(ctx,&expr)?,
                     Operator::Not => builtin::not(ctx,&expr)?,
-                    Operator::DeRef => self.eval(ctx,&expr)?,
+                    Operator::DeRef => {
+                        match expr.as_ref() {
+                            ExpressionType::Ref(rc) => {
+                                rc.get()
+                            }
+                            _ => Err(anyhow!("deref on non-ref"))?
+                        }
+                    }
                     _ => ast.to_error()?,
                 }
             }
             ExpressionType::Closure(cctx, args, body) => {
-                debug!("eval closure");
                 ExpressionType::Closure(cctx.capture(), args.to_owned(), body.to_owned()).into()
             } 
             ExpressionType::Array(vals) => {
-                debug!("eval array");
                 expression::array({
                     let mut new = vec![];
                     for v in vals.borrow().iter() {
@@ -590,6 +588,7 @@ impl Interpreter {
             ("not", [val]) => builtin::not(ctx, val),
             ("len", [val]) => builtin::len(ctx, val),
             ("is_error", [expr]) => builtin::is_error(self, ctx, expr),
+            ("is_ref", [expr]) => builtin::is_ref(self, ctx, expr),
             ("integer", [val]) => builtin::integer(self, ctx, val),
             ("float", [val]) => builtin::float(self, ctx, val),
             ("string", [val]) => builtin::string(self, ctx, val),

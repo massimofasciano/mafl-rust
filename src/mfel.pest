@@ -133,6 +133,10 @@ assign = {
     identifier ~ (array_access | field_access)* ~ "=" ~ expr
 }
 
+deref_assign = {
+    identifier ~ (array_access | field_access)* ~ "<-" ~ expr
+}
+
 return = {
     "return" ~ expr?
 }
@@ -171,7 +175,7 @@ exclam = @{ "!" ~ !"=" }
 neg = @{ "-" }
 not = @{ "not" }
 ref = @{ "&" }
-deref = @{ "*" }
+deref = @{ "$" }
 add = @{ "+" }
 sub = @{ "-" }
 mult = @{ "*" ~ !"*" }
@@ -181,12 +185,12 @@ mod = @{ "mod" | "%" }
 ge = @{ ">=" }
 le = @{ "<=" }
 gt = @{ ">" ~ !"=" }
-lt = @{ "<" ~ !"=" }
+lt = @{ "<" ~ !("="|"-") }
 eq = @{ "==" }
 ne = @{ "!=" | "<>" }
 and = @{ "and" }
 or = @{ "or" }
-exp = @{ "**" | "^" }
+exp = @{ "**" | "^" ~ !"=" }
 pipe = @{ "|" }
 
 expr = _{ expr_infix_pipe }
@@ -206,7 +210,7 @@ expr_base = _{
     "(" ~ expr ~ ")" | nil_literal | 
     array | block | if | 
     while | unless | do_while | loop | for | try_catch |
-    defun | lambda | assign | context | module | object | 
+    defun | lambda | deref_assign | assign | context | module | object | 
     continue | 
     boolean | float | integer | string_literal | char_literal | 
     variable | let | return | break | throw | bind

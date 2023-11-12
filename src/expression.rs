@@ -51,6 +51,7 @@ pub enum ExpressionType {
     LetArray(Idents,Expression),
     BindIn(Ident,Expression,Expression),
     AssignToExpression(Expression,Expression),
+    AssignToDeRefExpression(Expression,Expression),
     ArrayAccess(Expression,Expression),
     Loop(Expression),
     Object(Expression),
@@ -168,6 +169,7 @@ impl std::fmt::Display for ExpressionType {
             ExpressionType::Error(a) => write!(f,"Error<{a}>"),
             ExpressionType::ArrayPrintable(a) =>
                 write!(f,"[{}]",a.iter().map(|x|x.to_string()).collect::<Vec<_>>().join(",")),
+            ExpressionType::Ref(mc) => write!(f,"->{}",mc.get()),
             ExpressionType::ExceptionPrintable(a) => write!(f,"Exception<{a}>"),
             ExpressionType::Throw(_) | 
             ExpressionType::Return(_) | 
