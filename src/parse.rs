@@ -410,10 +410,16 @@ impl Interpreter {
                 let as_list = parsed.to_owned().into_inner()
                     .find_tagged("as")
                     .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
-                let block = self.parse_rule(parsed.into_inner()
-                    .find_first_tagged("block")
-                    .expect("missing block").to_owned())?;
-                ExpressionType::Fun(args,with,as_list,block).into()
+                let body_unparsed = parsed.into_inner()
+                    .find_first_tagged("body")
+                    .expect("missing body").to_owned();
+                let body_parsed = self.parse_rule(body_unparsed.to_owned())?;
+                let body = if body_unparsed.as_rule() == Rule::function_block {
+                    body_parsed
+                } else {
+                    ExpressionType::FunctionBlock(vec![body_parsed]).into()
+                };
+                ExpressionType::Fun(args,with,as_list,body).into()
             }
             Rule::defun => {
                 let name = self.ident(parsed.to_owned().into_inner()
