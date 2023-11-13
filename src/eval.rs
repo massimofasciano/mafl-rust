@@ -16,6 +16,8 @@ impl Interpreter {
 
             ExpressionType::Break(br) =>
                 ExpressionType::Break(self.eval(ctx, br)?).into(),
+            ExpressionType::EndBlock(br) =>
+                ExpressionType::EndBlock(self.eval(ctx, br)?).into(),
             ExpressionType::Return(br) =>
                 ExpressionType::Return(self.eval(ctx, br)?).into(),
             ExpressionType::Throw(br) =>
@@ -32,6 +34,10 @@ impl Interpreter {
                         ExpressionType::Break(_) |
                         ExpressionType::Throw(_) |
                         ExpressionType::Continue => break,
+                        ExpressionType::EndBlock(val) => {
+                            last_value = val.to_owned();
+                            break
+                        }
                         _ => {},
                     }
                 }
@@ -45,6 +51,7 @@ impl Interpreter {
                     match last_value.as_ref() {
                         ExpressionType::Throw(_) => break,
                         ExpressionType::Break(val) |
+                        ExpressionType::EndBlock(val) |
                         ExpressionType::Return(val) => {
                             last_value = val.to_owned();
                             break
@@ -53,6 +60,22 @@ impl Interpreter {
                             last_value = expression::nil();
                             break
                         }
+                        _ => {},
+                    }
+                }
+                last_value
+            }
+            ExpressionType::IfBlock(exprs) => {
+                let ctx = &ctx.with_new_context();
+                let mut last_value = expression::nil();
+                for expr in exprs {
+                    last_value = self.eval(ctx,expr)?;
+                    match last_value.as_ref() {
+                        ExpressionType::EndBlock(_) |
+                        ExpressionType::Return(_) |
+                        ExpressionType::Break(_) |
+                        ExpressionType::Throw(_) |
+                        ExpressionType::Continue => break,
                         _ => {},
                     }
                 }
@@ -67,14 +90,15 @@ impl Interpreter {
                         ExpressionType::Break(_) |
                         ExpressionType::Throw(_) |
                         ExpressionType::Continue => break,
+                        ExpressionType::EndBlock(val) => {
+                            last_value = val.to_owned();
+                            break
+                        }
                         _ => {},
                     }
                 }
                 last_value
             }
-            // ExpressionType::Ref(rc) => {
-            //     rc.get()
-            // }
             ExpressionType::BindIn(id, value, container) => {
                 let container = self.eval(ctx,container)?;
                 let value = self.eval(ctx,value)?;
@@ -88,16 +112,8 @@ impl Interpreter {
             }
             ExpressionType::Let(id, val) => {
                 let val = self.eval(ctx,val)?;
-                // match val.as_ref() {
-                //     ExpressionType::Ref(rc) => {
-                //         ctx.add_binding_ref(id.to_owned(), rc.to_owned());
-                //         val
-                //     }
-                //     _ => {
-                        ctx.add_binding(id.to_owned(), val.to_owned());
-                        val
-                //     }
-                // }
+                ctx.add_binding(id.to_owned(), val.to_owned());
+                val
             }
             ExpressionType::LetArray(ids, val) => {
                 let val = self.eval(ctx,val)?;
@@ -113,13 +129,6 @@ impl Interpreter {
                         Err(anyhow!("let array (destructure) on non-array"))?
                     }
                 }
-            }
-            ExpressionType::DefineFunction(fname, arg_names, body) => {
-                let cctx = ctx.capture();
-                let val : Expression = ExpressionType::Closure(cctx.to_owned(), arg_names.to_owned(), body.to_owned()).into();
-                cctx.add_binding(fname.to_owned(), val.to_owned());
-                ctx.add_binding(fname.to_owned(), val.to_owned());
-                val
             }
             ExpressionType::ArrayAccess(target, index) => {
             let target = self.eval(ctx, target)?;
@@ -250,6 +259,7 @@ impl Interpreter {
                         ExpressionType::Boolean(b) => if *b {
                             body_value = self.eval(ctx,body)?;
                             match body_value.as_ref() {
+                                ExpressionType::EndBlock(val) |
                                 ExpressionType::Break(val) => {
                                     body_value = val.to_owned();
                                     break
@@ -277,6 +287,7 @@ impl Interpreter {
                 loop {
                     body_value = self.eval(ctx,body)?;
                     match body_value.as_ref() {
+                        ExpressionType::EndBlock(val) |
                         ExpressionType::Break(val) => {
                             body_value = val.to_owned();
                             break
@@ -300,6 +311,7 @@ impl Interpreter {
                 loop {
                     body_value = self.eval(ctx,body)?;
                     match body_value.as_ref() {
+                        ExpressionType::EndBlock(val) |
                         ExpressionType::Break(val) => {
                             body_value = val.to_owned();
                             break
@@ -309,6 +321,53 @@ impl Interpreter {
                         ExpressionType::Throw(_) => break,
                         _ => {},
                     }
+                }
+                body_value
+            }
+            ExpressionType::For(var, iterator, body) => {
+                let iterator = self.eval(ctx, iterator)?;
+                let mut body_value = expression::nil();
+                let ctx = &ctx.with_new_context();
+                ctx.add_binding(var.to_owned(), expression::nil());
+                match self.eval(ctx,&iterator)?.as_ref() {
+                    ExpressionType::Array(arr) => {
+                        for v in arr.borrow().iter() {
+                            ctx.set_binding(var.to_owned(), v.to_owned());
+                            body_value = self.eval(ctx,body)?;
+                            match body_value.as_ref() {
+                                ExpressionType::EndBlock(val) |
+                                ExpressionType::Break(val) => {
+                                    body_value = val.to_owned();
+                                    break
+                                }
+                                ExpressionType::Continue => continue,
+                                ExpressionType::Return(_) | 
+                                ExpressionType::Throw(_) => break,
+                                _ => {},
+                            }
+                        }
+                    },
+                    ExpressionType::Closure(_,_,_) => {
+                        loop {
+                            let apply = ExpressionType::FunctionCall(iterator.to_owned(), vec![]).into();
+                            let next = self.eval(ctx, &apply)?;
+                            if next == expression::nil() { break; }
+                            ctx.set_binding(var.to_owned(), next.to_owned());
+                            body_value = self.eval(ctx,body)?;
+                            match body_value.as_ref() {
+                                ExpressionType::EndBlock(val) |
+                                ExpressionType::Break(val) => {
+                                    body_value = val.to_owned();
+                                    break
+                                }
+                                ExpressionType::Continue => continue,
+                                ExpressionType::Return(_) | 
+                                ExpressionType::Throw(_) => break,
+                                _ => {},
+                            }
+                        }
+                    },
+                    _ => return ast.to_error(),
                 }
                 body_value
             }
@@ -332,51 +391,6 @@ impl Interpreter {
                     }
                 }
             }
-            ExpressionType::For(var, iterator, body) => {
-                let iterator = self.eval(ctx, iterator)?;
-                let mut body_value = expression::nil();
-                let ctx = &ctx.with_new_context();
-                ctx.add_binding(var.to_owned(), expression::nil());
-                match self.eval(ctx,&iterator)?.as_ref() {
-                    ExpressionType::Array(arr) => {
-                        for v in arr.borrow().iter() {
-                            ctx.set_binding(var.to_owned(), v.to_owned());
-                            body_value = self.eval(ctx,body)?;
-                            match body_value.as_ref() {
-                                ExpressionType::Break(val) => {
-                                    body_value = val.to_owned();
-                                    break
-                                }
-                                ExpressionType::Continue => continue,
-                                ExpressionType::Return(_) | 
-                                ExpressionType::Throw(_) => break,
-                                _ => {},
-                            }
-                        }
-                    },
-                    ExpressionType::Closure(_,_,_) => {
-                        loop {
-                            let apply = ExpressionType::FunctionCall(iterator.to_owned(), vec![]).into();
-                            let next = self.eval(ctx, &apply)?;
-                            if next == expression::nil() { break; }
-                            ctx.set_binding(var.to_owned(), next.to_owned());
-                            body_value = self.eval(ctx,body)?;
-                            match body_value.as_ref() {
-                                ExpressionType::Break(val) => {
-                                    body_value = val.to_owned();
-                                    break
-                                }
-                                ExpressionType::Continue => continue,
-                                ExpressionType::Return(_) | 
-                                ExpressionType::Throw(_) => break,
-                                _ => {},
-                            }
-                        }
-                    },
-                    _ => return ast.to_error(),
-                }
-                body_value
-            }
             ExpressionType::Field(target, field) => {
                 let target = self.eval(ctx, target)?;
                 match target.as_ref() {
@@ -389,9 +403,6 @@ impl Interpreter {
                     }
                     _ => Err(anyhow!("field lookup on non-object/dict: {field}"))?,
                 }
-            }
-            ExpressionType::Lambda(arg_names, body) => {
-                ExpressionType::Closure(ctx.capture(), arg_names.to_owned(), body.to_owned()).into()
             }
             ExpressionType::Fun(arg_names, capture_names, self_names, body) => {
                 let captured = Context::new();

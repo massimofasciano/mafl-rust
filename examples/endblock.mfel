@@ -1,0 +1,25 @@
+###
+### endblock exits the current block with an optional value
+### break does the same but propagates until caught by a loop or function body
+###
+### need a better name than endblock but don't want to reserve "end"
+###
+
+let x = 10;
+let b3 = loop {
+    let b1 = {
+        @println("b1-pre");
+        if x > 1 { endblock 10; }
+        @println("b1-post");
+        20
+    };
+    @println("b1=",b1);
+    let b2 = {
+        @println("b2-pre");
+        if x > 2 { break 15; }
+        @println("b2-post");
+        30
+    };
+    @println("b2=",b2);
+};
+@println("b3=",b3);

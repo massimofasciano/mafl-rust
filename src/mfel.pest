@@ -16,8 +16,8 @@ block_comment = @{
 
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
-    "return" | "break" | "continue" | "throw" | 
-    "let" | "function" | "lambda" | "in" | "bind" |
+    "return" | "break" | "endblock" | "continue" | "throw" | 
+    "let" | "in" | "bind" |
     "fun" | "with" | "as" | "defun" |
     "context" | "module" | "object" |
     "try" | "catch" |
@@ -67,13 +67,6 @@ array = { "[" ~ (expr ~ ("," ~ expr)*)? ~ "]"}
 
 function_args = { (identifier ~ ("," ~ identifier)*)? }
 
-lambda = { "deprecated_do_not_use" }
-// lambda = {
-//     ( ("lambda" | "\\") ~ "(" ~ function_args ~ ")" ~ function_block ) |
-//     ( ("lambda" | "\\") ~ function_block ) |
-//     ( ("lambda" | "\\") ~ identifier ~ function_block )
-// }
-
 fun = {
     ( "fun" ~ (#arg = identifier)* ~ ("with" ~ (#with = identifier)+)? ~ ("as" ~ (#as = identifier)+)? ~ (#body = function_block) ) |
     ( "\\" ~ (#arg = identifier)* ~ ( ("->" ~ (#body = expr)) | (#body=function_block) ) )
@@ -82,11 +75,6 @@ fun = {
 defun = {
     "defun" ~ (#name = identifier) ~ (#arg = identifier)* ~ ("with" ~ (#with = identifier)+)? ~ (#body = function_block)
 }
-
-function = { "deprecated_do_not_use" }
-// function = {
-//     "function" ~ identifier ~ "(" ~ function_args ~ ")" ~ function_block
-// }
 
 context = {
     "context" ~ "(" ~ function_args ~ ")" ~ ( ("in" ~ expr) | block )
@@ -101,11 +89,11 @@ object = {
 }
 
 if = {
-    "if" ~ expr ~ block ~ ("else" ~ block)?
+    "if" ~ expr ~ if_block ~ ("else" ~ if_block)?
 }
 
 unless = {
-    "unless" ~ expr ~ block
+    "unless" ~ expr ~ if_block
 }
 
 while = {
@@ -155,6 +143,9 @@ break = {
 throw = {
     "throw" ~ expr?
 }
+endblock = { 
+    "endblock" ~ expr?
+}
 
 catch = {
     "catch" ~ "{" ~ sequence ~ "}"
@@ -165,6 +156,10 @@ block = {
 }
 
 function_block = {
+    "{" ~ sequence ~ "}"
+}
+
+if_block = {
     "{" ~ sequence ~ "}"
 }
 
@@ -225,14 +220,14 @@ expr_base = _{
     "(" ~ expr ~ ")" | nil_literal | 
     array | block | if | 
     while | unless | do_while | loop | for | try_catch |
-    function | defun | lambda | fun | assign | context | module | object | 
+    defun | fun | assign | context | module | object | 
     continue | 
     boolean | float | integer | string_literal | char_literal | 
-    variable | let | return | break | throw | bind
+    variable | let | return | break | endblock | throw | bind
 }
 
 // expressions that behave like blocks
-expr_block = _{ block | if | while | unless | loop | for | function | module | try_catch | defun }
+expr_block = _{ block | if | while | unless | loop | for | module | try_catch | defun }
 
 semicolons = _{ ";" ~ semicolons | ";" }
 nil_implicit = { "" }

@@ -25,6 +25,7 @@ impl Interpreter {
             _ => match rule { 
                 Rule::block => ExpressionType::Block(sequence).into(),
                 Rule::function_block => ExpressionType::FunctionBlock(sequence).into(),
+                Rule::if_block => ExpressionType::IfBlock(sequence).into(),
                 Rule::block_syntax => ExpressionType::Sequence(sequence).into(),
                 Rule::file => ExpressionType::Sequence(sequence).into(),
                 _ => Err(anyhow!("parse error block type: {rule:?}"))?,
@@ -100,30 +101,6 @@ impl Interpreter {
                         }
                     })?
                 } 
-                Rule::lambda => {
-                    assert!(inner.len() == 2 || inner.len() == 1);
-                    if inner.len() == 2 {
-                        if inner[0].as_rule() == Rule::function_args {
-                            // lambda (x,...) { ... }
-                            assert!(inner[1].as_rule() == Rule::function_block);
-                            let args : Vec<_> = inner[0].clone().into_inner().map(|e| self.ident(e.as_str())).collect();
-                            let body = self.parse_rule(inner[1].clone())?;
-                            ExpressionType::Lambda(args, body).into()
-                        } else {
-                            // lambda x { ... }
-                            assert!(inner[0].as_rule() == Rule::identifier);
-                            assert!(inner[1].as_rule() == Rule::function_block);
-                            let args : Vec<_> = vec![self.ident(inner[0].as_str())];
-                            let body = self.parse_rule(inner[1].clone())?;
-                            ExpressionType::Lambda(args, body).into()
-                        }
-                    } else {
-                        // lambda { ... }
-                        assert!(inner[0].as_rule() == Rule::function_block);
-                        let body = self.parse_rule(inner[0].clone())?;
-                        ExpressionType::Lambda(vec![], body).into()
-                    }
-                }
                 Rule::fun => {
                     let args = Self::find_tag("arg", &inner)
                         .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
@@ -184,7 +161,7 @@ impl Interpreter {
                     } else {
                         expr
                     };
-                    assert!(inner[1].as_rule() == Rule::block);
+                    assert!(inner[1].as_rule() == Rule::if_block);
                     let then = self.parse_rule(inner[1].clone())?;
                     let r#else = if inner.len() < 3 {
                         ExpressionType::Nil.into()
@@ -232,15 +209,6 @@ impl Interpreter {
                         }
                         _ => Err(anyhow!("bad let syntax {:?}", inner[1].as_rule()))?,
                     }
-                } 
-                Rule::function => {
-                    assert!(inner.len() == 3);
-                    let var = self.ident(inner[0].as_str());
-                    assert!(inner[1].as_rule() == Rule::function_args);
-                    assert!(inner[2].as_rule() == Rule::function_block);
-                    let args : Vec<_> = inner[1].clone().into_inner().map(|e| self.ident(e.as_str())).collect();
-                    let body = self.parse_rule(inner[2].clone())?;
-                    ExpressionType::DefineFunction(var, args, body).into()
                 } 
                 Rule::assign => {
                     assert!(inner.len() >= 3);
@@ -346,6 +314,14 @@ impl Interpreter {
                     };
                     ExpressionType::Break(body).into() 
                 },
+                Rule::endblock => { 
+                    let body = if inner.len() == 1 {
+                        self.parse_rule(inner[0].clone())?
+                    } else {
+                        ExpressionType::Nil.into()
+                    };
+                    ExpressionType::EndBlock(body).into() 
+                },
                 Rule::throw => { 
                     let body = if inner.len() == 1 {
                         self.parse_rule(inner[0].clone())?
@@ -411,7 +387,7 @@ impl Interpreter {
             Rule::ne => { ExpressionType::ParsedOperator(Operator::Ne).into() },
             Rule::eq => { ExpressionType::ParsedOperator(Operator::Eq).into() },
             Rule::r#continue => { ExpressionType::Continue.into() },
-            Rule::block_syntax | Rule::block | Rule::file | 
+            Rule::block_syntax | Rule::block | Rule::file | Rule::if_block |
             Rule::function_block  => { self.parse_block(parsed)? },
             Rule::string_literal | Rule::char_literal  | Rule::array_access => {
                 let inner = parsed.into_inner().next().ok_or(anyhow!("problem parsing silent rule"))?;
@@ -421,11 +397,11 @@ impl Interpreter {
             Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
             Rule::expr_mul | Rule::expr_apply_or_access | Rule::expr_post | 
             Rule::expr_prefix | Rule::expr_exp | Rule::expr_ref |
-            Rule::context | Rule::module | Rule::function | Rule::defun |
+            Rule::context | Rule::module | Rule::defun |
             Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
             Rule::assign | Rule::object | Rule::bind | Rule::fun |
             Rule::r#let | Rule::r#loop | Rule::r#for | Rule::try_catch |
-            Rule::lambda | Rule::r#break | Rule::throw | 
+            Rule::endblock | Rule::r#break | Rule::throw | 
             Rule::infix_identifier | Rule::r#return => {
                 let rule = parsed.as_rule();
                 let str = parsed.as_str().to_owned();
