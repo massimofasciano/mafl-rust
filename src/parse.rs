@@ -415,7 +415,24 @@ impl Interpreter {
                     .expect("missing block").to_owned())?;
                 ExpressionType::Fun(args,with,as_list,block).into()
             }
-        _ => {
+            Rule::defun => {
+                let name = self.ident(parsed.to_owned().into_inner()
+                    .find_first_tagged("name")
+                    .expect("missing name").as_str());
+                let args = parsed.to_owned().into_inner()
+                    .find_tagged("arg")
+                    .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                let with = parsed.to_owned().into_inner()
+                    .find_tagged("with")
+                    .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                let block = self.parse_rule(parsed.into_inner()
+                    .find_first_tagged("block")
+                    .expect("missing block").to_owned())?;
+                ExpressionType::Let(name.to_owned(), 
+                    ExpressionType::Fun(args,with,vec![name],block).into()
+                ).into()
+            }
+            _ => {
                 Err(anyhow!("TODO: [{:?}] {}",parsed.as_rule(), parsed.as_str()))?
             }
         })

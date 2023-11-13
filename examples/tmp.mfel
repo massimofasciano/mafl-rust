@@ -8,9 +8,18 @@ c += 1;
 @println(f(3,4));
 c += 1;
 @println(f(3,4));
-fun x as me {
+(#
+let f = fun x as me {
     if x < 2 { x }
     else {
         me(x-1)* 2        
     }
-}(10)
+};
+#)
+defun f x {
+    if x < 2 { x }
+    else {
+        f(x-1)* 2        
+    }
+}
+f(4)
