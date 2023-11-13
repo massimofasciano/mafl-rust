@@ -18,6 +18,7 @@ reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
     "return" | "break" | "continue" | "throw" | 
     "let" | "function" | "lambda" | "in" | "bind" |
+    "fun" | "with" | "as" |
     "context" | "module" | "object" |
     "try" | "catch" |
     "true" | "false" | "nil" |
@@ -72,7 +73,11 @@ lambda = {
     ( ("lambda" | "\\") ~ identifier ~ function_block )
 }
 
-defun = {
+fun = {
+    ("fun" | "~") ~ (#arg = identifier)* ~ ((":" | "with") ~ (#with = identifier)+)? ~ ((("->" | "as") ~ (#as = identifier)+)? ~ (#block = function_block) )
+}
+
+function = {
     "function" ~ identifier ~ "(" ~ function_args ~ ")" ~ function_block
 }
 
@@ -213,14 +218,14 @@ expr_base = _{
     "(" ~ expr ~ ")" | nil_literal | 
     array | block | if | 
     while | unless | do_while | loop | for | try_catch |
-    defun | lambda | assign | context | module | object | 
+    function | lambda | fun | assign | context | module | object | 
     continue | 
     boolean | float | integer | string_literal | char_literal | 
     variable | let | return | break | throw | bind
 }
 
 // expressions that behave like blocks
-expr_block = _{ block | if | while | unless | loop | for | defun | module | try_catch }
+expr_block = _{ block | if | while | unless | loop | for | function | module | try_catch }
 
 semicolons = _{ ";" ~ semicolons | ";" }
 nil_implicit = { "" }

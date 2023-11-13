@@ -114,7 +114,7 @@ impl Interpreter {
                     }
                 }
             }
-            ExpressionType::Defun(fname, arg_names, body) => {
+            ExpressionType::DefineFunction(fname, arg_names, body) => {
                 let cctx = ctx.capture();
                 let val : Expression = ExpressionType::Closure(cctx.to_owned(), arg_names.to_owned(), body.to_owned()).into();
                 cctx.add_binding(fname.to_owned(), val.to_owned());
@@ -392,6 +392,22 @@ impl Interpreter {
             }
             ExpressionType::Lambda(arg_names, body) => {
                 ExpressionType::Closure(ctx.capture(), arg_names.to_owned(), body.to_owned()).into()
+            }
+            ExpressionType::Fun(arg_names, capture_names, self_names, body) => {
+                let captured = Context::new();
+                for name in capture_names {
+                    let value = if let Some(val) = ctx.get_binding(name) { 
+                        val.to_owned()
+                    } else {
+                        expression::nil()
+                    };
+                   captured.add_binding(name.to_owned(), value); 
+                }
+                let closure : Expression = ExpressionType::Closure(captured.to_owned(), arg_names.to_owned(), body.to_owned()).into();
+                for name in self_names {
+                   captured.add_binding(name.to_owned(), closure.to_owned()); 
+                }
+                closure
             }
             ExpressionType::FunctionCall(lambda, arg_values) => {
                 match self.eval(ctx,lambda)?.as_ref() {

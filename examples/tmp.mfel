@@ -1,4 +1,16 @@
-let line;
-while (line = @readline()) != nil {
-    @println(@eval(line))
-}
+let a = 10;
+let c = 100;
+let f = fun x y with a b {
+    x * a + y * b + c
+};
+f.b = 20;
+c += 1;
+@println(f(3,4));
+c += 1;
+@println(f(3,4));
+fun x as me {
+    if x < 2 { x }
+    else {
+        me(x-1)* 2        
+    }
+}(10)

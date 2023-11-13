@@ -201,14 +201,14 @@ impl Interpreter {
                         _ => Err(anyhow!("bad let syntax {:?}", inner[1].as_rule()))?,
                     }
                 } 
-                Rule::defun => {
+                Rule::function => {
                     assert!(inner.len() == 3);
                     let var = self.ident(inner[0].as_str());
                     assert!(inner[1].as_rule() == Rule::function_args);
                     assert!(inner[2].as_rule() == Rule::function_block);
                     let args : Vec<_> = inner[1].clone().into_inner().map(|e| self.ident(e.as_str())).collect();
                     let body = self.parse_rule(inner[2].clone())?;
-                    ExpressionType::Defun(var, args, body).into()
+                    ExpressionType::DefineFunction(var, args, body).into()
                 } 
                 Rule::assign => {
                     assert!(inner.len() >= 3);
@@ -389,18 +389,33 @@ impl Interpreter {
             Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
             Rule::expr_mul | Rule::expr_apply_or_access | Rule::expr_post | 
             Rule::expr_prefix | Rule::expr_exp | Rule::expr_ref |
-            Rule::context | Rule::module | Rule::defun | 
+            Rule::context | Rule::module | Rule::function | 
             Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
             Rule::assign | Rule::object | Rule::bind |
             Rule::r#let | Rule::r#loop | Rule::r#for | Rule::try_catch |
-            Rule::lambda | Rule::r#break | Rule::throw |
+            Rule::lambda | Rule::r#break | Rule::throw | 
             Rule::infix_identifier | Rule::r#return => {
                 let rule = parsed.as_rule();
                 let str = parsed.as_str().to_owned();
                 let inner : Vec<Pair<Rule>> = parsed.into_inner().collect();
                 self.parse_vec(rule,str,inner)?
             }
-            _ => {
+            Rule::fun => {
+                let args = parsed.to_owned().into_inner()
+                    .find_tagged("arg")
+                    .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                let with = parsed.to_owned().into_inner()
+                    .find_tagged("with")
+                    .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                let as_list = parsed.to_owned().into_inner()
+                    .find_tagged("as")
+                    .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                let block = self.parse_rule(parsed.into_inner()
+                    .find_first_tagged("block")
+                    .expect("missing block").to_owned())?;
+                ExpressionType::Fun(args,with,as_list,block).into()
+            }
+        _ => {
                 Err(anyhow!("TODO: [{:?}] {}",parsed.as_rule(), parsed.as_str()))?
             }
         })
