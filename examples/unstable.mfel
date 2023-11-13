@@ -8,14 +8,14 @@ let z = 30;
 module test (z) {
     let x = 10;
     let y = 20;
-    let f = \{ x + y };
+    let f = fun with x y { x + y };
     module m (x,y,z) {
         # shadows x and y (by value)
-        let f = \{ x + y + z };
+        let f = fun with x y z { x + y + z };
     }
 }
 
-function bindings(mod) {
+defun bindings mod {
     let arr = @array(mod)!; # exclam catches and unwraps an exception
     if @is_error(arr) {
         @print(mod)
@@ -67,7 +67,7 @@ a[3][3][2]=18;
 @println(a);
 @println(b);
 
-function plus(x,y) { x + y }
+let plus = \x y -> x + y;
 @println(4 `plus` 6);
 
 let v = 200;
@@ -102,7 +102,7 @@ reftest(&v);
 
 let x = 100000;
 let y = 100;
-function dynclo(x) {
+defun dynclo x with y {
     x + y + zzz
 }
 
@@ -120,7 +120,7 @@ let args = @array(0,nil);
 @append(args,10);
 @println(@call(dynclo,args));
 
-function f(x,y) { 
+defun f x y { 
     let d = @dict();
     @insert(d,"r",[x * y, x + y, x / y]);
     d 
@@ -174,7 +174,7 @@ for i in range(0,10) {
 module TestSelf () {
     let o = object {
         let x = 10;
-        function f() {
+        let f = fun {
             @self.x
         }
     };
@@ -185,11 +185,11 @@ module TestSelf () {
 let f = context () {
     let rec;
     let rec2;
-    rec = lambda x {
+    rec = fun x with rec rec2 {
         if x > 10 { rec2(x) }
         else { rec(x+1) }
     };
-    rec2 = \x {
+    rec2 = fun x with rec {
         if x > 20 {
             rec(x // 10)
         } else {

@@ -50,6 +50,7 @@ impl Interpreter {
     pub fn parse_source(&self, source: &str) -> Result<Expression> {
         let parsed = MfelParser::parse(Rule::file, source)?
             .next().ok_or(anyhow!("parse error"))?; 
+        // println!("{:#?}",parsed);
         self.parse_rule(parsed)
     }
     pub fn var_num(&self, id: &str) -> usize {

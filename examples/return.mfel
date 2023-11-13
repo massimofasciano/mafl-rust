@@ -1,4 +1,4 @@
-function f(x) {
+defun f x {
     if x > 20 {
         @println("return at beginning");     
         return 20;

@@ -23,7 +23,7 @@ for s in lines {
         let i = 1;
         while i < @len(chars)-1 {
             @print(chars[i]);
-            i = i + 1;
+            i += 1;
         };
         @println();
     }

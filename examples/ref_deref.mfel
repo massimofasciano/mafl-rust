@@ -37,7 +37,7 @@ r <- $r + 100;
 
 # a function that tests if it has a reference and increments through it
 # if it's not a ref, the increment is only local
-let reftest = \r {
+let reftest = fun r {
     if @is_ref(r) {
         r <- $r + 1;
     } else {

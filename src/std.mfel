@@ -7,15 +7,15 @@
 ## time calculations
 module time () {
     let start = @now();
-    function elapsed() {
+    defun elapsed {
         @now() - start
     } 
 }
 
 ## iterators and iterator functions
 module iter () {
-    function range(start,end) {
-        lambda() {
+    defun range start end {
+        fun with start end {
             if start < end {
                 let count = start;
                 start = start + 1;
@@ -23,41 +23,41 @@ module iter () {
             }
         }
     }
-    function collect(iter) {
+    defun collect iter {
         let out = @array(0,nil);
         for e in iter { @append(out,e); }
         out
     }
-    function map(f,iter) {
+    defun map f iter {
         let out = @array(0,nil);
         for e in iter { @append(out,f(e)); }
         out
     }
-    function fold(f,acc,iter) {
+    defun fold f acc iter {
         for e in iter { acc = f(acc,e) }
         acc
     }
-    function sum(iter) {
-        fold(lambda(x,y){x+y}, 0, iter)
+    defun sum iter {
+        fold(\x y -> x+y, 0, iter)
     }
-    function prod(iter) {
-        fold(lambda(x,y){x*y}, 1, iter)
+    defun prod iter {
+        fold(\x y -> x*y, 1, iter)
     }
-    function filter(f,iter) {
+    defun filter f iter {
         let out = @array(0,nil);
         for e in iter {
             if f(e) { @append(out,e); }
         }
         out
     }
-    function foreach(f,a) {
+    defun foreach f a {
         for e in a { f(e) }
     }
 }
 
 ## array functions
 module array () {
-    function reduce(f,arr) {
+    defun reduce f arr {
         if @len(arr) < 1 { 
             @error("reduce called on empty array")
         } else {
@@ -70,7 +70,7 @@ module array () {
             acc
         }
     }
-    function reverse(arr) {
+    defun reverse arr {
         # reverses the array in place
         let back = @len(arr)-1;
         let front = 0;

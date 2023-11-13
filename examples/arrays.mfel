@@ -16,6 +16,7 @@ let map = @std.iter.map;
 let sum = @std.iter.sum;
 let prod = @std.iter.prod;
 let filter = @std.iter.filter;
+let fold = @std.iter.fold;
 let reduce = @std.array.reduce;
 
 let a1 = [1,2,3,4];
@@ -24,7 +25,7 @@ let a1 = [1,2,3,4];
 let a2 = @array(10,4);
 @println("a2=",a2);
 
-let a3 = @array(10, lambda(x) { 
+let a3 = @array(10, fun x { 
     if x < 5 { 
         (x + 1) * 10 
     } else { 
@@ -43,29 +44,29 @@ a1[2] = a1_2_3;
 a1[0] = 100; # mutate a1 index 0
 @println("a1=",a1); 
 
-@println("map (*100) a1=",map(\x{x*100},a1));
+@println("map (*100) a1=",map(\x -> x*100,a1));
 @println("sum(a1)=",sum(a1));
 @println("prod(a1)=",prod(a1));
 # test if all elements are greater than n (using fold)
-function all_gt(n,arr) { 
-    afold(
-        \(x,y){x and y},
+defun all_gt n arr { 
+    fold(
+        \ x y -> x and y,
         true,
-        map(\x{x > n},arr)
+        map(\x -> x > n,arr)
     )
 }
 # test if all elements are greater than n (using filter)
-function all_gt(n,arr) { 
-    let filtered = filter(\x{x > n},arr);
+defun all_gt_flt n arr { 
+    let filtered = filter(\x -> x > n,arr);
     @len(filtered) == @len(arr)
 }
 @println("all_gt_0(a1)=",all_gt(0,a1));
-@println("all_gt_5(a1)=",all_gt(5,a1));
-@println("chain_div([9,3,4])=",reduce(\(x,y){x/y},[9,3,4]));
+@println("all_gt_5(a1)=",all_gt_flt(5,a1));
+@println("chain_div([9,3,4])=",reduce(\x y -> x/y,[9,3,4]));
 
 @append(a1,42);
 @println("a1=",a1); 
-@println("filter >10 in a1=",filter(\x{x>10},a1));
+@println("filter >10 in a1=",filter(\x -> x>10,a1));
 
 @println("a1[3]=",@get(a1,3)); 
 @set(a1,3,1);

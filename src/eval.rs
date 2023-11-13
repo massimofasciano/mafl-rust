@@ -396,12 +396,11 @@ impl Interpreter {
             ExpressionType::Fun(arg_names, capture_names, self_names, body) => {
                 let captured = Context::new();
                 for name in capture_names {
-                    let value = if let Some(val) = ctx.get_binding(name) { 
-                        val.to_owned()
+                    if let Some(mc) = ctx.get_binding_ref(name) { 
+                        captured.add_binding_ref(name.to_owned(), mc); 
                     } else {
-                        expression::nil()
+                        captured.add_binding(name.to_owned(), expression::nil()); 
                     };
-                   captured.add_binding(name.to_owned(), value); 
                 }
                 let closure : Expression = ExpressionType::Closure(captured.to_owned(), arg_names.to_owned(), body.to_owned()).into();
                 for name in self_names {

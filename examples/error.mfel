@@ -15,7 +15,7 @@
 ### it unwraps an exception (thrown or system error) but leaves normal values as is
 ###
 
-function test1(f,x) {
+defun test1 f x {
     try 1 + f(x) catch z {
         @println("- I caught this exception: ",z);
         if @is_error(z) {
@@ -26,26 +26,26 @@ function test1(f,x) {
     }
 }
 
-function test2(x) {
+defun test2 x {
     1 / x
 }
 
-function test3(x) {
+defun test3 x {
     "hello" < x
 }
 
-function test4(x) {
+defun test4 x {
     if x > 3 {
         throw @make_error("x is too big!");
     }
     x
 }
 
-function test5(x) {
+defun test5 x {
     @error("there is a problem with ",x);
 }
 
-function test6(x) {
+defun test6 x {
     let r = test4(x)!;
     if @is_error(r) { return 6 };
     x

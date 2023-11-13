@@ -5,6 +5,13 @@ use crate::{expression::{Rule, ExpressionType, Expression, self, Operator}, unes
 
 impl Interpreter {
 
+    fn find_tag<'a>(tag: &'a str, pairs: &'a [Pair<Rule>]) -> impl Iterator<Item=&'a Pair<'a,Rule>> + 'a {
+        pairs.iter().filter(move |p| {
+            let ptag = p.as_node_tag();
+            ptag.is_some() && ptag.unwrap() == tag
+        })
+    }
+
     fn parse_block(&self, parsed: Pair<Rule>) -> Result<Expression> {
         let rule = parsed.as_rule().to_owned();
         let sequence = parsed.into_inner()
@@ -116,6 +123,32 @@ impl Interpreter {
                         let body = self.parse_rule(inner[0].clone())?;
                         ExpressionType::Lambda(vec![], body).into()
                     }
+                }
+                Rule::fun => {
+                    let args = Self::find_tag("arg", &inner)
+                        .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                    let with = Self::find_tag("with", &inner)
+                        .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                    let as_list = Self::find_tag("as", &inner)
+                        .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                    let body = Self::find_tag("body", &inner).next()
+                        .map(|x| self.parse_rule(x.to_owned()))
+                        .expect("missing body")?;
+                    ExpressionType::Fun(args,with,as_list,body).into()
+                }
+                Rule::defun => {
+                    let name = Self::find_tag("name", &inner).next()
+                        .map(|x|self.ident(x.as_str())).expect("missing name");
+                    let args = Self::find_tag("arg", &inner)
+                        .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                    let with = Self::find_tag("with", &inner)
+                        .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                    let body = Self::find_tag("body", &inner).next()
+                        .map(|x| self.parse_rule(x.to_owned()))
+                        .expect("missing body")?;
+                    ExpressionType::Let(name.to_owned(), 
+                        ExpressionType::Fun(args,with,vec![name],body).into()
+                    ).into()
                 }
                 Rule::array => {
                     ExpressionType::Array(RefCell::new(
@@ -388,9 +421,9 @@ impl Interpreter {
             Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
             Rule::expr_mul | Rule::expr_apply_or_access | Rule::expr_post | 
             Rule::expr_prefix | Rule::expr_exp | Rule::expr_ref |
-            Rule::context | Rule::module | Rule::function | 
+            Rule::context | Rule::module | Rule::function | Rule::defun |
             Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
-            Rule::assign | Rule::object | Rule::bind |
+            Rule::assign | Rule::object | Rule::bind | Rule::fun |
             Rule::r#let | Rule::r#loop | Rule::r#for | Rule::try_catch |
             Rule::lambda | Rule::r#break | Rule::throw | 
             Rule::infix_identifier | Rule::r#return => {
@@ -398,45 +431,6 @@ impl Interpreter {
                 let str = parsed.as_str().to_owned();
                 let inner : Vec<Pair<Rule>> = parsed.into_inner().collect();
                 self.parse_vec(rule,str,inner)?
-            }
-            Rule::fun => {
-                let args = parsed.to_owned().into_inner()
-                    .find_tagged("arg")
-                    .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
-                let with = parsed.to_owned().into_inner()
-                    .find_tagged("with")
-                    .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
-                let as_list = parsed.to_owned().into_inner()
-                    .find_tagged("as")
-                    .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
-                let body_unparsed = parsed.into_inner()
-                    .find_first_tagged("body")
-                    .expect("missing body").to_owned();
-                let body_parsed = self.parse_rule(body_unparsed.to_owned())?;
-                // let body = if body_unparsed.as_rule() == Rule::function_block {
-                //     body_parsed
-                // } else {
-                //     ExpressionType::FunctionBlock(vec![body_parsed]).into()
-                // };
-                let body = body_parsed;
-                ExpressionType::Fun(args,with,as_list,body).into()
-            }
-            Rule::defun => {
-                let name = self.ident(parsed.to_owned().into_inner()
-                    .find_first_tagged("name")
-                    .expect("missing name").as_str());
-                let args = parsed.to_owned().into_inner()
-                    .find_tagged("arg")
-                    .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
-                let with = parsed.to_owned().into_inner()
-                    .find_tagged("with")
-                    .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
-                let block = self.parse_rule(parsed.into_inner()
-                    .find_first_tagged("block")
-                    .expect("missing block").to_owned())?;
-                ExpressionType::Let(name.to_owned(), 
-                    ExpressionType::Fun(args,with,vec![name],block).into()
-                ).into()
             }
             _ => {
                 Err(anyhow!("TODO: [{:?}] {}",parsed.as_rule(), parsed.as_str()))?

@@ -1,6 +1,5 @@
-# lambda captures context at definition (so it can't directly call itself)
-# but symbol lookups fall back to the calling context
-let fibo1 = lambda (x) {
+# we don't capture the fibo1 name inside the closure
+let fibo1 = fun x {
     if x < 2 {
         x
     } else {
@@ -16,28 +15,20 @@ let fibo1copy = fibo1;
 @test("fibo1copy(10)",55);
 
 # we replace fibo1 at the call site
-let fibo1 = lambda (x) { 0 };
+let fibo1 = \x -> 0;
 # this will return 0 because the recursive call to fibo1 was shadowed above
 @test("fibo1copy(10)",0);
 
 @println("**************************************************");
 
-# lambda captures context at definition (so it can't directly call itself)
-# but symbol lookups fall back to the calling context
-# alternate lambda syntax with \ and single argument
-let fibo2 = \x {
+# here we capture a circular reference to fibo2 inside the closure
+let fibo2 = fun x as fibo2 {
     if x < 2 {
         x
     } else {
         fibo2(x-2) + fibo2(x-1)
     }
 }; 
-# inserts binding for fibo2 into the fibo2 lambda (for recursion)
-bind fibo2;
-
-# we could also use...
-#bind fibo2 = fibo2 in fibo2;
-#bind fibo2 in fibo2;
 
 #@println(fibo2);
 
@@ -48,15 +39,14 @@ let fibo2copy = fibo2;
 @test("fibo2copy(10)",55);
 
 # we replace fibo1 at the call site
-let fibo2 = lambda (x) { 0 };
-# this works because a lambda carries it's context around
+let fibo2 = \x->0;
+# this works because a closure carries it's context around
 @test("fibo2copy(10)",55);
 
 @println("**************************************************");
 
-# this creates a lambda with a circular reference to it's own name
-# it's syntactic sugar for the let + bind used for fibo2 above
-function fibo3(x) {
+# this is just syntactic sugar for what we did for fibo2
+defun fibo3 x {
     if x < 2 {
         x
     } else {
@@ -71,8 +61,8 @@ let fibo3copy = fibo3;
 @test("fibo3copy(10)",55);
 
 # we replace fibo1 at the call site
-let fibo3 = lambda (x) { 0 };
-# this works because a lambda carries it's context around
+let fibo3 = \x -> 0;
+# this works because a closure carries it's context around
 @test("fibo3copy(10)",55);
 
 @println("**************************************************");

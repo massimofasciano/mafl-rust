@@ -4,13 +4,13 @@ let x = 1;
 let y = 100;
 let z = 1000;
 
-# the lambda captures references to x and y at definition
+# the fun captures references to x and y at definition (with ...)
 # z is a parameter so it always gets bound when calling
-let clo = lambda(z) {x+y+z};
+let lex = fun z with x y { x+y+z };
 
-# we create the lambda in an empty context, so x and y are not captured
+# here, x and y are not captured (default behavior)
 # z is a parameter so it always gets bound when calling
-let dyn = context () in lambda(z) {x+y+z};
+let dyn = \z -> x+y+z;
 
 # here, we shadow y (this is another y, the older y is still captured by the first lambda)
 let y = 10;
@@ -18,14 +18,14 @@ let y = 10;
 # here we have an example of dynamic fall back binding:
 #  dyn did not capture x and y so it will look them up here
 #  (it sees the new y binding)
-@println("dynamic: ",dyn(10));
+@test("dyn(10)",21);
 
-# the lambda is evaluated in the context where it was defined (it sees the old y binding)
-@println("closure: ",clo(10));
+# the lexical closure sees the old y binding that was captured by reference
+@test("lex(10)",111);
 
 # but if we mutate x instead of shadowing it, they have similar behavior
 x = 2;
 # dyn looks up x here so it sees the change
-@println("dynamic: ",dyn(10));
-# clo has a reference to the global x so it sees the change
-@println("closure: ",clo(10));
+@test("dyn(10)",22);
+# lex has a reference to the global x so it sees the change
+@test("lex(10)",112);

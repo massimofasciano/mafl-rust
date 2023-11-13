@@ -10,18 +10,18 @@
 ### it unwraps an exception (thrown or system error) but leaves normal values as is
 ###
 
-function unwrap_before_mult(x) {
+defun unwrap_before_mult x {
     3 * try f1(x) catch x {
         if @is_error(x) { 3 }
         else {x}
     }
 }
 
-function unwrap_after_mult(x) {
+defun unwrap_after_mult x {
     (f1(x) * 3)!
 }
 
-function try_catch(x) {
+defun try_catch x {
     try f1(x) * 3 catch y {
         if @is_error(y) {
             @string(y)
@@ -31,11 +31,11 @@ function try_catch(x) {
     }
 }
 
-function f1(x) {
+defun f1 x {
     f2(x) * 5
 }
 
-function f2(x) {
+defun f2 x {
     if x >= 10 {
         throw 10;
         @println("unreachable");

@@ -2,14 +2,14 @@
 ### it passes the resulting array to f
 ### 
 ### if you call the program with these araguments:
-###  executable_name "lambda(x,y){x*y}(5)" 3 1+1 2+2 "@array(2,1)" nil "3<1" "[1,2,3,4]"
+###  executable_name "(\x y -> x*y)(5)" 3 1+1 2+2 "@array(2,1)" nil "3<1" "[1,2,3,4]"
 ### it will output:
 ###  [15,[2,4,[1,1],nil,false,[1,2,3,4]]]
 ###
 
 let map = @std.iter.map;
 
-function f(args) {
+defun f args {
     if @len(args) < 2 {
         @error("need at least 2 args, got ",@len(args))
     } else {
@@ -19,5 +19,5 @@ function f(args) {
         [f(x),args]
     }
 };
-f({let eval = \str {@eval(str)}; map(eval,@env)})
+f({let eval = \str -> @eval(str); map(eval,@env)})
 

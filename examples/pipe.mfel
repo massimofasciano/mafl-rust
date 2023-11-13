@@ -1,4 +1,4 @@
-function f(x) {
+defun f x {
     if x == nil {
         nil
     } 

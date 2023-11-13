@@ -13,10 +13,10 @@ let y = 30;
 module mod (y) {
     # y gets shadowed by the module
     let x = 10;
-    let get_x = \{x}; # alternate lambda syntax
-    let get_y = \() {y}; # alternate lambda syntax
-    let set_x = lambda(new_x) {x = new_x};
-    let set_y = \new_y {y = new_y}; # alternate lambda syntax
+    let get_x = fun with x {x}; 
+    let get_y = fun with y {y};
+    let set_x = fun new_x with x {x = new_x};
+    let set_y = fun new_y with y {y = new_y};
 }
 
 @println(mod.get_x());

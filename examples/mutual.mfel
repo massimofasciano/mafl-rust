@@ -1,5 +1,5 @@
 # f1 has an open reference to f2
-function f1(x) {
+defun f1 x {
     if x < 10 {
         x
     } else {
@@ -8,14 +8,13 @@ function f1(x) {
 }
 
 # f2 has captured f1
-function f2(x) {
+defun f2 x with f1 {
     if x > 20 {
         x
     } else {
         f1(-x)
     }
 }
-#bind f2 in f1; # let's do this later in the example...
 
 # the mutual recursion works because we fall back
 # to the context at the call site
@@ -29,9 +28,7 @@ let f1c = f1;
 let f2c = f2;
 
 # we can safely redefine f1 and f2 will still call the captured original
-function f1(x) {
-    x
-}
+let f1 = \x -> x;
 
 @test("f1c(5)",5);
 @test("f1c(15)",-15);
@@ -41,9 +38,7 @@ function f1(x) {
 let f1 = f1c;
 
 # but if we redefine f2, f1 will call the new one
-function f2(x) {
-    x
-}
+let f2 = \x -> x;
 
 @test("f1(5)",5);
 @test("f1(15)",15); # the wrong f2 is called
@@ -56,9 +51,7 @@ let f2 = f2c;
 bind f2 in f1;
 
 # now if we redefine f2, f1 will call the correct version
-function f2(x) {
-    x
-}
+let f2 = \x -> x;
 
 @test("f1(5)",5);
 @test("f1(15)",-15);
@@ -72,17 +65,16 @@ let f2 = f2c;
 #@println(f2);
 
 ###
-### a simpler way using only let and lambda
+### another way of doing mutual recursion...
 ###
 
-let f = context () { # a simple block works too but captures the outside context too
-    let rec;
+let f = {
     let rec2;
-    rec = \x { # alternate lambda syntax
+    let rec = fun x with rec2 as rec { 
         if x > 10 { rec2(x) }
         else { rec(x+1) }
     };
-    rec2 = \(x) { # alternate lambda syntax
+    rec2 = fun x with rec {
         if x > 20 {
             rec(x // 10)
         } else {

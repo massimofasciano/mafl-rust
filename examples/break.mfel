@@ -1,12 +1,12 @@
 let range = @std.iter.range;
 
-function f2(i) {
+defun f2 i {
     # the break is caught here (at function top-level it is like a return)
     break i*100;
     @println("in f2: will never print");
 }
 
-function f1(x,a,b) {
+defun f1 x a b {
     for i in range(a,b) {
         if i > x { 
             # also works inside a second block...

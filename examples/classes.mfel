@@ -8,17 +8,17 @@
 
 module Point () {
     let count = 0; # class variable
-    function new(x,y) {
+    defun new x y with count {
         count = count + 1;
         object {
-            function add(point) {
+            defun add point with x y {
                 Point.new(x + point.x,y + point.y)
             }
-            function add_assign(point) {
+            defun add_assign point with x y {
                 x += point.x;
                 y += point.y;
             }
-            function __str__() {
+            defun __str__ with x y {
                 "Point("+x+","+y+")"
             }
             @println("=> point instance ",count,": ",__str__());
@@ -26,14 +26,13 @@ module Point () {
     }
 }
 
-function Counter(start, end) {
+defun Counter start end {
     object {
-        let count = nil;
-        function count() {
+        defun count with start end {
             if start > end {
                 return nil;
             }
-            count = start;
+            let count = start;
             start += 1;
             count
         }
@@ -51,6 +50,7 @@ p3.add_assign(p3);
 
 let c1 = Counter(10,20);
 let c2 = Counter(0,5);
+
 for i in c1.count {
     @println("c1 is ",i);
 }

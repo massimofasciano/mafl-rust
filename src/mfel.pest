@@ -67,24 +67,26 @@ array = { "[" ~ (expr ~ ("," ~ expr)*)? ~ "]"}
 
 function_args = { (identifier ~ ("," ~ identifier)*)? }
 
-lambda = {
-    ( ("lambda" | "\\") ~ "(" ~ function_args ~ ")" ~ function_block ) |
-    ( ("lambda" | "\\") ~ function_block ) |
-    ( ("lambda" | "\\") ~ identifier ~ function_block )
-}
+lambda = { "deprecated_do_not_use" }
+// lambda = {
+//     ( ("lambda" | "\\") ~ "(" ~ function_args ~ ")" ~ function_block ) |
+//     ( ("lambda" | "\\") ~ function_block ) |
+//     ( ("lambda" | "\\") ~ identifier ~ function_block )
+// }
 
 fun = {
     ( "fun" ~ (#arg = identifier)* ~ ("with" ~ (#with = identifier)+)? ~ ("as" ~ (#as = identifier)+)? ~ (#body = function_block) ) |
-    ( "\\" ~ (#arg = identifier)* ~ "->" ~ (#body = (function_block | expr)) )
+    ( "\\" ~ (#arg = identifier)* ~ ( ("->" ~ (#body = expr)) | (#body=function_block) ) )
 }
 
 defun = {
-    "defun" ~ (#name = identifier) ~ (#arg = identifier)* ~ ("with" ~ (#with = identifier)+)? ~ (#block = function_block)
+    "defun" ~ (#name = identifier) ~ (#arg = identifier)* ~ ("with" ~ (#with = identifier)+)? ~ (#body = function_block)
 }
 
-function = {
-    "function" ~ identifier ~ "(" ~ function_args ~ ")" ~ function_block
-}
+function = { "deprecated_do_not_use" }
+// function = {
+//     "function" ~ identifier ~ "(" ~ function_args ~ ")" ~ function_block
+// }
 
 context = {
     "context" ~ "(" ~ function_args ~ ")" ~ ( ("in" ~ expr) | block )
