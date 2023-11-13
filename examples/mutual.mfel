@@ -68,22 +68,21 @@ let f2 = f2c;
 ### another way of doing mutual recursion...
 ###
 
-let f = {
-    let rec2;
-    let rec = fun x with rec2 as rec { 
-        if x > 10 { rec2(x) }
-        else { rec(x+1) }
-    };
-    rec2 = fun x with rec {
-        if x > 20 {
-            rec(x // 10)
-        } else {
-            x * 10
-        }
-    };
-    rec
+# rec captures a nil for rec2 (not defined yet)
+defun rec x with rec2 { 
+    if x > 10 { rec2(x) }
+    else { rec(x+1) }
+};
+# rec2 will bind itself to rec.rec2 after definition
+# rec needs to have reserved a binding for rec2 by using "with rec2"
+defun rec2 x with rec in rec {
+    if x > 20 {
+        rec(x // 10)
+    } else {
+        x * 10
+    }
 };
 
-@test("f(1)",110);
-@test("f(50)",110);
+@test("rec(1)",110);
+@test("rec(50)",110);
 #@println(f);

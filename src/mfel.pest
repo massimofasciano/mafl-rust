@@ -18,7 +18,7 @@ reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
     "return" | "break" | "endblock" | "continue" | "throw" | 
     "let" | "in" | "bind" |
-    "fun" | "with" | "as" | "defun" |
+    "fun" | "with" | "as" | "defun" | 
     "context" | "module" | "object" |
     "try" | "catch" |
     "true" | "false" | "nil" |
@@ -73,7 +73,7 @@ fun = {
 }
 
 defun = {
-    "defun" ~ (#name = identifier) ~ (#arg = identifier)* ~ ("with" ~ (#with = identifier)+)? ~ (#body = function_block)
+    "defun" ~ (#name = identifier) ~ (#arg = identifier)* ~ ("with" ~ (#with = identifier)+)? ~ ("in" ~ (#in = identifier)+)? ~ (#body = function_block)
 }
 
 context = {

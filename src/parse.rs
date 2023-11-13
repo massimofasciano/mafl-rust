@@ -120,12 +120,27 @@ impl Interpreter {
                         .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
                     let with = Self::find_tag("with", &inner)
                         .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                    let mutual = Self::find_tag("in", &inner)
+                        .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
                     let body = Self::find_tag("body", &inner).next()
                         .map(|x| self.parse_rule(x.to_owned()))
                         .expect("missing body")?;
-                    ExpressionType::Let(name.to_owned(), 
-                        ExpressionType::Fun(args,with,vec![name],body).into()
-                    ).into()
+                    let definition : Expression = ExpressionType::Let(name.to_owned(), 
+                        ExpressionType::Fun(args,with,vec![name.to_owned()],body).into()
+                    ).into();
+                    let mutual_assigns = mutual.into_iter().map(|mutname| {
+                        ExpressionType::AssignToExpression(
+                            ExpressionType::Field(ExpressionType::Variable(mutname.to_owned()).into(), name.to_owned()).into(),
+                            ExpressionType::Variable(name.to_owned()).into()
+                        ).into()
+                    });
+                    let mut sequence = vec![definition.to_owned()];
+                    sequence.extend(mutual_assigns);
+                    if sequence.len() == 1 {
+                        definition
+                    } else {
+                        ExpressionType::Sequence(sequence).into()
+                    }
                 }
                 Rule::array => {
                     ExpressionType::Array(RefCell::new(
