@@ -22,4 +22,5 @@ defun f x {
         f(x-1)* 2        
     }
 }
-~x y:x+y
+\x y -> x+y 
+

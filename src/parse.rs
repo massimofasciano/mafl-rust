@@ -15,7 +15,6 @@ impl Interpreter {
             .collect::<Result<Vec<Expression>>>()?;
         Ok(match sequence.len() {
             0 => ExpressionType::Nil.into(),
-            1 => sequence[0].clone(),
             _ => match rule { 
                 Rule::block => ExpressionType::Block(sequence).into(),
                 Rule::function_block => ExpressionType::FunctionBlock(sequence).into(),
@@ -414,11 +413,12 @@ impl Interpreter {
                     .find_first_tagged("body")
                     .expect("missing body").to_owned();
                 let body_parsed = self.parse_rule(body_unparsed.to_owned())?;
-                let body = if body_unparsed.as_rule() == Rule::function_block {
-                    body_parsed
-                } else {
-                    ExpressionType::FunctionBlock(vec![body_parsed]).into()
-                };
+                // let body = if body_unparsed.as_rule() == Rule::function_block {
+                //     body_parsed
+                // } else {
+                //     ExpressionType::FunctionBlock(vec![body_parsed]).into()
+                // };
+                let body = body_parsed;
                 ExpressionType::Fun(args,with,as_list,body).into()
             }
             Rule::defun => {

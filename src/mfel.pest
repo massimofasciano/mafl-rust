@@ -75,8 +75,7 @@ lambda = {
 
 fun = {
     ( "fun" ~ (#arg = identifier)* ~ ("with" ~ (#with = identifier)+)? ~ ("as" ~ (#as = identifier)+)? ~ (#body = function_block) ) |
-    ( "~" ~ (#arg = identifier)* ~ ":" ~ (#body = (function_block | expr)) )
-
+    ( "\\" ~ (#arg = identifier)* ~ "->" ~ (#body = (function_block | expr)) )
 }
 
 defun = {
