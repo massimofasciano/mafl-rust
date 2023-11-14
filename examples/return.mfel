@@ -9,7 +9,7 @@ defun f x {
             @println("return in while");     
             return i;
         }
-        i = i + 1;   
+        i += 1;   
     }
     @println("return at end");     
     return i;

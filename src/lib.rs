@@ -38,7 +38,7 @@ impl Interpreter {
     }
     pub fn run(&self, source: &str) -> Result<Expression> {
         let expr = self.parse_source(source)?;
-        // println!("{expr:#?}");
+        println!("{expr:#?}");
         self.eval(&self.ctx,&expr)
     }
     pub fn print(&self, e: Expression) -> Result<Expression> {

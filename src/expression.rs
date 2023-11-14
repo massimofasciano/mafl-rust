@@ -23,6 +23,14 @@ pub enum Operator {
     Identifier(Ident)
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BlockType {
+    Sequence,
+    Block,
+    If,
+    Function
+}
+
 #[derive(Debug,Clone)]
 pub enum ExpressionType {
     Integer(i64),
@@ -35,18 +43,12 @@ pub enum ExpressionType {
     Variable(Ident),
     BuiltinVariable(String),
     BuiltinFunction(String),
-    Block(Expressions),
-    FunctionBlock(Expressions),
-    IfBlock(Expressions),
-    Sequence(Expressions),
     FunctionCall(Expression,Expressions),
     Field(Expression,Ident),
     BinOpCall(Operator,Expression,Expression),
     UnaryOpCall(Operator,Expression),
     If(Expression,Expression,Expression),
-    While(Expression,Expression),
-    DoWhile(Expression,Expression),
-    For(Ident,Expression,Expression),
+    Iterate(Ident,Expression,Expression),
     TryCatch(Expression,Ident,Expression),
     Let(Ident,Expression),
     LetArray(Idents,Expression),
@@ -55,6 +57,7 @@ pub enum ExpressionType {
     AssignToDeRefExpression(Expression,Expression),
     OpAssignToExpression(Operator,Expression,Expression),
     ArrayAccess(Expression,Expression),
+    Block{r#type: BlockType, body: Expressions},
     Loop(Expression),
     Object(Expression),
     Context(Idents,Expression),

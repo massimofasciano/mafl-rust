@@ -1,4 +1,4 @@
-use crate::{expression::{ExpressionType, Expression, self, Operator}, builtin::{self}, context::Context, Interpreter};
+use crate::{expression::{ExpressionType, Expression, self, Operator, BlockType}, builtin::{self}, context::Context, Interpreter};
 use anyhow::{Result,anyhow};
 use log::debug;
 
@@ -24,81 +24,60 @@ impl Interpreter {
                 ExpressionType::Throw(self.eval(ctx, br)?).into(),
             ExpressionType::Continue => ExpressionType::Continue.into(),
 
-            ExpressionType::Block(exprs) => {
-                let ctx = &ctx.with_new_context();
+            ExpressionType::Block{r#type: block_type, body: exprs} => {
+                let block_ctx = match block_type {
+                    BlockType::Sequence => ctx.to_owned(),
+                    BlockType::Block | BlockType::If | BlockType::Function =>
+                        ctx.with_new_context(),
+                };
                 let mut last_value = expression::nil();
                 for expr in exprs {
-                    last_value = self.eval(ctx,expr)?;
-                    match last_value.as_ref() {
-                        ExpressionType::Return(_) |
-                        ExpressionType::Break(_) |
-                        ExpressionType::Throw(_) |
-                        ExpressionType::Continue => break,
-                        ExpressionType::EndBlock(val) => {
-                            last_value = val.to_owned();
-                            break
+                    last_value = self.eval(&block_ctx,expr)?;
+                    match block_type {
+                        BlockType::Sequence | BlockType::Block => {
+                            match last_value.as_ref() {
+                                ExpressionType::Return(_) |
+                                ExpressionType::Break(_) |
+                                ExpressionType::Throw(_) |
+                                ExpressionType::Continue => break,
+                                ExpressionType::EndBlock(val) => {
+                                    last_value = val.to_owned();
+                                    break
+                                }
+                                _ => {},
+                            }
                         }
-                        _ => {},
+                        BlockType::If => {
+                            match last_value.as_ref() {
+                                ExpressionType::EndBlock(_) |
+                                ExpressionType::Return(_) |
+                                ExpressionType::Break(_) |
+                                ExpressionType::Throw(_) |
+                                ExpressionType::Continue => break,
+                                _ => {},
+                            }
+                        }
+                        BlockType::Function => {
+                            match last_value.as_ref() {
+                                ExpressionType::Throw(_) => break,
+                                ExpressionType::Break(val) |
+                                ExpressionType::EndBlock(val) |
+                                ExpressionType::Return(val) => {
+                                    last_value = val.to_owned();
+                                    break
+                                }
+                                ExpressionType::Continue => {
+                                    last_value = expression::nil();
+                                    break
+                                }
+                                _ => {},
+                            }
+                        }
                     }
                 }
                 last_value
             }
-            ExpressionType::FunctionBlock(exprs) => {
-                let ctx = &ctx.with_new_context();
-                let mut last_value = expression::nil();
-                for expr in exprs {
-                    last_value = self.eval(ctx,expr)?;
-                    match last_value.as_ref() {
-                        ExpressionType::Throw(_) => break,
-                        ExpressionType::Break(val) |
-                        ExpressionType::EndBlock(val) |
-                        ExpressionType::Return(val) => {
-                            last_value = val.to_owned();
-                            break
-                        }
-                        ExpressionType::Continue => {
-                            last_value = expression::nil();
-                            break
-                        }
-                        _ => {},
-                    }
-                }
-                last_value
-            }
-            ExpressionType::IfBlock(exprs) => {
-                let ctx = &ctx.with_new_context();
-                let mut last_value = expression::nil();
-                for expr in exprs {
-                    last_value = self.eval(ctx,expr)?;
-                    match last_value.as_ref() {
-                        ExpressionType::EndBlock(_) |
-                        ExpressionType::Return(_) |
-                        ExpressionType::Break(_) |
-                        ExpressionType::Throw(_) |
-                        ExpressionType::Continue => break,
-                        _ => {},
-                    }
-                }
-                last_value
-            }
-            ExpressionType::Sequence(exprs) => {
-                let mut last_value = expression::nil();
-                for expr in exprs {
-                    last_value = self.eval(ctx,expr)?;
-                    match last_value.as_ref() {
-                        ExpressionType::Return(_) |
-                        ExpressionType::Break(_) |
-                        ExpressionType::Throw(_) |
-                        ExpressionType::Continue => break,
-                        ExpressionType::EndBlock(val) => {
-                            last_value = val.to_owned();
-                            break
-                        }
-                        _ => {},
-                    }
-                }
-                last_value
-            }
+
             ExpressionType::BindIn(id, value, container) => {
                 let container = self.eval(ctx,container)?;
                 let value = self.eval(ctx,value)?;
@@ -250,60 +229,7 @@ impl Interpreter {
                     _ => ast.to_error()?,
                 }
             }
-            ExpressionType::While(cond, body) => {
-                let mut body_value = expression::nil();
-                let ctx = &ctx.with_new_context();
-                #[allow(clippy::while_let_loop)]
-                loop {
-                    match self.eval(ctx,cond)?.as_ref() {
-                        ExpressionType::Boolean(b) => if *b {
-                            body_value = self.eval(ctx,body)?;
-                            match body_value.as_ref() {
-                                ExpressionType::EndBlock(val) |
-                                ExpressionType::Break(val) => {
-                                    body_value = val.to_owned();
-                                    break
-                                }
-                                ExpressionType::Continue => {
-                                    body_value = expression::nil();
-                                    continue
-                                }
-                                ExpressionType::Return(_) | 
-                                ExpressionType::Throw(_) => break,
-                                _ => {},
-                            }
-                        } else {
-                            break;
-                        },
-                        _ => break,
-                    };
-                }
-                body_value
-            }
-            ExpressionType::DoWhile(cond, body) => {
-                let mut body_value;
-                let ctx = &ctx.with_new_context();
-                #[allow(clippy::while_let_loop)]
-                loop {
-                    body_value = self.eval(ctx,body)?;
-                    match body_value.as_ref() {
-                        ExpressionType::EndBlock(val) |
-                        ExpressionType::Break(val) => {
-                            body_value = val.to_owned();
-                            break
-                        }
-                        ExpressionType::Continue => continue,
-                        ExpressionType::Return(_) | 
-                        ExpressionType::Throw(_) => break,
-                        _ => {},
-                    }
-                    match self.eval(ctx,cond)?.as_ref() {
-                        ExpressionType::Boolean(b) => if !b { break; },
-                        _ => break,
-                    };
-                }
-                body_value
-            }
+
             ExpressionType::Loop(body) => {
                 let mut body_value;
                 let ctx = &ctx.with_new_context();
@@ -324,7 +250,8 @@ impl Interpreter {
                 }
                 body_value
             }
-            ExpressionType::For(var, iterator, body) => {
+
+            ExpressionType::Iterate(var, iterator, body) => {
                 let iterator = self.eval(ctx, iterator)?;
                 let mut body_value = expression::nil();
                 let ctx = &ctx.with_new_context();

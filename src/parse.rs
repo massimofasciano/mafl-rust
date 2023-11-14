@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use pest::iterators::Pair;
 use anyhow::{anyhow, Result};
-use crate::{expression::{Rule, ExpressionType, Expression, self, Operator}, unescape_string, Interpreter};
+use crate::{expression::{Rule, ExpressionType, Expression, self, Operator, BlockType}, unescape_string, Interpreter};
 
 impl Interpreter {
 
@@ -23,11 +23,11 @@ impl Interpreter {
         Ok(match sequence.len() {
             0 => ExpressionType::Nil.into(),
             _ => match rule { 
-                Rule::block => ExpressionType::Block(sequence).into(),
-                Rule::function_block => ExpressionType::FunctionBlock(sequence).into(),
-                Rule::if_block => ExpressionType::IfBlock(sequence).into(),
-                Rule::block_syntax => ExpressionType::Sequence(sequence).into(),
-                Rule::file => ExpressionType::Sequence(sequence).into(),
+                Rule::block => ExpressionType::Block{r#type: BlockType::Block, body: sequence}.into(),
+                Rule::function_block => ExpressionType::Block{r#type: BlockType::Function, body: sequence}.into(),
+                Rule::if_block => ExpressionType::Block{r#type: BlockType::If, body: sequence}.into(),
+                Rule::block_syntax => ExpressionType::Block{r#type: BlockType::Sequence, body: sequence}.into(),
+                Rule::file => ExpressionType::Block{r#type: BlockType::Sequence, body: sequence}.into(),
                 _ => Err(anyhow!("parse error block type: {rule:?}"))?,
             },
         })
@@ -104,17 +104,6 @@ impl Interpreter {
                 Rule::fun => {
                     let args = Self::find_tag("arg", &inner)
                         .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
-                    // let with = Self::find_tag("with", &inner)
-                    //     .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
-                    // let with_pairs = Self::find_tag("with_pair", &inner)
-                    //     .map(|pair| {
-                    //         let mut inner = pair.to_owned().into_inner();
-                    //         let alias = self.ident(inner.next().expect("need identifier alias").as_str());
-                    //         let var = self.ident(inner.next().expect("need identifier var").as_str());
-                    //         (alias, var)
-                    //     }).collect::<Vec<_>>();
-                    //     let with = Self::find_tag("with", &inner)
-                    //     .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
                     let with = Self::find_tag("with", &inner)
                         .map(|pair| -> Result<_> {
                             let mut inner = pair.to_owned().into_inner();
@@ -200,7 +189,8 @@ impl Interpreter {
                     if sequence.len() == 1 {
                         definition
                     } else {
-                        ExpressionType::Sequence(sequence).into()
+                        ExpressionType::Block{r#type: BlockType::Sequence, body: sequence}.into()
+                        // ExpressionType::Sequence(sequence).into()
                     }
                 }
                 Rule::array => {
@@ -312,7 +302,6 @@ impl Interpreter {
                                 Rule::field_access => {
                                     let inner : Vec<Pair<Rule>> = pair.clone().into_inner().collect();
                                     assert!(inner.len() == 1);
-                                    // let field = inner[0].as_str().to_owned();
                                     let field = self.ident(inner[0].as_str());
                                     Ok(ExpressionType::Field(acc, field).into())
                                 }
@@ -337,17 +326,33 @@ impl Interpreter {
                 }
                 Rule::r#while => {
                     assert!(inner.len() == 2);
-                    let cond = self.parse_rule(inner[0].clone())?;
+                    let precond = self.parse_rule(inner[0].clone())?;
                     assert!(inner[1].as_rule() == Rule::block_syntax);
                     let body = self.parse_rule(inner[1].clone())?;
-                    ExpressionType::While(cond, body).into()
+                    let code = vec![
+                        ExpressionType::If(precond,
+                            ExpressionType::Nil.into(),
+                            ExpressionType::Break(ExpressionType::Nil.into()).into()
+                        ).into(),
+                        body,
+                    ];
+                    let block_seq = ExpressionType::Block{ r#type: BlockType::Sequence, body: code }.into();
+                    ExpressionType::Loop(block_seq).into()
                 } 
                 Rule::do_while => {
                     assert!(inner.len() == 2);
-                    let cond = self.parse_rule(inner[1].clone())?;
+                    let postcond = self.parse_rule(inner[1].clone())?;
                     assert!(inner[0].as_rule() == Rule::block_syntax);
                     let body = self.parse_rule(inner[0].clone())?;
-                    ExpressionType::DoWhile(cond, body).into()
+                    let code = vec![
+                        body,
+                        ExpressionType::If(postcond,
+                            ExpressionType::Nil.into(),
+                            ExpressionType::Break(ExpressionType::Nil.into()).into()
+                        ).into(),
+                    ];
+                    let block_seq = ExpressionType::Block{ r#type: BlockType::Sequence, body: code }.into();
+                    ExpressionType::Loop(block_seq).into()
                 } 
                 Rule::r#loop => {
                     assert!(inner.len() == 1);
@@ -358,12 +363,11 @@ impl Interpreter {
                 Rule::r#for => {
                     assert!(inner.len() == 3);
                     assert!(inner[0].as_rule() == Rule::variable);
-                    // let var = inner[0].as_str().to_owned();
                     let var = self.ident(inner[0].as_str());
                     let expr = self.parse_rule(inner[1].clone())?;
                     assert!(inner[2].as_rule() == Rule::block_syntax);
                     let body = self.parse_rule(inner[2].clone())?;
-                    ExpressionType::For(var, expr, body).into()
+                    ExpressionType::Iterate(var, expr, body).into()
                 } 
                 Rule::try_catch => {
                     assert!(inner.len() == 3);
