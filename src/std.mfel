@@ -15,7 +15,7 @@ module time () {
 ## iterators and iterator functions
 module iter () {
     defun range start end {
-        fun with start end {
+        fun {
             if start < end {
                 let count = start;
                 start += 1;
@@ -37,10 +37,10 @@ module iter () {
         for e in iter { acc = f(acc,e) }
         acc
     }
-    defun sum iter with fold {
+    defun sum iter {
         fold(\x y -> x+y, 0, iter)
     }
-    defun prod iter with fold {
+    defun prod iter {
         fold(\x y -> x*y, 1, iter)
     }
     defun filter f iter {

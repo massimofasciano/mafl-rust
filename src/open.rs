@@ -83,6 +83,12 @@ impl Interpreter {
                 for expr in exprs {
                     open.extend(self.open(&block_ctx,expr)?);
                 }
+                // remove from open vars if it now has a binding...
+                for open_var in open.clone() {
+                    if block_ctx.get_binding(&open_var).is_some() {
+                        open.remove(&open_var);
+                    }
+                }
                 open
             }
 
@@ -115,6 +121,7 @@ impl Interpreter {
                     ctx.add_binding(closed_var.to_owned(), expression::nil()); 
                 }
                 let mut open = self.open(&ctx, expr)?;
+                // remove the function arguments from open vars...
                 for closed_var in closed {
                     open.remove(closed_var);
                 }
@@ -127,6 +134,7 @@ impl Interpreter {
                     ctx.add_binding(closed_var.to_owned(), expression::nil()); 
                 }
                 let mut open = self.open(&ctx, expr)?;
+                // remove the context arguments from open vars...
                 for closed_var in closed {
                     open.remove(closed_var);
                 }
@@ -135,8 +143,7 @@ impl Interpreter {
 
             ExpressionType::Object(expr) => {
                 let ctx = Context::new();
-                let mut open = self.open(&ctx, expr)?;
-                open                
+                self.open(&ctx, expr)?                
             }
 
             ExpressionType::Module(closed_var, closed, expr) => {
@@ -146,6 +153,7 @@ impl Interpreter {
                     ctx.add_binding(closed_var.to_owned(), expression::nil()); 
                 }
                 let mut open = self.open(&ctx, expr)?;
+                // remove the module name and arguments from open vars...
                 open.remove(closed_var);
                 for closed_var in closed {
                     open.remove(closed_var);
@@ -154,8 +162,6 @@ impl Interpreter {
             }
 
             _ => {
-                // println!("*** unhandled case for open vars, assuming empty");
-                // HashSet::new()
                 Err(anyhow!("unhandled case for open vars: {:?}",ast))?
             }
         })

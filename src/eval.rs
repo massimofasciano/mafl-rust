@@ -334,7 +334,7 @@ impl Interpreter {
             ExpressionType::Fun(arg_names, capture_pairs, 
                     self_names, persist, 
                     body) => {
-                let open_vars = self.open(ctx, ast)?;
+                let open_vars = self.open(&ctx.capture(), ast)?;
                 let captured = Context::new();
                 for open_var in open_vars {
                     println!("*** capturing {}",open_var);

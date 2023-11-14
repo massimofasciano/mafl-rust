@@ -11,20 +11,6 @@ let x = 20;
 # this becomes even more important when using nested code blocks with local scopes
 
 ###
-### assign and op-assign: change variable bindings
-###
-
-let x = 10;
-
-# this changes the content of the memory cell of x and places 20 into it
-x = 20;
-
-# a shortcut for x = x + 1;
-# adds 1 to the value inside the cell
-x += 1;
-# many other op-assign combos exist like *= /= -= etc...
-
-###
 ### unit testing
 ###
 
@@ -37,6 +23,23 @@ let y = 3;
 # test success: x + y == 5
 
 ###
+### assign and op-assign: change variable bindings
+###
+
+let x = 10;
+@test("x",10);
+
+# this changes the content of the memory cell of x and places 20 into it
+x = 20;
+@test("x",20);
+
+# a shortcut for x = x + 1;
+# adds 1 to the value inside the cell
+x += 1;
+@test("x",21);
+# many other op-assign combos exist like *= /= -= etc...
+
+###
 ### fun: create anonymous functions
 ###
 
@@ -44,20 +47,11 @@ let y = 3;
 let f = fun x y z { x + y * z };
 # f(1,2,3) will return 1 + 2 * 3 = 7 (no outside effects)
 
-# open function: 2 arguments x and y, 1 open variable z
-# the value of z will be looked up when the function is called
-# (dynamic binding by default)
-let f = fun x y { x + y * z };
-
-# after defining the function, the latest binding for z will be used
-let z = 10;
-@test("f(1,2)",21);
-
-# closed function: 2 arguments x and y, 1 captured variable z
+# open function: 2 arguments x and y, 1 free variable z
 # a reference to z will be looked up when the function is defined
-# and will be kept inside a closure (lexical binding per variable)
+# and will be kept inside a closure (lexical binding)
 let z = 40;
-let f = fun x y with z { x + y * z };
+let f = fun x y { x + y * z };
 @test("f(1,2)",81);
 
 # if the original z is modified, the function will see the change because
@@ -73,107 +67,80 @@ let z = 50;
 # something like this can be used to create an iterator
 let counter = {
     let count = 0;
-    fun with count {
+    fun {
         # this function captures a reference to the 
-        # count variable and can update it when called
-        count += 1;
-        count
+        # count variable and can update it when called.
+        # the add-assign as an expression returns the
+        # new value after mutation.
+        count += 1 
     }
 };
 @test("counter()",1);
 @test("counter()",2);
 @test("counter()",3);
 
-# another way to write the same counter with the "persist" keyword
-# it creates persistent (like C static) variables inside the function
-let counter = fun persist (count=0) {
-    count += 1;
-    count
-};
-@test("counter()",1);
-@test("counter()",2);
-@test("counter()",3);
-
-# we can also alias a capture (here we capture a reference to w under the name z)
-let z = 60;
-let w = 70;
-let f = fun x y with (z=w) { x + y * z };
-@test("f(1,2)",141);
-
-# when we need to refer to our anonymous function recursively, we can use the "as" keyword
-let f = fun x as rec {
-    if x <= 1 { x } else { x * rec(x-1) }
+# when we need to refer to our anonymous function recursively, we can use the capture trick...
+# - declare f (defaults to nil)
+# - the fun expression will capture it by reference
+# - store the function in the memory cell that was captured (circular reference)
+let f;
+f = fun x {
+    if x <= 1 { x } else { x * f(x-1) }
 };
 @test("f(4)",24);
-# works even if we change f1
+# works even if we change f
 let g = f;
 let f = fun x { 0 };
 @test("g(4)",24);
 
-# we could also rely on dynamic binding for the recursive call
-let f = fun x {
-    if x <= 1 { x } else { x * f(x-1) }
-};
-@test("f(4)",24);
-# but this will fail if the name f is redefined
-let g = f;
-let f = fun x { 0 };
-@test("g(4)",0); # we would like to get 24
-# dynamic binding is not reliable
+# we can do mutual recursion (2 functions calling each other) with
+# a variant of the capture trick...
 
-###
-### defun
-###
-
-# defun is a shortcut for let f = fun ... as f (more or less)
-let f = fun x as f {
-    if x <= 1 { x } else { x * f(x-1) }
-};
-# we often define functions so some syntactic sugar is worth it
-defun f x {
-    if x <= 1 { x } else { x * f(x-1) }
-};
-# we also get the circular binding on the name of the function 
-# in case we need to recurse
-@test("f(4)",24);
-
-# a few differences: 
-# - defun doesn't have an "as" clause (it's built in)
-# - defun has an "in" clause to help with mutual recursion
-
-# f1 has a persistent (and closed) reference to f2 (bound to nil for now)
-defun f1 x persist f2 {
+# f1 captures the reference to f2 (bound to nil for now)
+let f2;
+let f1 = fun x {
     if x < 10 {
         x
     } else {
         f2(x)
     }
-}
-
-# f2 has captured f1 (with f1) and changed the f2 reference 
-# inside f1 (in f1) to point to f2
-# (f1 needs to have a persistent slot for this to work)
-defun f2 x with f1 in f1 {
+};
+# f2 has captured f1 and replaced the f2 captured inside f1
+f2 = fun x {
     if x > 20 {
         x
     } else {
         f1(-x)
     }
-}
-# this is another level of syntactic sugar for:
-#defun f2 x with f1 { ... }
-#f1.f2 = f2;
+};
+# we could also directly modify the f2 binding
+# that is captured in f1 (if we had used let instead
+# of assignment when declaring f2)
+# f1.f2 = f2;
 
 @test("f1(5)",5);
 @test("f1(15)",-15);
 @test("f1(25)",25);
 
-# once again, this mutual recursion would have worked using dynamic binding
-# with no extra effort but by forcing mutual capture of function references,
-# we make sure that any changes in the outside environment will not break
-# the calls.
 
-# open variable f2 left for dynamic binding
+###
+### defun
+###
+
+# we often define functions so some syntactic sugar is worth it:
+defun f x {
+    if x <= 1 { x } else { x * f(x-1) }
+};
+# it's shorter than a let+fun and we also get the circular binding on the
+# name of the function in case we need to recurse.
+@test("f(4)",24);
+
+# defun does not solve the mutual recursion issue by itself.
+# the example above can be rewritten using 2 defun but we still
+# need an external binding of f2 to be captured by f1.
+# we can change the captured f2 inside f1 by assigning to f1.f2
+
+let f2;
 defun f1 x {
     if x < 10 {
         x
@@ -181,8 +148,6 @@ defun f1 x {
         f2(x)
     }
 }
-
-# open variable f1 left for dynamic binding
 defun f2 x {
     if x > 20 {
         x
@@ -190,10 +155,9 @@ defun f2 x {
         f1(-x)
     }
 }
+f1.f2 = f2;
 
-@test("f1(5)",5);
-@test("f1(15)",-15);
-@test("f1(25)",25);
+
 
 ###
 ### a shortcut for small functions: \ ... -> expr
@@ -211,8 +175,7 @@ let f = \x y z -> x * y * z;
 let f = \->1;
 @test("f()",1);
 
-# this shortcut only allows fully closed functions
-# it looks good when passing a function to another function (with map, filter, etc...)
+# this short syntax looks good when passing a function to another function (with map, filter, etc...)
 
 ###
 ### code blocks

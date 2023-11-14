@@ -73,7 +73,7 @@ fun = {
     ( 
         "fun" ~ (#arg = identifier)* ~ 
         ( 
-            ("with" ~ ( #with = with_var )+ ) |
+            // ("with" ~ ( #with = with_var )+ ) |
             ("persist" ~ ( #persist = persist_var )+ ) |
             ("as" ~ (#as = identifier)+ )
         )* ~ 
@@ -87,7 +87,7 @@ defun = {
     ( 
         "defun" ~ (#name = identifier) ~ (#arg = identifier)* ~ 
         ( 
-            ("with" ~ ( #with = with_var )+ ) |
+            // ("with" ~ ( #with = with_var )+ ) |
             ("persist" ~ ( #persist = persist_var )+ ) |
             ("in" ~ ( #in = identifier )+ )
         )* ~ 
