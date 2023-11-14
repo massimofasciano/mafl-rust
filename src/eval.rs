@@ -334,6 +334,8 @@ impl Interpreter {
             ExpressionType::Fun(arg_names, capture_pairs, 
                     self_names, persist, 
                     body) => {
+                let open_res = self.open(ctx, ast);
+                println!("===> OPEN VARS {:?}",open_res);
                 let captured = Context::new();
                 for (alias, var) in capture_pairs {
                     if let Some(mc) = ctx.get_binding_ref(var) { 

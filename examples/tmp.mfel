@@ -1,5 +1,1 @@
-let x = 10;
-do {
-    @println(x);
-    x -= 1;
-} while (x > 1);
+\x -> x + y

@@ -9,6 +9,7 @@ pub mod expression;
 pub mod context;
 pub mod builtin;
 pub mod parse;
+pub mod open;
 
 #[derive(Debug,Clone)]
 pub struct Interpreter {
@@ -38,7 +39,7 @@ impl Interpreter {
     }
     pub fn run(&self, source: &str) -> Result<Expression> {
         let expr = self.parse_source(source)?;
-        println!("{expr:#?}");
+        // println!("{expr:#?}");
         self.eval(&self.ctx,&expr)
     }
     pub fn print(&self, e: Expression) -> Result<Expression> {
