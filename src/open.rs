@@ -5,6 +5,7 @@ use anyhow::{Result,anyhow};
 
 impl Interpreter {
 
+    #[allow(clippy::only_used_in_recursion)]
     pub fn open(&self, ctx: &Context, ast: &Expression) -> Result<HashSet<Ident>> {
         Ok(match ast.as_ref() {
             ExpressionType::Variable(s) => {
@@ -25,6 +26,7 @@ impl Interpreter {
             ExpressionType::String(_)
                 => HashSet::new(),
 
+            ExpressionType::Object(expr) |
             ExpressionType::Field(expr, _) |
             ExpressionType::Loop(expr) |
             ExpressionType::UnaryOpCall(_, expr) |
@@ -76,7 +78,7 @@ impl Interpreter {
                 let block_ctx = match block_type {
                     BlockType::Sequence => ctx.to_owned(),
                     BlockType::Block | BlockType::If | BlockType::Function =>
-                        ctx.with_new_context(),
+                        ctx.capture(),
                 };
                 for expr in exprs {
                     open.extend(self.open(&block_ctx,expr)?);
@@ -101,23 +103,24 @@ impl Interpreter {
             ExpressionType::Iterate(closed_var,iter, body) => {
                 let mut open = HashSet::new();
                 open.extend(self.open(ctx, iter)?);
-                let new_ctx = Context::new();
-                ctx.add_binding(closed_var.to_owned(), expression::nil()); 
+                let new_ctx = ctx.capture();
+                new_ctx.add_binding(closed_var.to_owned(), expression::nil()); 
                 open.extend(self.open(&new_ctx, body)?);
                 open
             }
 
-            ExpressionType::Context(closed, expr) |
             ExpressionType::Fun(closed,_,_,_,expr) => {
+                for closed_var in closed {
+                    ctx.add_binding(closed_var.to_owned(), expression::nil()); 
+                }
+                self.open(ctx, expr)?
+            }
+
+            ExpressionType::Context(closed, expr) => {
                 let ctx = Context::new();
                 for closed_var in closed {
                     ctx.add_binding(closed_var.to_owned(), expression::nil()); 
                 }
-                self.open(&ctx, expr)?
-            }
-
-            ExpressionType::Object(expr) => {
-                let ctx = Context::new();
                 self.open(&ctx, expr)?
             }
 

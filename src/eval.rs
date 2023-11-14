@@ -334,9 +334,16 @@ impl Interpreter {
             ExpressionType::Fun(arg_names, capture_pairs, 
                     self_names, persist, 
                     body) => {
-                let open_res = self.open(ctx, ast);
-                println!("===> OPEN VARS {:?}",open_res);
+                let open_vars = self.open(ctx, ast)?;
                 let captured = Context::new();
+                for open_var in open_vars {
+                    println!("*** capturing {}",open_var);
+                    if let Some(mc) = ctx.get_binding_ref(&open_var) { 
+                        captured.add_binding_ref(open_var.to_owned(), mc); 
+                    } else {
+                        Err(anyhow!("binding not found: {open_var}"))?;
+                    };
+                }
                 for (alias, var) in capture_pairs {
                     if let Some(mc) = ctx.get_binding_ref(var) { 
                         captured.add_binding_ref(alias.to_owned(), mc); 
