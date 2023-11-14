@@ -1,7 +1,7 @@
 ###
 ### this is the MFEL embedded standard library
 ###
-### it is visisible through the @std module (ex: @std.array.map)
+### it is visible through the @std module (ex: @std.array.map)
 ###
 
 ## time calculations
@@ -37,10 +37,10 @@ module iter () {
         for e in iter { acc = f(acc,e) }
         acc
     }
-    defun sum iter {
+    defun sum iter with fold {
         fold(\x y -> x+y, 0, iter)
     }
-    defun prod iter {
+    defun prod iter with fold {
         fold(\x y -> x*y, 1, iter)
     }
     defun filter f iter {
@@ -65,7 +65,7 @@ module array () {
             let i = 1;
             while i < @len(arr) {
                 acc = f(acc,arr[i]);
-                i = i + 1;
+                i += 1;
             }
             acc
         }
@@ -78,8 +78,8 @@ module array () {
             let tmp = arr[back];
             arr[back] = arr[front];
             arr[front] = tmp;
-            back = back - 1;
-            front = front + 1;
+            back -= 1;
+            front += 1;
         }
         arr
     }
