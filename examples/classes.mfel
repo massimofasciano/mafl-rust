@@ -8,17 +8,17 @@
 
 module Point () {
     let count = 0; # class variable
-    defun new x y with count {
-        count = count + 1;
+    defun new x y {
+        count += 1;
         object {
-            defun add point with x y {
-                Point.new(x + point.x,y + point.y)
+            defun add point {
+                new(x + point.x,y + point.y)
             }
-            defun add_assign point with x y {
+            defun add_assign point {
                 x += point.x;
                 y += point.y;
             }
-            defun __str__ with x y {
+            defun __str__ {
                 "Point("+x+","+y+")"
             }
             @println("=> point instance ",count,": ",__str__());
@@ -28,7 +28,7 @@ module Point () {
 
 defun Counter start end {
     object {
-        defun count with start end {
+        defun count {
             if start > end {
                 return nil;
             }

@@ -8,10 +8,10 @@ let z = 30;
 module test (z) {
     let x = 10;
     let y = 20;
-    let f = fun with x y { x + y };
+    let f = fun { x + y };
     module m (x,y,z) {
         # shadows x and y (by value)
-        let f = fun with x y z { x + y + z };
+        let f = fun { x + y + z };
     }
 }
 
@@ -102,12 +102,13 @@ reftest(&v);
 
 let x = 100000;
 let y = 100;
-defun dynclo x with y {
+let zzz;
+defun dynclo x {
     x + y + zzz
 }
 
 let y = 10000;
-let zzz = 1;
+zzz = 1;
 
 @println(dynclo(10));
 
@@ -185,11 +186,11 @@ module TestSelf () {
 let f = context () {
     let rec;
     let rec2;
-    rec = fun x with rec rec2 {
+    rec = fun x {
         if x > 10 { rec2(x) }
         else { rec(x+1) }
     };
-    rec2 = fun x with rec {
+    rec2 = fun x {
         if x > 20 {
             rec(x // 10)
         } else {

@@ -20,7 +20,8 @@ let tuce;
 tuce = 300;
 @println(tuce);
 
-let ings = fun x {
+let ings;
+ings = fun x {
     if x < 0 {
         0
     } else {

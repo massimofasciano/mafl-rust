@@ -54,7 +54,7 @@ let o = object {
     #let outer = @self;
     let m = object {
         let z = 3;
-        let f = fun with x y z {
+        let f = fun {
             [x,y,z]
         };
     };

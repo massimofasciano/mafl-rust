@@ -72,25 +72,24 @@ with_var = { "(" ~ identifier ~ "=" ~ expr ~ ")" | identifier }
 fun = {
     ( 
         "fun" ~ (#arg = identifier)* ~ 
-        ( 
-            // ("with" ~ ( #with = with_var )+ ) |
-            ("persist" ~ ( #persist = persist_var )+ ) |
-            ("as" ~ (#as = identifier)+ )
-        )* ~ 
+        // ( 
+        //     ("with" ~ ( #with = with_var )+ ) |
+        //     ("persist" ~ ( #persist = persist_var )+ ) |
+        //     ("as" ~ (#as = identifier)+ )
+        // )* ~ 
         (#body = function_block) 
     ) |
     ( "\\" ~ (#arg = identifier)* ~ ( ("->" ~ (#body = expr)) | (#body=function_block) ) )
 }
 
 defun = {
-    // "defun" ~ (#name = identifier) ~ (#arg = identifier)* ~ ("with" ~ (#with = identifier)+)? ~ ("in" ~ (#in = identifier)+)? ~ (#body = function_block)
     ( 
         "defun" ~ (#name = identifier) ~ (#arg = identifier)* ~ 
-        ( 
-            // ("with" ~ ( #with = with_var )+ ) |
-            ("persist" ~ ( #persist = persist_var )+ ) |
-            ("in" ~ ( #in = identifier )+ )
-        )* ~ 
+        // ( 
+        //     ("with" ~ ( #with = with_var )+ ) |
+        //     ("persist" ~ ( #persist = persist_var )+ ) |
+        //     ("in" ~ ( #in = identifier )+ )
+        // )* ~ 
         (#body = function_block) 
     )
 }

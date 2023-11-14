@@ -2,6 +2,8 @@
 ### let: create variable bindings
 ###
 
+@println("*** LET ***");
+
 # this binds the name x to a memory cell containing the value 10
 let x = 10;
 
@@ -14,6 +16,8 @@ let x = 20;
 ### unit testing
 ###
 
+@println("*** UNIT TESTING ***");
+
 # the @test builtin function can be used for simple unit tests
 let x = 2;
 let y = 3;
@@ -25,6 +29,8 @@ let y = 3;
 ###
 ### assign and op-assign: change variable bindings
 ###
+
+@println("*** ASSIGN ***");
 
 let x = 10;
 @test("x",10);
@@ -42,6 +48,8 @@ x += 1;
 ###
 ### fun: create anonymous functions
 ###
+
+@println("*** FUN ***");
 
 # closed function: 3 arguments x, y and z
 let f = fun x y z { x + y * z };
@@ -127,6 +135,8 @@ f2 = fun x {
 ### defun
 ###
 
+@println("*** DEFUN ***");
+
 # we often define functions so some syntactic sugar is worth it:
 defun f x {
     if x <= 1 { x } else { x * f(x-1) }
@@ -157,11 +167,11 @@ defun f2 x {
 }
 f1.f2 = f2;
 
-
-
 ###
 ### a shortcut for small functions: \ ... -> expr
 ###
+
+@println("*** \\ -> SHORTCUT ***");
 
 let f = \x -> x + 1;
 # equivalent to let f = fun x { x + 1 }
@@ -180,6 +190,8 @@ let f = \->1;
 ###
 ### code blocks
 ###
+
+@println("*** BLOCKS ***");
 
 # we have seen blocks in the section about functions but code blocks can be used anywhere
 # in place of an expression. they create a local scope for variables.

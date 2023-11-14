@@ -10,6 +10,26 @@
 ### it unwraps an exception (thrown or system error) but leaves normal values as is
 ###
 
+defun f2 x {
+    if x >= 10 {
+        throw 10;
+        @println("unreachable");
+    }
+    if x > 8 {
+        @error("x is 9");
+        @println("unreachable");
+    }
+    if x > 7 {
+        throw @make_error("x is 8");
+        @println("unreachable");
+    }
+    x
+}
+
+defun f1 x {
+    f2(x) * 5
+}
+
 defun unwrap_before_mult x {
     3 * try f1(x) catch x {
         if @is_error(x) { 3 }
@@ -31,25 +51,6 @@ defun try_catch x {
     }
 }
 
-defun f1 x {
-    f2(x) * 5
-}
-
-defun f2 x {
-    if x >= 10 {
-        throw 10;
-        @println("unreachable");
-    }
-    if x > 8 {
-        @error("x is 9");
-        @println("unreachable");
-    }
-    if x > 7 {
-        throw @make_error("x is 8");
-        @println("unreachable");
-    }
-    x
-}
 
 @test("unwrap_before_mult(7)",105);
 @test("unwrap_before_mult(8)",9);

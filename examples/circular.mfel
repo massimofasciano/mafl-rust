@@ -12,7 +12,7 @@ let o = object {
     let p = object {
         let self2 = @self;
         let val = 2;
-        let f = fun val with self1 self2 {
+        let f = fun val {
             [self1.val, self2.val, val]
         }
     }

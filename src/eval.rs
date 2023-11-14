@@ -331,34 +331,32 @@ impl Interpreter {
                     _ => Err(anyhow!("field lookup on non-object/dict: {field}"))?,
                 }
             }
-            ExpressionType::Fun(arg_names, capture_pairs, 
-                    self_names, persist, 
-                    body) => {
+            ExpressionType::Fun(arg_names, body) => {
                 let open_vars = self.open(&ctx.capture(), ast)?;
                 let captured = Context::new();
                 for open_var in open_vars {
-                    println!("*** capturing {}",open_var);
+                    // println!("*** capturing {}",open_var);
                     if let Some(mc) = ctx.get_binding_ref(&open_var) { 
                         captured.add_binding_ref(open_var.to_owned(), mc); 
                     } else {
                         Err(anyhow!("binding not found: {open_var}"))?;
                     };
                 }
-                for (alias, var) in capture_pairs {
-                    if let Some(mc) = ctx.get_binding_ref(var) { 
-                        captured.add_binding_ref(alias.to_owned(), mc); 
-                    } else {
-                        Err(anyhow!("binding not found: {var}"))?;
-                    };
-                }
-                for (alias, value) in persist {
-                    let value = self.eval(ctx, value)?;
-                    captured.add_binding(alias.to_owned(), value); 
-                }
+                // for (alias, var) in capture_pairs {
+                //     if let Some(mc) = ctx.get_binding_ref(var) { 
+                //         captured.add_binding_ref(alias.to_owned(), mc); 
+                //     } else {
+                //         Err(anyhow!("binding not found: {var}"))?;
+                //     };
+                // }
+                // for (alias, value) in persist {
+                //     let value = self.eval(ctx, value)?;
+                //     captured.add_binding(alias.to_owned(), value); 
+                // }
                 let closure : Expression = ExpressionType::Closure(captured.to_owned(), arg_names.to_owned(), body.to_owned()).into();
-                for name in self_names {
-                   captured.add_binding(name.to_owned(), closure.to_owned()); 
-                }
+                // for name in self_names {
+                //    captured.add_binding(name.to_owned(), closure.to_owned()); 
+                // }
                 closure
             }
             ExpressionType::FunctionCall(lambda, arg_values) => {

@@ -4,7 +4,7 @@
 let str = @readfile("Cargo.toml");
 let chars = @array(str);
 let chars2 = @std.iter.map(
-    \x -> if x == '=' { ':' } else { x },
+    fun x { if x == '=' { ':' } else { x } },
     chars
 );
 let str2 = @string(chars2);

@@ -115,7 +115,7 @@ impl Interpreter {
                 open
             }
 
-            ExpressionType::Fun(closed,_,_,_,expr) => {
+            ExpressionType::Fun(closed,expr) => {
                 let ctx = Context::new();
                 for closed_var in closed {
                     ctx.add_binding(closed_var.to_owned(), expression::nil()); 

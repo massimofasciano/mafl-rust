@@ -5,7 +5,7 @@
 
 # we define the range function that creates an iterator for start..end
 defun range start end {
-    fun with start end {
+    fun {
         if start < end {
             let count = start;
             start = start + 1;

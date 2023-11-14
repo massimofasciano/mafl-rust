@@ -1,4 +1,4 @@
-let lines = \{ @readline() };
+let lines = fun { @readline() };
 
 @print("MFEL> ");
 for line in lines {

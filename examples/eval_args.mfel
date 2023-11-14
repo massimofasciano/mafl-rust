@@ -19,5 +19,5 @@ defun f args {
         [f(x),args]
     }
 };
-f({let eval = \str -> @eval(str); map(eval,@env)})
+f({let eval = fun str { @eval(str) }; map(eval,@env)})
 

@@ -50,9 +50,9 @@ a1[0] = 100; # mutate a1 index 0
 # test if all elements are greater than n (using fold)
 defun all_gt n arr { 
     fold(
-        \ x y -> x and y,
+        fun x y {x and y},
         true,
-        map(\x -> x > n,arr)
+        map(fun x {x > n}, arr)
     )
 }
 # test if all elements are greater than n (using filter)

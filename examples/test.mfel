@@ -9,7 +9,7 @@
 ###
 
 let x = 20;
-let f = \x y -> x / y;
+let f = fun x y { x / y };
 
 @test("1 + 5 * 8 / x + f(3,4)",3.75);
 @test("1 + 1",3);
