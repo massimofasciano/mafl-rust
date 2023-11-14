@@ -1,0 +1,18 @@
+{
+
+let x = 10;
+let y = 20;
+let z = 30;
+
+let self = @self;
+
+let f = fun with x (a=y) z self {
+    a += 1;
+    self.z += 100;
+};
+
+f();
+
+@println(x," ",y," ",z);
+};
+

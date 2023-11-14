@@ -18,7 +18,7 @@ module iter () {
         fun with start end {
             if start < end {
                 let count = start;
-                start = start + 1;
+                start += 1;
                 count            
             }
         }

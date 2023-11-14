@@ -104,31 +104,92 @@ impl Interpreter {
                 Rule::fun => {
                     let args = Self::find_tag("arg", &inner)
                         .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                    // let with = Self::find_tag("with", &inner)
+                    //     .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                    // let with_pairs = Self::find_tag("with_pair", &inner)
+                    //     .map(|pair| {
+                    //         let mut inner = pair.to_owned().into_inner();
+                    //         let alias = self.ident(inner.next().expect("need identifier alias").as_str());
+                    //         let var = self.ident(inner.next().expect("need identifier var").as_str());
+                    //         (alias, var)
+                    //     }).collect::<Vec<_>>();
+                    //     let with = Self::find_tag("with", &inner)
+                    //     .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
                     let with = Self::find_tag("with", &inner)
-                        .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                        .map(|pair| -> Result<_> {
+                            let mut inner = pair.to_owned().into_inner();
+                            let alias = self.ident(inner.next().expect("need identifier alias").as_str());
+                            let var = {
+                                if let Some(val) = inner.next() {
+                                    self.ident(val.as_str())
+                                } else {
+                                    alias.to_owned()
+                                }
+                            };
+                            Ok((alias, var))
+                        }).collect::<Result<Vec<_>>>()?;
+                    let persist = Self::find_tag("persist", &inner)
+                        .map(|pair| -> Result<_> {
+                            let mut inner = pair.to_owned().into_inner();
+                            let alias = self.ident(inner.next().expect("need identifier alias").as_str());
+                            let value = {
+                                if let Some(val) = inner.next() {
+                                    self.parse_rule(val)?
+                                } else {
+                                    ExpressionType::Nil.into()
+                                }
+                            };
+                            Ok((alias, value))
+                        }).collect::<Result<Vec<_>>>()?;
                     let as_list = Self::find_tag("as", &inner)
                         .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
                     let body = Self::find_tag("body", &inner).next()
                         .map(|x| self.parse_rule(x.to_owned()))
                         .expect("missing body")?;
-                    ExpressionType::Fun(args,with,as_list,body).into()
+                    ExpressionType::Fun(args,with,as_list,persist,body).into()
                 }
                 Rule::defun => {
                     let name = Self::find_tag("name", &inner).next()
                         .map(|x|self.ident(x.as_str())).expect("missing name");
                     let args = Self::find_tag("arg", &inner)
                         .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                    // let with = Self::find_tag("with", &inner)
+                    //     .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
                     let with = Self::find_tag("with", &inner)
-                        .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
-                    let mutual = Self::find_tag("in", &inner)
+                        .map(|pair| -> Result<_> {
+                            let mut inner = pair.to_owned().into_inner();
+                            let alias = self.ident(inner.next().expect("need identifier alias").as_str());
+                            let var = {
+                                if let Some(val) = inner.next() {
+                                    self.ident(val.as_str())
+                                } else {
+                                    alias.to_owned()
+                                }
+                            };
+                            Ok((alias, var))
+                        }).collect::<Result<Vec<_>>>()?;
+                    let persist = Self::find_tag("persist", &inner)
+                        .map(|pair| -> Result<_> {
+                            let mut inner = pair.to_owned().into_inner();
+                            let alias = self.ident(inner.next().expect("need identifier alias").as_str());
+                            let value = {
+                                if let Some(val) = inner.next() {
+                                    self.parse_rule(val)?
+                                } else {
+                                    ExpressionType::Nil.into()
+                                }
+                            };
+                            Ok((alias, value))
+                        }).collect::<Result<Vec<_>>>()?;
+                    let in_list = Self::find_tag("in", &inner)
                         .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
                     let body = Self::find_tag("body", &inner).next()
                         .map(|x| self.parse_rule(x.to_owned()))
                         .expect("missing body")?;
                     let definition : Expression = ExpressionType::Let(name.to_owned(), 
-                        ExpressionType::Fun(args,with,vec![name.to_owned()],body).into()
+                        ExpressionType::Fun(args,with,vec![name.to_owned()],persist,body).into()
                     ).into();
-                    let mutual_assigns = mutual.into_iter().map(|mutname| {
+                    let mutual_assigns = in_list.into_iter().map(|mutname| {
                         ExpressionType::AssignToExpression(
                             ExpressionType::Field(ExpressionType::Variable(mutname.to_owned()).into(), name.to_owned()).into(),
                             ExpressionType::Variable(name.to_owned()).into()

@@ -17,8 +17,8 @@ block_comment = @{
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
     "return" | "break" | "endblock" | "continue" | "throw" | 
-    "let" | "in" | "bind" |
-    "fun" | "with" | "as" | "defun" | 
+    "let" | "in" | "bind" | "use" |
+    "fun" | "with" | "as" | "defun" | "persist" |
     "context" | "module" | "object" |
     "try" | "catch" |
     "true" | "false" | "nil" |
@@ -67,13 +67,32 @@ array = { "[" ~ (expr ~ ("," ~ expr)*)? ~ "]"}
 
 function_args = { (identifier ~ ("," ~ identifier)*)? }
 
+persist_var = { "(" ~ identifier ~ "=" ~ expr ~ ")" | identifier }
+with_var = { "(" ~ identifier ~ "=" ~ expr ~ ")" | identifier }
 fun = {
-    ( "fun" ~ (#arg = identifier)* ~ ("with" ~ (#with = identifier)+)? ~ ("as" ~ (#as = identifier)+)? ~ (#body = function_block) ) |
+    ( 
+        "fun" ~ (#arg = identifier)* ~ 
+        ( 
+            ("with" ~ ( #with = with_var )+ ) |
+            ("persist" ~ ( #persist = persist_var )+ ) |
+            ("as" ~ (#as = identifier)+ )
+        )* ~ 
+        (#body = function_block) 
+    ) |
     ( "\\" ~ (#arg = identifier)* ~ ( ("->" ~ (#body = expr)) | (#body=function_block) ) )
 }
 
 defun = {
-    "defun" ~ (#name = identifier) ~ (#arg = identifier)* ~ ("with" ~ (#with = identifier)+)? ~ ("in" ~ (#in = identifier)+)? ~ (#body = function_block)
+    // "defun" ~ (#name = identifier) ~ (#arg = identifier)* ~ ("with" ~ (#with = identifier)+)? ~ ("in" ~ (#in = identifier)+)? ~ (#body = function_block)
+    ( 
+        "defun" ~ (#name = identifier) ~ (#arg = identifier)* ~ 
+        ( 
+            ("with" ~ ( #with = with_var )+ ) |
+            ("persist" ~ ( #persist = persist_var )+ ) |
+            ("in" ~ ( #in = identifier )+ )
+        )* ~ 
+        (#body = function_block) 
+    )
 }
 
 context = {

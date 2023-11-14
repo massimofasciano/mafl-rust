@@ -23,6 +23,7 @@ let f2 = fun x with g { x + 10 + g };
 let f3 = \x -> x + 10 + g;
 
 # when more than 1 argument is needed, any whitespace can separate them
+let [a,b,c] = [1,2,3];
 let f4 = fun x y z with a b c { x*a + b/y + z/c };
 
 # sometimes, we need to refer to ourselves for recursive calculations

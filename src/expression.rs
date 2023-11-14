@@ -59,7 +59,7 @@ pub enum ExpressionType {
     Object(Expression),
     Context(Idents,Expression),
     Module(Ident,Idents,Expression),
-    Fun(Idents,Idents,Idents,Expression),
+    Fun(Idents,Vec<(Ident,Ident)>,Idents,Vec<(Ident,Expression)>,Expression),
     Closure(Context,Idents,Expression),
     Array(RefCell<Expressions>),
     Return(Expression),

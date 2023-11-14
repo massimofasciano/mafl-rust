@@ -404,14 +404,20 @@ impl Interpreter {
                     _ => Err(anyhow!("field lookup on non-object/dict: {field}"))?,
                 }
             }
-            ExpressionType::Fun(arg_names, capture_names, self_names, body) => {
+            ExpressionType::Fun(arg_names, capture_pairs, 
+                    self_names, persist, 
+                    body) => {
                 let captured = Context::new();
-                for name in capture_names {
-                    if let Some(mc) = ctx.get_binding_ref(name) { 
-                        captured.add_binding_ref(name.to_owned(), mc); 
+                for (alias, var) in capture_pairs {
+                    if let Some(mc) = ctx.get_binding_ref(var) { 
+                        captured.add_binding_ref(alias.to_owned(), mc); 
                     } else {
-                        captured.add_binding(name.to_owned(), expression::nil()); 
+                        Err(anyhow!("binding not found: {var}"))?;
                     };
+                }
+                for (alias, value) in persist {
+                    let value = self.eval(ctx, value)?;
+                    captured.add_binding(alias.to_owned(), value); 
                 }
                 let closure : Expression = ExpressionType::Closure(captured.to_owned(), arg_names.to_owned(), body.to_owned()).into();
                 for name in self_names {
