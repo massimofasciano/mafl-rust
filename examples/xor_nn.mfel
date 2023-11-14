@@ -12,13 +12,13 @@ module Model() {
             defun sigmoid x {
                 1.0/(1.0+@exp(-x))
             }
-            defun forward x1 x2 with sigmoid w_x1_h1 w_x1_h2 w_x2_h1 w_x2_h2 w_b1_h1 w_b1_h2 w_h1_out w_h2_out w_b2_out {
+            defun forward x1 x2 {
                 let h1 = sigmoid(x1 * w_x1_h1 + x2 * w_x2_h1 + w_b1_h1);
                 let h2 = sigmoid(x1 * w_x1_h2 + x2 * w_x2_h2 + w_b1_h2);
                 let out = sigmoid(h1 * w_h1_out + h2 * w_h2_out + w_b2_out);
                 [h1,h2,out]
             }
-            defun backward out x1 x2 y h1 h2 learning_rate with w_x1_h1 w_x1_h2 w_x2_h1 w_x2_h2 w_b1_h1 w_b1_h2 w_h1_out w_h2_out w_b2_out {
+            defun backward out x1 x2 y h1 h2 learning_rate {
                 let grad_out = out * (1.0 - out) * (y - out);
                 let grad_h1 = h1 * (1.0 - h1) * w_h1_out * grad_out;
                 let grad_h2 = h2 * (1.0 - h2) * w_h2_out * grad_out;
@@ -38,12 +38,12 @@ module Model() {
                 let loss = 0.5*diff*diff;
                 loss
             }
-            defun __str__ with w_x1_h1 w_x1_h2 w_x2_h1 w_x2_h2 w_b1_h1 w_b1_h2 w_h1_out w_h2_out w_b2_out {
+            defun __str__ {
                 "Model(" + w_x1_h1 + "," + w_x1_h2 + "," + w_x2_h1 + "," + w_x2_h2 + "," +
                 w_b1_h1 + "," + w_b1_h2 + "," + w_h1_out + "," + w_h2_out + "," + w_b2_out + ")"
             }
 
-            defun train epochs learning_rate target_loss data with forward backward self {
+            defun train epochs learning_rate target_loss data {
                 let trace_steps = epochs // 10;
                 let range = @std.iter.range;
                 let start = @now();

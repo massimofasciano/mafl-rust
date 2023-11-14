@@ -376,7 +376,10 @@ impl Interpreter {
                         self.builtin_fn(ctx, name, &eval_args)?
                     }
                     ExpressionType::Closure(closure_ctx, arg_names, body) => {
-                        let function_ctx = ctx.with_context(closure_ctx.to_owned());
+                        // dynamic binding (default to global)
+                        // let function_ctx = ctx.with_context(closure_ctx.to_owned());
+                        // lexical binding (default to empty)
+                        let function_ctx = Context::new().with_context(closure_ctx.to_owned());
                         for (name,value) in arg_names.iter().zip(arg_values) {
                             let value = self.eval(ctx,value)?;
                             // propagate exception

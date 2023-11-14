@@ -1,0 +1,6 @@
+let x = 10;
+fun {
+    let x = 1;
+    let x = x + 1;
+    x
+}

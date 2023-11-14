@@ -26,7 +26,6 @@ impl Interpreter {
             ExpressionType::String(_)
                 => HashSet::new(),
 
-            ExpressionType::Object(expr) |
             ExpressionType::Field(expr, _) |
             ExpressionType::Loop(expr) |
             ExpressionType::UnaryOpCall(_, expr) |
@@ -46,8 +45,9 @@ impl Interpreter {
                 open
             }
 
-            ExpressionType::FunctionCall(_, exprs) => {
+            ExpressionType::FunctionCall(expr, exprs) => {
                 let mut open = HashSet::new();
+                open.extend(self.open(ctx, expr)?);
                 for expr in exprs {
                     open.extend(self.open(ctx, expr)?);
                 }
@@ -110,10 +110,15 @@ impl Interpreter {
             }
 
             ExpressionType::Fun(closed,_,_,_,expr) => {
+                let ctx = Context::new();
                 for closed_var in closed {
                     ctx.add_binding(closed_var.to_owned(), expression::nil()); 
                 }
-                self.open(ctx, expr)?
+                let mut open = self.open(&ctx, expr)?;
+                for closed_var in closed {
+                    open.remove(closed_var);
+                }
+                open                
             }
 
             ExpressionType::Context(closed, expr) => {
@@ -121,16 +126,31 @@ impl Interpreter {
                 for closed_var in closed {
                     ctx.add_binding(closed_var.to_owned(), expression::nil()); 
                 }
-                self.open(&ctx, expr)?
+                let mut open = self.open(&ctx, expr)?;
+                for closed_var in closed {
+                    open.remove(closed_var);
+                }
+                open                
+            }
+
+            ExpressionType::Object(expr) => {
+                let ctx = Context::new();
+                let mut open = self.open(&ctx, expr)?;
+                open                
             }
 
             ExpressionType::Module(closed_var, closed, expr) => {
-                let local_ctx = Context::new();
-                local_ctx.add_binding(closed_var.to_owned(), expression::nil()); 
+                let ctx = Context::new();
+                ctx.add_binding(closed_var.to_owned(), expression::nil()); 
                 for closed_var in closed {
-                    local_ctx.add_binding(closed_var.to_owned(), expression::nil()); 
+                    ctx.add_binding(closed_var.to_owned(), expression::nil()); 
                 }
-                self.open(&local_ctx, expr)?
+                let mut open = self.open(&ctx, expr)?;
+                open.remove(closed_var);
+                for closed_var in closed {
+                    open.remove(closed_var);
+                }
+                open                
             }
 
             _ => {
