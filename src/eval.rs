@@ -78,17 +78,6 @@ impl Interpreter {
                 last_value
             }
 
-            ExpressionType::BindIn(id, value, container) => {
-                let container = self.eval(ctx,container)?;
-                let value = self.eval(ctx,value)?;
-                match container.as_ref() {
-                    ExpressionType::Closure(cctx,_,_) => {
-                        cctx.add_binding(id.to_owned(), value.to_owned());
-                        value.to_owned()
-                    }
-                    _ => Err(anyhow!("bind {id}"))?,
-                }
-            }
             ExpressionType::Let(id, val) => {
                 let val = self.eval(ctx,val)?;
                 ctx.add_binding(id.to_owned(), val.to_owned());
@@ -342,21 +331,7 @@ impl Interpreter {
                         Err(anyhow!("binding not found: {open_var}"))?;
                     };
                 }
-                // for (alias, var) in capture_pairs {
-                //     if let Some(mc) = ctx.get_binding_ref(var) { 
-                //         captured.add_binding_ref(alias.to_owned(), mc); 
-                //     } else {
-                //         Err(anyhow!("binding not found: {var}"))?;
-                //     };
-                // }
-                // for (alias, value) in persist {
-                //     let value = self.eval(ctx, value)?;
-                //     captured.add_binding(alias.to_owned(), value); 
-                // }
                 let closure : Expression = ExpressionType::Closure(captured.to_owned(), arg_names.to_owned(), body.to_owned()).into();
-                // for name in self_names {
-                //    captured.add_binding(name.to_owned(), closure.to_owned()); 
-                // }
                 closure
             }
             ExpressionType::FunctionCall(lambda, arg_values) => {

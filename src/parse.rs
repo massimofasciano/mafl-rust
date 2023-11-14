@@ -104,38 +104,9 @@ impl Interpreter {
                 Rule::fun => {
                     let args = Self::find_tag("arg", &inner)
                         .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
-                    // let with = Self::find_tag("with", &inner)
-                    //     .map(|pair| -> Result<_> {
-                    //         let mut inner = pair.to_owned().into_inner();
-                    //         let alias = self.ident(inner.next().expect("need identifier alias").as_str());
-                    //         let var = {
-                    //             if let Some(val) = inner.next() {
-                    //                 self.ident(val.as_str())
-                    //             } else {
-                    //                 alias.to_owned()
-                    //             }
-                    //         };
-                    //         Ok((alias, var))
-                    //     }).collect::<Result<Vec<_>>>()?;
-                    // let persist = Self::find_tag("persist", &inner)
-                    //     .map(|pair| -> Result<_> {
-                    //         let mut inner = pair.to_owned().into_inner();
-                    //         let alias = self.ident(inner.next().expect("need identifier alias").as_str());
-                    //         let value = {
-                    //             if let Some(val) = inner.next() {
-                    //                 self.parse_rule(val)?
-                    //             } else {
-                    //                 ExpressionType::Nil.into()
-                    //             }
-                    //         };
-                    //         Ok((alias, value))
-                    //     }).collect::<Result<Vec<_>>>()?;
-                    // let as_list = Self::find_tag("as", &inner)
-                    //     .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
                     let body = Self::find_tag("body", &inner).next()
                         .map(|x| self.parse_rule(x.to_owned()))
                         .expect("missing body")?;
-                    // ExpressionType::Fun(args,with,as_list,persist,body).into()
                     ExpressionType::Fun(args,body).into()
                 }
                 Rule::defun => {
@@ -143,54 +114,9 @@ impl Interpreter {
                         .map(|x|self.ident(x.as_str())).expect("missing name");
                     let args = Self::find_tag("arg", &inner)
                         .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
-                    // let with = Self::find_tag("with", &inner)
-                    //     .map(|pair| -> Result<_> {
-                    //         let mut inner = pair.to_owned().into_inner();
-                    //         let alias = self.ident(inner.next().expect("need identifier alias").as_str());
-                    //         let var = {
-                    //             if let Some(val) = inner.next() {
-                    //                 self.ident(val.as_str())
-                    //             } else {
-                    //                 alias.to_owned()
-                    //             }
-                    //         };
-                    //         Ok((alias, var))
-                    //     }).collect::<Result<Vec<_>>>()?;
-                    // let persist = Self::find_tag("persist", &inner)
-                    //     .map(|pair| -> Result<_> {
-                    //         let mut inner = pair.to_owned().into_inner();
-                    //         let alias = self.ident(inner.next().expect("need identifier alias").as_str());
-                    //         let value = {
-                    //             if let Some(val) = inner.next() {
-                    //                 self.parse_rule(val)?
-                    //             } else {
-                    //                 ExpressionType::Nil.into()
-                    //             }
-                    //         };
-                    //         Ok((alias, value))
-                    //     }).collect::<Result<Vec<_>>>()?;
-                    // let in_list = Self::find_tag("in", &inner)
-                    //     .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
                     let body = Self::find_tag("body", &inner).next()
                         .map(|x| self.parse_rule(x.to_owned()))
                         .expect("missing body")?;
-                    // let definition : Expression = ExpressionType::Let(name.to_owned(), 
-                    //     // ExpressionType::Fun(args,with,vec![name.to_owned()],persist,body).into()
-                    //     ExpressionType::Fun(args,body).into()
-                    // ).into();
-                    // let mutual_assigns = in_list.into_iter().map(|mutname| {
-                    //     ExpressionType::AssignToExpression(
-                    //         ExpressionType::Field(ExpressionType::Variable(mutname.to_owned()).into(), name.to_owned()).into(),
-                    //         ExpressionType::Variable(name.to_owned()).into()
-                    //     ).into()
-                    // });
-                    // let mut sequence = vec![definition.to_owned()];
-                    // sequence.extend(mutual_assigns);
-                    // if sequence.len() == 1 {
-                    //     definition
-                    // } else {
-                    //     ExpressionType::Block{r#type: BlockType::Sequence, body: sequence}.into()
-                    // }
                     ExpressionType::Block{r#type: BlockType::Sequence, body: vec![
                         ExpressionType::Let(name.to_owned(), ExpressionType::Nil.into()).into(), 
                         ExpressionType::AssignToExpression(
@@ -241,23 +167,6 @@ impl Interpreter {
                         self.parse_rule(inner[2].clone())?
                     };
                     ExpressionType::If(cond, then, r#else).into()
-                } 
-                Rule::bind => {
-                    assert!(!inner.is_empty() || inner.len() <= 3);
-                    let var = self.ident(inner[0].as_str());
-                    if inner.len() == 1 {
-                        let value = ExpressionType::Variable(var.to_owned()).into();
-                        let body = ExpressionType::Variable(var.to_owned()).into();
-                        ExpressionType::BindIn(var, value, body).into()
-                    } else if inner.len() == 2 {
-                        let value = ExpressionType::Variable(var.to_owned()).into();
-                        let body = self.parse_rule(inner[1].clone())?;
-                        ExpressionType::BindIn(var, value, body).into()
-                    } else {
-                        let value = self.parse_rule(inner[1].clone())?;
-                        let body = self.parse_rule(inner[2].clone())?;
-                        ExpressionType::BindIn(var, value, body).into()
-                    }
                 } 
                 Rule::r#let => {
                     assert!(inner.len() == 1 || inner.len() == 2);
@@ -485,7 +394,7 @@ impl Interpreter {
             Rule::expr_prefix | Rule::expr_exp | Rule::expr_ref |
             Rule::context | Rule::module | Rule::defun |
             Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
-            Rule::assign | Rule::object | Rule::bind | Rule::fun |
+            Rule::assign | Rule::object | Rule::fun |
             Rule::r#let | Rule::r#loop | Rule::r#for | Rule::try_catch |
             Rule::endblock | Rule::r#break | Rule::throw | 
             Rule::infix_identifier | Rule::r#return => {

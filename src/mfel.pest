@@ -17,7 +17,7 @@ block_comment = @{
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
     "return" | "break" | "endblock" | "continue" | "throw" | 
-    "let" | "in" | "bind" | "use" |
+    "let" | "in" | "use" |
     "fun" | "with" | "as" | "defun" | "persist" |
     "context" | "module" | "object" |
     "try" | "catch" |
@@ -72,11 +72,6 @@ with_var = { "(" ~ identifier ~ "=" ~ expr ~ ")" | identifier }
 fun = {
     ( 
         "fun" ~ (#arg = identifier)* ~ 
-        // ( 
-        //     ("with" ~ ( #with = with_var )+ ) |
-        //     ("persist" ~ ( #persist = persist_var )+ ) |
-        //     ("as" ~ (#as = identifier)+ )
-        // )* ~ 
         (#body = function_block) 
     ) |
     ( "\\" ~ (#arg = identifier)* ~ ( ("->" ~ (#body = expr)) | (#body=function_block) ) )
@@ -85,11 +80,6 @@ fun = {
 defun = {
     ( 
         "defun" ~ (#name = identifier) ~ (#arg = identifier)* ~ 
-        // ( 
-        //     ("with" ~ ( #with = with_var )+ ) |
-        //     ("persist" ~ ( #persist = persist_var )+ ) |
-        //     ("in" ~ ( #in = identifier )+ )
-        // )* ~ 
         (#body = function_block) 
     )
 }
@@ -138,10 +128,6 @@ identifier_array = { "[" ~ (identifier ~ ("," ~ identifier)*)? ~ "]"}
 
 let = {
     "let" ~ (identifier | identifier_array) ~ ("=" ~ expr)?
-}
-
-bind = {
-    "bind" ~ identifier ~ (("=" ~ expr)? ~ "in" ~ expr)?
 }
 
 field_access = { "." ~ identifier }
@@ -241,7 +227,7 @@ expr_base = _{
     defun | fun | assign | context | module | object | 
     continue | 
     boolean | float | integer | string_literal | char_literal | 
-    variable | let | return | break | endblock | throw | bind
+    variable | let | return | break | endblock | throw 
 }
 
 // expressions that behave like blocks
