@@ -9,7 +9,7 @@ defun sigmoid x {
     1.0/(1.0+@exp(-x))
 }
 
-class Model w_x1_h1 w_x1_h2 w_x2_h1 w_x2_h2 w_b1_h1 w_b1_h2 w_h1_out w_h2_out w_b2_out {
+defcon Model w_x1_h1 w_x1_h2 w_x2_h1 w_x2_h2 w_b1_h1 w_b1_h2 w_h1_out w_h2_out w_b2_out {
     let self = @self;
 
     defun forward x1 x2 {
