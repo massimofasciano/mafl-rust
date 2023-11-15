@@ -325,6 +325,17 @@ impl Interpreter {
                     };
                     ExpressionType::Throw(body).into() 
                 },
+                Rule::proto => { 
+                    let caps = Self::find_tag("capture", &inner)
+                        .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                    let opt_extends = Self::find_tag("extends", &inner).next()
+                        .map(|x| self.parse_rule(x.to_owned()))
+                        .map_or(Ok(None), |v| v.map(Some))?;
+                    let body = Self::find_tag("body", &inner).next()
+                        .map(|x| self.parse_rule(x.to_owned()))
+                        .expect("missing body")?;
+                    ExpressionType::Proto(caps,opt_extends,body).into()
+                },
                 Rule::infix_identifier => { 
                     assert!(inner.len() == 1);
                     let id = self.ident(inner[0].as_str());
@@ -396,7 +407,7 @@ impl Interpreter {
             Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
             Rule::assign | Rule::object | Rule::fun |
             Rule::r#let | Rule::r#loop | Rule::r#for | Rule::try_catch |
-            Rule::endblock | Rule::r#break | Rule::throw | 
+            Rule::endblock | Rule::r#break | Rule::throw | Rule::proto |
             Rule::infix_identifier | Rule::r#return => {
                 let rule = parsed.as_rule();
                 let str = parsed.as_str().to_owned();

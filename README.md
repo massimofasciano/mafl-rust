@@ -8,6 +8,11 @@ FEATURES:
 
 TODO:
 
+- don't forget to update open vars when adding new constructs!!! (like inheritance or with)  *****
+
+- context should take ref
+- replace context with object ?
+
 - field (object) based builtins like .copy() .string() .map() ?
 
 - curry @builtin and op (LUT for builtins with fixed arg list, op syntax maybe ?)

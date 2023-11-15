@@ -60,6 +60,7 @@ pub enum ExpressionType {
     Loop(Expression),
     Object(Expression),
     Context(Idents,Expression),
+    Proto(Idents,Option<Expression>,Expression),
     Module(Ident,Idents,Expression),
     Fun(Idents,Expression),
     Closure(Context,Idents,Expression),

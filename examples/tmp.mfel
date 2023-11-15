@@ -1,3 +1,5 @@
+(#
+
 #pre (auto generated)
 
 
@@ -34,3 +36,33 @@ y = _o.y;
 
 y -= 21;
 f1(1)
+
+#)
+
+let z = 100;
+
+let p1 = proto {
+    let x = 10;
+};
+@println(p1);
+
+let p2 = proto extends p1 with z {
+    let y = x + 1;
+};
+@println(p2);
+
+let p3 = proto with z {
+    z += 1;
+};
+@println(p3);
+
+@println(z);
+
+p2.x += 1;
+@println(p2);
+@println(p1);
+
+let a;
+let b;
+let c;
+proto with z extends (proto with a with b c {}) with p1 {}

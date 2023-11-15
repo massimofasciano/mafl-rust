@@ -18,7 +18,7 @@ reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
     "return" | "break" | "endblock" | "continue" | "throw" | 
     "let" | "in" | "use" |
-    "fun" | "with" | "as" | "defun" | "persist" |
+    "fun" | "with" | "as" | "defun" | "persist" | "proto" | "extends" |
     "context" | "module" | "object" |
     "try" | "catch" |
     "true" | "false" | "nil" |
@@ -67,8 +67,8 @@ array = { "[" ~ (expr ~ ("," ~ expr)*)? ~ "]"}
 
 function_args = { (identifier ~ ("," ~ identifier)*)? }
 
-persist_var = { "(" ~ identifier ~ "=" ~ expr ~ ")" | identifier }
-with_var = { "(" ~ identifier ~ "=" ~ expr ~ ")" | identifier }
+// persist_var = { "(" ~ identifier ~ "=" ~ expr ~ ")" | identifier }
+// with_var = { "(" ~ identifier ~ "=" ~ expr ~ ")" | identifier }
 fun = {
     ("fun" | "\\" ) ~ (#arg = identifier)* ~ (#body = function_block) 
 }
@@ -79,6 +79,14 @@ defun = {
 
 context = {
     "context" ~ "(" ~ function_args ~ ")" ~ ( ("in" ~ expr) | block )
+}
+
+proto = {
+    "proto" ~ 
+    ( "with" ~ (#capture = identifier)* )? ~ 
+    ( "extends" ~ (#extends = expr) )? ~ 
+    ( "with" ~ (#capture = identifier)* )? ~ 
+    (#body = block_syntax)
 }
 
 module = {
@@ -220,11 +228,11 @@ expr_base = _{
     defun | fun | assign | context | module | object | 
     continue | 
     boolean | float | integer | string_literal | char_literal | 
-    variable | let | return | break | endblock | throw 
+    variable | let | return | break | endblock | throw | proto
 }
 
 // expressions that behave like blocks
-expr_block = _{ block | if | while | unless | loop | for | module | try_catch | defun }
+expr_block = _{ block | if | while | unless | loop | for | module | try_catch | defun | proto }
 
 semicolons = _{ ";" ~ semicolons | ";" }
 nil_implicit = { "" }

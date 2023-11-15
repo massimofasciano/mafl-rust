@@ -334,6 +334,7 @@ impl Interpreter {
                 let closure : Expression = ExpressionType::Closure(captured.to_owned(), arg_names.to_owned(), body.to_owned()).into();
                 closure
             }
+
             ExpressionType::FunctionCall(lambda, arg_values) => {
                 match self.eval(ctx,lambda)?.as_ref() {
                     ExpressionType::BuiltinFunction(name) => {
@@ -383,6 +384,7 @@ impl Interpreter {
                 let cap_ctx = ctx.capture();
                 expression::context(cap_ctx.to_owned())
             }
+
             ExpressionType::Context(arg_names, body) => {
                 let local_ctx = Context::new();
                 for name in arg_names {
@@ -392,6 +394,7 @@ impl Interpreter {
                 }
                 self.eval(&local_ctx, body)?
             }
+
             ExpressionType::Module(modname, arg_names, body) => {
                 let local_ctx = Context::new();
                 for name in arg_names {
@@ -404,6 +407,36 @@ impl Interpreter {
                 ctx.add_binding(modname.to_owned(), captured);
                 val
             }
+
+            ExpressionType::Proto(captures, extends, body) => {
+                // create new context based on extends or empty if no extends present
+                let new_ctx = if let Some(extends) = extends {
+                    let closure = self.eval(ctx, extends)?;
+                    match closure.as_ref() {
+                        ExpressionType::Closure(cctx,_,_) => {
+                            Context::new().with_context(cctx.to_owned())
+                        }
+                        _ => Err(anyhow!("with on non-closure"))?
+                    }
+                } else {
+                    Context::new()
+                };
+                // bind all captured identifiers by ref (from old to new context)
+                for cap in captures {
+                    println!("*** proto capturing {}", cap);
+                    if let Some(mc) = ctx.get_binding_ref(cap) { 
+                        new_ctx.add_binding_ref(cap.to_owned(), mc.to_owned()); 
+                    } else {
+                        Err(anyhow!("binding not found: {cap}"))?;
+                    }
+                }
+                // evaluate the body in the new context
+                self.eval(&new_ctx, body)?;
+                // capture the context from the body in a closure and return it
+                // let cap_ctx = new_ctx.capture();
+                expression::context(new_ctx.to_owned())
+            }
+
             ExpressionType::BinOpCall(op, left, right) => {
                 if let Operator::And = op {
                     return builtin::and_lazy(self,ctx,left,right);

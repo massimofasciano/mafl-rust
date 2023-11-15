@@ -584,7 +584,7 @@ pub fn shallow_copy(_: &Context, val: &Expression) -> Result<Expression> {
         }
         ExpressionType::Closure(cctx,args,body) => {
             let copy = cctx.bindings_cloned();
-            let new_ctx = cctx.with_bindings(copy);
+            let new_ctx = Context::from_bindings(copy);
             expression::closure(new_ctx.to_owned(), args.to_owned(), body.to_owned())
         }
         _ => val.to_owned(),
@@ -604,7 +604,7 @@ pub fn deep_copy(ctx: &Context, val: &Expression) -> Result<Expression> {
             let copyrec = cctx.bindings_cloned().into_iter().map(|(k,v)| {
                 (k, MemCell::new_ref(deep_copy(ctx, &v.get()).unwrap()))
             }).collect::<Bindings>();
-            let new_ctx = cctx.with_bindings(copyrec);
+            let new_ctx = Context::from_bindings(copyrec);
             expression::closure(new_ctx.to_owned(), args.to_owned(), body.to_owned())
         }
         _ => val.to_owned(),

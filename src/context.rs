@@ -217,7 +217,7 @@ impl Context {
         debug!("bindings cloned");
         self.bindings_ref().into_iter().map(| (k, rc) | { (k, rc.duplicate_ref()) }).collect()
     }
-    pub fn with_bindings(&self, bindings: Bindings) -> Self {
+    pub fn from_bindings(bindings: Bindings) -> Self {
         debug!("with bindings");
         let scope = Scope::new();
         *scope.bindings.borrow_mut() = bindings;
