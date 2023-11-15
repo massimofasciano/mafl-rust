@@ -215,10 +215,10 @@ impl Interpreter {
                     let opt_val = Self::find_tag("val", &inner).next()
                         .map(|x| self.parse_rule(x.to_owned()))
                         .map_or(Ok(None), |v| v.map(Some))?;
-                    let val = opt_val.unwrap_or(expression::nil());
                     match var_rule.as_rule() {
                         Rule::identifier => {
                             let var = self.ident(var_rule.as_str());
+                            let val = opt_val.unwrap_or(expression::nil());
                             if rec {
                                 // let f; f = ... (recursive binding)
                                 ExpressionType::Block{r#type: BlockType::Sequence, body: vec![
@@ -236,6 +236,7 @@ impl Interpreter {
                             let vars = var_rule.clone().into_inner().map(|pair| {
                                 self.ident(pair.as_str())
                             }).collect();
+                            let val = opt_val.expect("need a value for array let");
                             ExpressionType::LetArray(vars, val).into()
                         }
                         _ => Err(anyhow!("bad let syntax {:?}", var_rule.as_rule()))?,

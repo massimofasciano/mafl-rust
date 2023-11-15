@@ -192,6 +192,24 @@ impl Interpreter {
                         _ => Err(anyhow!("index assign on non-array"))?
                         }
                     }
+                    // this requires a special expression type
+                    // ExpressionType::Array(rc) => {
+                    //     let vars = rc.borrow().to_owned();
+                    //     if let ExpressionType::Array(rc_val) = val.as_ref() {
+                    //         let vals = rc_val.borrow().to_owned();
+                    //         for (var, val) in vars.iter().zip(vals) {
+                    //             if let ExpressionType::String(id) = var.as_ref() {
+                    //                 self.eval(ctx, &ExpressionType::AssignToExpression(
+                    //                     ExpressionType::Variable(id.to_owned()).into(), val).into())?;
+                    //             } else {
+                    //                 Err(anyhow!("assign to non-identifier"))?
+                    //             }
+                    //         }
+                    //     } else {
+                    //         Err(anyhow!("array assign on non-array"))?
+                    //     }
+                    //     val.to_owned()
+                    // }
                     _ => ast.to_error()?,
                 }
             }

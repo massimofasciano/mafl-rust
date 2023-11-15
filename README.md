@@ -12,6 +12,20 @@ TODO:
 
 - implement USE expr (to import all symbols from closure expr by ref flattened)
 
+- array assign and let rec parallel
+[a,b,c] = [1,2,3]
+
+let rec [a,b,c] = [1,2,3];   
+IS
+let [a,b,c] = [nil,nil,nil];
+[a,b,c] = [1,2,3];
+OR
+let a; let b; let c;
+a = [1,2,3][0];
+b = [1,2,3][1];
+c = [1,2,3][2];
+(check lenghts before)
+
 - constructor is fun that returns @self
 - defcon defines constructor (useful ?)
 - module is zero-arg constructor that is immediately called with zero args (creating an object)
