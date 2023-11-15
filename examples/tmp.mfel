@@ -51,9 +51,13 @@ let p2 = proto extends p1 with z {
 };
 @println(p2);
 
-let p3 = proto with z {
+#let p3 = proto with z {
+#    z += 1;
+#};
+let p3 = fun {
     z += 1;
-};
+    @self
+}();
 @println(p3);
 
 @println(z);
@@ -76,4 +80,16 @@ let p4 = fun {
 
 @debugln(p4);
 
-@std.array.map(\x{x+1},[1,2,3])
+let c1 = proto {
+    let count = 0;
+    defcon new y {
+        count += 1;
+        let x = 1;
+        defun __str__ {
+            "c1("+x+","+y+")#"+count
+        }
+    }
+};
+
+@println(c1.new(3));
+@println(c1.new(4));

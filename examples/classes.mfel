@@ -6,36 +6,33 @@
 ###  to class variables and methods
 ###
 
-module Point () {
+let Point = fun {
     let count = 0; # class variable
-    defun new x y {
+    defcon new x y {
         count += 1;
-        object {
-            defun add point {
-                new(x + point.x,y + point.y)
-            }
-            defun add_assign point {
-                x += point.x;
-                y += point.y;
-            }
-            defun __str__ {
-                "Point("+x+","+y+")"
-            }
-            @println("=> point instance ",count,": ",__str__());
+        defun add point {
+            new(x + point.x,y + point.y)
         }
+        defun add_assign point {
+            x += point.x;
+            y += point.y;
+        }
+        defun __str__ {
+            "Point("+x+","+y+")"
+        }
+        @println("=> point instance ",count,": ",__str__());
     }
-}
+    @self
+}();
 
-defun Counter start end {
-    object {
-        defun count {
-            if start > end {
-                return nil;
-            }
-            let count = start;
-            start += 1;
-            count
+defcon Counter start end {
+    defun count {
+        if start > end {
+            return nil;
         }
+        let count = start;
+        start += 1;
+        count
     }
 }
 

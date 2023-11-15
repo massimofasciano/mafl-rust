@@ -18,8 +18,8 @@ reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
     "return" | "break" | "endblock" | "continue" | "throw" | 
     "let" | "in" | "use" |
-    "fun" | "with" | "as" | "defun" | "persist" | "proto" | "extends" |
-    "context" | "module" | "object" |
+    "fun" | "with" | "defun" | "proto" | "extends" |
+    "module" | "class" |
     "try" | "catch" |
     "true" | "false" | "nil" |
     "and" | "or" | "not"
@@ -67,34 +67,36 @@ array = { "[" ~ (expr ~ ("," ~ expr)*)? ~ "]"}
 
 function_args = { (identifier ~ ("," ~ identifier)*)? }
 
-// persist_var = { "(" ~ identifier ~ "=" ~ expr ~ ")" | identifier }
-// with_var = { "(" ~ identifier ~ "=" ~ expr ~ ")" | identifier }
 fun = {
-    ("fun" | "\\" ) ~ (#arg = identifier)* ~ (#body = function_block) 
+    ("fun" | "\\" ) ~ "("? ~ (#arg = identifier ~ ","?)* ~ ")"? ~ (#body = function_block) 
 }
 
+fun_type = { "defun" | "defcon" }
 defun = {
-    "defun" ~ (#name = identifier) ~ (#arg = identifier)* ~ (#body = function_block) 
+    (#fun_type = fun_type) ~ (#name = identifier) ~ (#arg = identifier)* ~ (#body = function_block) 
 }
 
 context = {
-    "context" ~ "(" ~ function_args ~ ")" ~ ( ("in" ~ expr) | block )
+    // "context" ~ "(" ~ function_args ~ ")" ~ ( ("in" ~ expr) | block )
+    "DEPRECATED"
 }
 
 proto = {
-    "proto" ~ 
-    ( "with" ~ (#capture = identifier)* )? ~ 
+    ("proto"|"module") ~ 
+    ( "with" ~ "("? ~ (#capture = identifier ~ ","?)* ~ ")"? )? ~ 
     ( "extends" ~ (#extends = expr) )? ~ 
-    ( "with" ~ (#capture = identifier)* )? ~ 
+    ( "with" ~ "("? ~ (#capture = identifier ~ ","?)* ~ ")"? )? ~ 
     (#body = block_syntax)
 }
 
 module = {
-    "module" ~ identifier ~ "(" ~ function_args ~ ")" ~ block_syntax
+    // "module" ~ identifier ~ "(" ~ function_args ~ ")" ~ block_syntax
+    "DEPRECATED"
 }
 
 object = {
-    "object" ~ block_syntax
+    // "object" ~ block_syntax
+    "DEPRECATED"
 }
 
 if = {

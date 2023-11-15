@@ -10,6 +10,13 @@ TODO:
 
 - don't forget to update open vars when adding new constructs!!! (like inheritance or with)  *****
 
+- implement USE expr (to import all symbols from closure expr by ref flattened)
+
+- constructor is fun that returns @self
+- defcon defines constructor (useful ?)
+- module is zero-arg constructor that is immediately called with zero args (creating an object)
+- defmod defines module ?
+
 - context should take ref
 - replace context with object ?
 
