@@ -38,10 +38,10 @@ module iter () {
         acc
     }
     defun sum iter {
-        fold(\x y -> x+y, 0, iter)
+        fold(\x y{x+y}, 0, iter)
     }
     defun prod iter {
-        fold(\x y -> x*y, 1, iter)
+        fold(\x y{x*y}, 1, iter)
     }
     defun filter f iter {
         let out = @array(0,nil);

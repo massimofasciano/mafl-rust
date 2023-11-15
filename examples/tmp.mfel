@@ -1,4 +1,36 @@
-for z in [1,2,3] {
-    fun { z }
+#pre (auto generated)
+
+
+let f1;
+let f2;
+let y;
+
+{
+##################################
+# mutual f1 f2 y ...
+
+# need a unique temp name here instead of _o
+let _o = object {
+defun f1 x { 
+    if x > 40 { x }
+    else { f2(x,y) }
 }
 
+defun f2 a b { 
+    f1(a+b) 
+}
+
+let y = 30;
+};
+##################################
+
+#post (auto generated)
+
+f1 = _o.f1;
+f2 = _o.f2;
+y = _o.y;
+
+}
+
+y -= 21;
+f1(1)

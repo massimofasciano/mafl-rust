@@ -168,21 +168,21 @@ defun f2 x {
 f1.f2 = f2;
 
 ###
-### a shortcut for small functions: \ ... -> expr
+### a shortcut: \ instead of fun
 ###
 
-@println("*** \\ -> SHORTCUT ***");
+@println("*** \\ = fun ***");
 
-let f = \x -> x + 1;
+let f = \x{x+1};
 # equivalent to let f = fun x { x + 1 }
 @test("f(1)",2);
 
 # works with multiple arguments
-let f = \x y z -> x * y * z;
+let f = \x y z {x * y * z};
 @test("f(1,2,3)",6);
 
-# works with no arguments (but looks strange)
-let f = \->1;
+# works with no arguments
+let f = \{1};
 @test("f()",1);
 
 # this short syntax looks good when passing a function to another function (with map, filter, etc...)

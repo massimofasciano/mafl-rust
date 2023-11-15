@@ -70,18 +70,11 @@ function_args = { (identifier ~ ("," ~ identifier)*)? }
 persist_var = { "(" ~ identifier ~ "=" ~ expr ~ ")" | identifier }
 with_var = { "(" ~ identifier ~ "=" ~ expr ~ ")" | identifier }
 fun = {
-    ( 
-        "fun" ~ (#arg = identifier)* ~ 
-        (#body = function_block) 
-    ) |
-    ( "\\" ~ (#arg = identifier)* ~ ( ("->" ~ (#body = expr)) | (#body=function_block) ) )
+    ("fun" | "\\" ) ~ (#arg = identifier)* ~ (#body = function_block) 
 }
 
 defun = {
-    ( 
-        "defun" ~ (#name = identifier) ~ (#arg = identifier)* ~ 
-        (#body = function_block) 
-    )
+    "defun" ~ (#name = identifier) ~ (#arg = identifier)* ~ (#body = function_block) 
 }
 
 context = {
