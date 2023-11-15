@@ -95,3 +95,6 @@ let c1 = module {
 
 @println(c1.new(3));
 @println(c1.new(4));
+
+let rec f = \x { f(x) };
+f

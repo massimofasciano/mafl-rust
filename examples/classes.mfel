@@ -8,7 +8,7 @@
 
 let Point = module {
     let count = 0; # class variable
-    let new; new = cons x y {
+    let rec new = cons x y {
         count += 1;
         defun add point {
             new(x + point.x,y + point.y)

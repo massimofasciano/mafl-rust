@@ -17,7 +17,7 @@ block_comment = @{
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
     "return" | "break" | "endblock" | "continue" | "throw" | 
-    "let" | "in" | "use" | "letrec" |
+    "let" | "in" | "use" | "rec" |
     "fun" | "with" | "defun" | "proto" | "extends" |
     "module" | "cons" |
     "try" | "catch" |
@@ -130,12 +130,9 @@ try_catch = {
 
 identifier_array = { "[" ~ (identifier ~ ("," ~ identifier)*)? ~ "]"}
 
+rec = { "rec" }
 let = {
-    "let" ~ (identifier | identifier_array) ~ ("=" ~ expr)?
-}
-
-letrec = {
-    "letrec" ~ (identifier | identifier_array) ~ ("=" ~ expr)?
+    "let" ~ (#rec = rec)? ~ (#var = (identifier | identifier_array)) ~ ("=" ~ (#val = expr))?
 }
 
 field_access = { "." ~ identifier }
@@ -235,7 +232,7 @@ expr_base = _{
     defun | fun | assign | context | module | object | 
     continue | 
     boolean | float | integer | string_literal | char_literal | 
-    variable | letrec | let | return | break | endblock | throw | proto
+    variable | let | return | break | endblock | throw | proto
 }
 
 // expressions that behave like blocks

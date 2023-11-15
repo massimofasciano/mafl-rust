@@ -207,26 +207,38 @@ impl Interpreter {
                     ExpressionType::If(cond, then, r#else).into()
                 } 
                 Rule::r#let => {
-                    assert!(inner.len() == 1 || inner.len() == 2);
-                    let val = if inner.len() == 2 {
-                        self.parse_rule(inner[1].clone())?
-                    } else {
-                        expression::nil()
-                    };
-                    match inner[0].as_rule() {
+                    assert!(inner.len() == 1 || inner.len() == 2 || inner.len() == 3);
+                    let rec =  Some("rec") == Self::find_tag("rec", &inner).next()
+                        .map(|x|x.as_str());
+                    let var_rule = Self::find_tag("var", &inner).next()
+                        .expect("missing var");
+                    let opt_val = Self::find_tag("val", &inner).next()
+                        .map(|x| self.parse_rule(x.to_owned()))
+                        .map_or(Ok(None), |v| v.map(Some))?;
+                    let val = opt_val.unwrap_or(expression::nil());
+                    match var_rule.as_rule() {
                         Rule::identifier => {
-                            // let var = inner[0].as_str().to_owned();
-                            let var = self.ident(inner[0].as_str());
-                            ExpressionType::Let(var, val).into()
+                            let var = self.ident(var_rule.as_str());
+                            if rec {
+                                // let f; f = ... (recursive binding)
+                                ExpressionType::Block{r#type: BlockType::Sequence, body: vec![
+                                    ExpressionType::Let(var.to_owned(), ExpressionType::Nil.into()).into(), 
+                                    ExpressionType::AssignToExpression(
+                                        ExpressionType::Variable(var.to_owned()).into(), val
+                                    ).into()    
+                                ]}.into()
+                            } else {
+                                // normal let (non-recursive)
+                                ExpressionType::Let(var, val).into()
+                            }
                         }
                         Rule::identifier_array => {
-                            let vars = inner[0].clone().into_inner().map(|pair| {
-                                // pair.as_str().to_owned()
+                            let vars = var_rule.clone().into_inner().map(|pair| {
                                 self.ident(pair.as_str())
                             }).collect();
                             ExpressionType::LetArray(vars, val).into()
                         }
-                        _ => Err(anyhow!("bad let syntax {:?}", inner[1].as_rule()))?,
+                        _ => Err(anyhow!("bad let syntax {:?}", var_rule.as_rule()))?,
                     }
                 } 
                 Rule::assign => {
@@ -443,7 +455,7 @@ impl Interpreter {
             Rule::expr_prefix | Rule::expr_exp | Rule::expr_ref |
             Rule::context | Rule::module | Rule::defun |
             Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
-            Rule::assign | Rule::object | Rule::fun |
+            Rule::assign | Rule::object | Rule::fun | 
             Rule::r#let | Rule::r#loop | Rule::r#for | Rule::try_catch |
             Rule::endblock | Rule::r#break | Rule::throw | Rule::proto |
             Rule::infix_identifier | Rule::r#return => {
