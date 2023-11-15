@@ -324,7 +324,7 @@ impl Interpreter {
                 let open_vars = self.open(&ctx.capture(), ast)?;
                 let captured = Context::new();
                 for open_var in open_vars {
-                    // println!("*** capturing {}",open_var);
+                    println!("*** fun capturing {}",open_var);
                     if let Some(mc) = ctx.get_binding_ref(&open_var) { 
                         captured.add_binding_ref(open_var.to_owned(), mc); 
                     } else {

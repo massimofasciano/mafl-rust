@@ -65,4 +65,11 @@ p2.x += 1;
 let a;
 let b;
 let c;
-proto with z extends (proto with a with b c {}) with p1 {}
+fun {
+    proto with z extends (proto with a with b c {}) with p1 {
+        let m = 1;
+        let q = \{a};
+        let r = zzz;
+        
+    }
+}

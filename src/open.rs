@@ -161,9 +161,17 @@ impl Interpreter {
                 open                
             }
 
-            _ => {
-                Err(anyhow!("unhandled case for open vars: {:?}",ast))?
+            ExpressionType::Proto(closed, opt_expr, _) => {
+                let mut open = if let Some(expr) = opt_expr {
+                    self.open(ctx, expr)?
+                } else {
+                    HashSet::new()
+                };
+                open.extend(closed.iter().cloned());
+                open                
             }
+
+            _ => Err(anyhow!("unhandled case for open vars: {:?}",ast))?
         })
     }
 
