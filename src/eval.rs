@@ -403,7 +403,8 @@ impl Interpreter {
                     }
                 }
                 let val = self.eval(&local_ctx, body)?;
-                let captured = builtin::capture_context(&local_ctx)?;
+                // let captured = builtin::capture_context(&local_ctx)?;
+                let captured = expression::context(local_ctx);
                 ctx.add_binding(modname.to_owned(), captured);
                 val
             }
@@ -414,7 +415,8 @@ impl Interpreter {
                     let closure = self.eval(ctx, extends)?;
                     match closure.as_ref() {
                         ExpressionType::Closure(cctx,_,_) => {
-                            Context::new().with_context(cctx.to_owned())
+                            cctx.with_new_context()
+                            // Context::new().with_context(cctx.to_owned())
                         }
                         _ => Err(anyhow!("with on non-closure"))?
                     }
@@ -432,8 +434,7 @@ impl Interpreter {
                 }
                 // evaluate the body in the new context
                 self.eval(&new_ctx, body)?;
-                // capture the context from the body in a closure and return it
-                // let cap_ctx = new_ctx.capture();
+                // return the new context in a closure
                 expression::context(new_ctx.to_owned())
             }
 
@@ -603,7 +604,7 @@ impl Interpreter {
             ("test", [source, expected]) => builtin::test(self, ctx, source, expected),
             ("now", []) => builtin::now(ctx),
             ("sleep", [seconds]) => builtin::sleep(ctx, seconds),
-            ("context", []) => builtin::capture_context(ctx),
+            ("flatten_self", []) => Ok(expression::context(ctx.flatten_ref())), // returns a flattened version of @self
             ("split", [source, pattern]) => builtin::split(self, ctx, source, pattern),
             ("trim", [source]) => builtin::trim(self, ctx, source),
             ("matches", [source, regex]) => builtin::matches(self, ctx, source, regex),

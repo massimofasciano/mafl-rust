@@ -407,9 +407,9 @@ pub fn read_file(_ctx: &Context, file_expr: &Expression) -> Result<Expression> {
     })
 }
 
-pub fn capture_context(ctx: &Context) -> Result<Expression> {
-    Ok(expression::context(ctx.capture()))
-}
+// pub fn capture_context(ctx: &Context) -> Result<Expression> {
+//     Ok(expression::context(ctx.capture()))
+// }
 
 pub fn is_error(_: &Interpreter, _: &Context, expr: &Expression) -> Result<Expression> {
     if let ExpressionType::Error(_) = expr.as_ref() {

@@ -65,11 +65,13 @@ p2.x += 1;
 let a;
 let b;
 let c;
-fun {
-    proto with z extends (proto with a with b c {}) with p1 {
+let p4 = fun {
+    let zzz = 23;
+    proto with z extends (proto with a with b c {}) with p1 zzz {
         let m = 1;
         let q = \{a};
         let r = zzz;
-        
     }
-}
+}();
+
+@debugln(p4);
