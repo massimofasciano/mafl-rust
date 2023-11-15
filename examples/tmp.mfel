@@ -75,3 +75,5 @@ let p4 = fun {
 }();
 
 @debugln(p4);
+
+@std.array.map(\x{x+1},[1,2,3])

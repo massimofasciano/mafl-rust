@@ -5,15 +5,15 @@
 ###
 
 ## time calculations
-module time () {
+let time = proto {
     let start = @now();
     defun elapsed {
         @now() - start
     } 
-}
+};
 
 ## iterators and iterator functions
-module iter () {
+let iter = proto {
     defun range start end {
         fun {
             if start < end {
@@ -53,10 +53,10 @@ module iter () {
     defun foreach f a {
         for e in a { f(e) }
     }
-}
+};
 
 ## array functions
-module array () {
+let array = proto extends iter {
     defun reduce f arr {
         if @len(arr) < 1 { 
             @error("reduce called on empty array")
@@ -83,4 +83,4 @@ module array () {
         }
         arr
     }
-}
+};

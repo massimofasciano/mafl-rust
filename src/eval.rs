@@ -403,7 +403,6 @@ impl Interpreter {
                     }
                 }
                 let val = self.eval(&local_ctx, body)?;
-                // let captured = builtin::capture_context(&local_ctx)?;
                 let captured = expression::context(local_ctx);
                 ctx.add_binding(modname.to_owned(), captured);
                 val
