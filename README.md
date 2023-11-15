@@ -17,6 +17,8 @@ TODO:
 - module is zero-arg constructor that is immediately called with zero args (creating an object)
 - defmod defines module ?
 
+- eliminate defun and all def... ? add letrec instead ?
+
 - context should take ref
 - replace context with object ?
 
