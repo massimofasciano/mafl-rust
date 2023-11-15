@@ -6,9 +6,9 @@
 ###  to class variables and methods
 ###
 
-let Point = fun {
+let Point = module {
     let count = 0; # class variable
-    defcon new x y {
+    let new; new = cons x y {
         count += 1;
         defun add point {
             new(x + point.x,y + point.y)
@@ -21,11 +21,10 @@ let Point = fun {
             "Point("+x+","+y+")"
         }
         @println("=> point instance ",count,": ",__str__());
-    }
-    @self
-}();
+    };
+};
 
-defcon Counter start end {
+let Counter = cons start end {
     defun count {
         if start > end {
             return nil;
@@ -34,7 +33,7 @@ defcon Counter start end {
         start += 1;
         count
     }
-}
+};
 
 let p1 = Point.new(3,4);
 let p2 = Point.new(5,6);

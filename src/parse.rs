@@ -102,12 +102,35 @@ impl Interpreter {
                     })?
                 } 
                 Rule::fun => {
+                    let fun_type = Self::find_tag("fun_type", &inner).next()
+                        .map(|x|x.as_str().to_owned()).expect("missing fun type");
                     let args = Self::find_tag("arg", &inner)
                         .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
-                    let body = Self::find_tag("body", &inner).next()
+                    let mut body = Self::find_tag("body", &inner).next()
                         .map(|x| self.parse_rule(x.to_owned()))
                         .expect("missing body")?;
-                    ExpressionType::Fun(args,body).into()
+                    if fun_type == "cons" || fun_type == "module" {
+                        // @self injected at end of function body
+                        let new_body_vec = match body.as_ref() {
+                            ExpressionType::Block{r#type: BlockType::Function, body} => {
+                                let mut new = body.clone();
+                                new.push(ExpressionType::BuiltinVariable("self".to_owned()).into());
+                                new
+                            }
+                            _ => Err(anyhow!("not a function body"))?
+                        };
+                        body = ExpressionType::Block{r#type: BlockType::Function, body: new_body_vec}.into();
+                    }
+                    if fun_type == "module" {
+                        if !args.is_empty() {
+                            Err(anyhow!("no arguments allowed for modules"))?
+                        }
+                        // if it's a module, we call the function to instantiate
+                        ExpressionType::FunctionCall(ExpressionType::Fun(vec![],body).into(),vec![]).into()
+                    } else {
+                        // a normal function
+                        ExpressionType::Fun(args,body).into()
+                    }
                 }
                 Rule::defun => {
                     let fun_type = Self::find_tag("fun_type", &inner).next()
@@ -120,7 +143,7 @@ impl Interpreter {
                         .map(|x| self.parse_rule(x.to_owned()))
                         .expect("missing body")?;
                     if fun_type == "defcon" {
-                        // class is defun with @self injected at end of function body
+                        // defcon is defun with @self injected at end of function body
                         let new_body_vec = match body.as_ref() {
                             ExpressionType::Block{r#type: BlockType::Function, body} => {
                                 let mut new = body.clone();

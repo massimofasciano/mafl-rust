@@ -80,15 +80,17 @@ let p4 = fun {
 
 @debugln(p4);
 
-let c1 = proto {
+@println(@std.array.map(\x{x+1},[4,5,6]));
+
+let c1 = module {
     let count = 0;
-    defcon new y {
+    let new = cons y {
         count += 1;
         let x = 1;
         defun __str__ {
             "c1("+x+","+y+")#"+count
         }
-    }
+    };
 };
 
 @println(c1.new(3));

@@ -17,9 +17,9 @@ block_comment = @{
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
     "return" | "break" | "endblock" | "continue" | "throw" | 
-    "let" | "in" | "use" |
+    "let" | "in" | "use" | "letrec" |
     "fun" | "with" | "defun" | "proto" | "extends" |
-    "module" | "class" |
+    "module" | "cons" |
     "try" | "catch" |
     "true" | "false" | "nil" |
     "and" | "or" | "not"
@@ -67,13 +67,14 @@ array = { "[" ~ (expr ~ ("," ~ expr)*)? ~ "]"}
 
 function_args = { (identifier ~ ("," ~ identifier)*)? }
 
+fun_type = { "fun" | "\\" | "cons" | "module" }
 fun = {
-    ("fun" | "\\" ) ~ "("? ~ (#arg = identifier ~ ","?)* ~ ")"? ~ (#body = function_block) 
+    (#fun_type = fun_type) ~ "("? ~ (#arg = identifier ~ ","?)* ~ ")"? ~ (#body = function_block) 
 }
 
-fun_type = { "defun" | "defcon" }
+defun_type = { "defun" | "defcon" }
 defun = {
-    (#fun_type = fun_type) ~ (#name = identifier) ~ (#arg = identifier)* ~ (#body = function_block) 
+    (#fun_type = defun_type) ~ (#name = identifier) ~ (#arg = identifier)* ~ (#body = function_block) 
 }
 
 context = {
@@ -82,7 +83,7 @@ context = {
 }
 
 proto = {
-    ("proto"|"module") ~ 
+    "proto" ~ 
     ( "with" ~ "("? ~ (#capture = identifier ~ ","?)* ~ ")"? )? ~ 
     ( "extends" ~ (#extends = expr) )? ~ 
     ( "with" ~ "("? ~ (#capture = identifier ~ ","?)* ~ ")"? )? ~ 
@@ -131,6 +132,10 @@ identifier_array = { "[" ~ (identifier ~ ("," ~ identifier)*)? ~ "]"}
 
 let = {
     "let" ~ (identifier | identifier_array) ~ ("=" ~ expr)?
+}
+
+letrec = {
+    "letrec" ~ (identifier | identifier_array) ~ ("=" ~ expr)?
 }
 
 field_access = { "." ~ identifier }
@@ -230,7 +235,7 @@ expr_base = _{
     defun | fun | assign | context | module | object | 
     continue | 
     boolean | float | integer | string_literal | char_literal | 
-    variable | let | return | break | endblock | throw | proto
+    variable | letrec | let | return | break | endblock | throw | proto
 }
 
 // expressions that behave like blocks
