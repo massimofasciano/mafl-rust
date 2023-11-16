@@ -1,0 +1,6 @@
+# we don't have a tracing GC so reference cycles cause memory leaks
+loop {
+    let rec cycle = module {
+        cycle
+    };
+}
