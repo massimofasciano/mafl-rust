@@ -16,8 +16,8 @@ impl Interpreter {
 
             ExpressionType::Break(br) =>
                 ExpressionType::Break(self.eval(ctx, br)?).into(),
-            ExpressionType::EndBlock(br) =>
-                ExpressionType::EndBlock(self.eval(ctx, br)?).into(),
+            ExpressionType::Exit(br) =>
+                ExpressionType::Exit(self.eval(ctx, br)?).into(),
             ExpressionType::Return(br) =>
                 ExpressionType::Return(self.eval(ctx, br)?).into(),
             ExpressionType::Throw(br) =>
@@ -40,7 +40,7 @@ impl Interpreter {
                                 ExpressionType::Break(_) |
                                 ExpressionType::Throw(_) |
                                 ExpressionType::Continue => break,
-                                ExpressionType::EndBlock(val) => {
+                                ExpressionType::Exit(val) => {
                                     last_value = val.to_owned();
                                     break
                                 }
@@ -49,7 +49,7 @@ impl Interpreter {
                         }
                         BlockType::If => {
                             match last_value.as_ref() {
-                                ExpressionType::EndBlock(_) |
+                                ExpressionType::Exit(_) |
                                 ExpressionType::Return(_) |
                                 ExpressionType::Break(_) |
                                 ExpressionType::Throw(_) |
@@ -61,7 +61,7 @@ impl Interpreter {
                             match last_value.as_ref() {
                                 ExpressionType::Throw(_) => break,
                                 ExpressionType::Break(val) |
-                                ExpressionType::EndBlock(val) |
+                                ExpressionType::Exit(val) |
                                 ExpressionType::Return(val) => {
                                     last_value = val.to_owned();
                                     break
@@ -244,7 +244,7 @@ impl Interpreter {
                 loop {
                     body_value = self.eval(ctx,body)?;
                     match body_value.as_ref() {
-                        ExpressionType::EndBlock(val) |
+                        ExpressionType::Exit(val) |
                         ExpressionType::Break(val) => {
                             body_value = val.to_owned();
                             break
@@ -269,7 +269,7 @@ impl Interpreter {
                             ctx.set_binding(var.to_owned(), v.to_owned());
                             body_value = self.eval(ctx,body)?;
                             match body_value.as_ref() {
-                                ExpressionType::EndBlock(val) |
+                                ExpressionType::Exit(val) |
                                 ExpressionType::Break(val) => {
                                     body_value = val.to_owned();
                                     break
@@ -289,7 +289,7 @@ impl Interpreter {
                             ctx.set_binding(var.to_owned(), next.to_owned());
                             body_value = self.eval(ctx,body)?;
                             match body_value.as_ref() {
-                                ExpressionType::EndBlock(val) |
+                                ExpressionType::Exit(val) |
                                 ExpressionType::Break(val) => {
                                     body_value = val.to_owned();
                                     break

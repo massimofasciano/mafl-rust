@@ -64,7 +64,7 @@ pub enum ExpressionType {
     Array(RefCell<Expressions>),
     Return(Expression),
     Break(Expression),
-    EndBlock(Expression),
+    Exit(Expression),
     Throw(Expression),
     Continue, 
     Ref(Rc<MemCell>),

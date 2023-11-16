@@ -29,7 +29,7 @@ impl Interpreter {
             ExpressionType::Field(expr, _) |
             ExpressionType::Loop(expr) |
             ExpressionType::UnaryOpCall(_, expr) |
-            ExpressionType::EndBlock(expr) |
+            ExpressionType::Exit(expr) |
             ExpressionType::Return(expr) |
             ExpressionType::Throw(expr) |
             ExpressionType::Break(expr) =>

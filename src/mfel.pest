@@ -16,10 +16,9 @@ block_comment = @{
 
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
-    "return" | "break" | "endblock" | "continue" | "throw" | 
+    "return" | "break" | "exit" | "continue" | "throw" | 
     "let" | "in" | "use" | "rec" | "from" |
-    "fun" | "defun" | "proto" | 
-    "module" | "cons" |
+    "fun" | "defun" | "module" | "cons" |
     "try" | "catch" |
     "true" | "false" | "nil" |
     "and" | "or" | "not"
@@ -75,14 +74,6 @@ fun = {
 defun_type = { "defun" | "defcon" }
 defun = {
     (#fun_type = defun_type) ~ (#name = identifier) ~ (#arg = identifier)* ~ (#body = function_block) 
-}
-
-proto = {
-    "proto" ~ 
-    ( "with" ~ "("? ~ (#capture = identifier ~ ","?)* ~ ")"? )? ~ 
-    ( "extends" ~ (#extends = expr) )? ~ 
-    ( "with" ~ "("? ~ (#capture = identifier ~ ","?)* ~ ")"? )? ~ 
-    (#body = block_syntax)
 }
 
 if = {
@@ -141,8 +132,8 @@ break = {
 throw = {
     "throw" ~ expr?
 }
-endblock = { 
-    "endblock" ~ expr?
+exit = { 
+    "exit" ~ expr?
 }
 
 catch = {
@@ -221,11 +212,11 @@ expr_base = _{
     defun | fun | assign | use | 
     continue | 
     boolean | float | integer | string_literal | char_literal | 
-    variable | let | return | break | endblock | throw | proto
+    variable | let | return | break | exit | throw
 }
 
 // expressions that behave like blocks
-expr_block = _{ block | if | while | unless | loop | for | try_catch | defun | proto }
+expr_block = _{ block | if | while | unless | loop | for | try_catch | defun }
 
 semicolons = _{ ";" ~ semicolons | ";" }
 nil_implicit = { "" }

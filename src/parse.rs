@@ -348,13 +348,13 @@ impl Interpreter {
                     };
                     ExpressionType::Break(body).into() 
                 },
-                Rule::endblock => { 
+                Rule::exit => { 
                     let body = if inner.len() == 1 {
                         self.parse_rule(inner[0].clone())?
                     } else {
                         ExpressionType::Nil.into()
                     };
-                    ExpressionType::EndBlock(body).into() 
+                    ExpressionType::Exit(body).into() 
                 },
                 Rule::throw => { 
                     let body = if inner.len() == 1 {
@@ -435,7 +435,7 @@ impl Interpreter {
             Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
             Rule::assign | Rule::fun | 
             Rule::r#let | Rule::r#loop | Rule::r#for | Rule::try_catch |
-            Rule::endblock | Rule::r#break | Rule::throw | 
+            Rule::exit | Rule::r#break | Rule::throw | 
             Rule::infix_identifier | Rule::r#return => {
                 let rule = parsed.as_rule();
                 let str = parsed.as_str().to_owned();
