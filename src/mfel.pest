@@ -19,7 +19,7 @@ reserved = _{
     "return" | "break" | "exit" | "continue" | "throw" | 
     "let" | "in" | "use" | "rec" | "from" |
     "fun" | "defun" | "module" | "cons" |
-    "try" | "catch" |
+    "try" | "catch" | "assert" |
     "true" | "false" | "nil" |
     "and" | "or" | "not"
 }
@@ -140,6 +140,11 @@ catch = {
     "catch" ~ "{" ~ sequence ~ "}"
 }
 
+assert = {
+    "assert" ~ expr ~ expr? 
+}
+
+
 block = {
     "{" ~ sequence ~ "}"
 }
@@ -212,7 +217,7 @@ expr_base = _{
     defun | fun | assign | use | 
     continue | 
     boolean | float | integer | string_literal | char_literal | 
-    variable | let | return | break | exit | throw
+    variable | let | return | break | exit | throw | assert
 }
 
 // expressions that behave like blocks

@@ -51,4 +51,10 @@ let p5 = module {
     let t = dyn { xxx += 1; @println(xxx); }
 };
 xxx *= 10;
-p5.t()
+p5.t();
+
+let qw = 10;
+module {
+assert qw == qw;
+assert qw + 3   qw+3;
+}

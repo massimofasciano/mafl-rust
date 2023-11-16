@@ -1,3 +1,5 @@
+use std::io::{stdout, Write};
+
 use crate::{expression::{ExpressionType, Expression, self, Operator, BlockType}, builtin::{self}, context::Context, Interpreter};
 use anyhow::{Result,anyhow};
 use log::debug;
@@ -430,6 +432,26 @@ impl Interpreter {
                 expression::nil()
             }
 
+            ExpressionType::Assert(source, expr, expected) => {
+                let expr = self.eval(ctx, expr)?;
+                let expected = self.eval(ctx, expected)?;
+                let source = source.trim();
+                if expr == expected {
+                    print!("# assertion {source} success");
+                    if !matches!(expected.as_ref(),ExpressionType::Boolean(true)) {
+                        print!(": result {expected}");
+                    }
+                } else {
+                    print!("# assertion {source} failure");
+                    if !matches!(expected.as_ref(),ExpressionType::Boolean(true)) {
+                        print!(": expected {expected} but got {expr}");
+                    }
+                }
+                println!();
+                stdout().flush()?;
+                expression::boolean(expr == expected)
+            }
+
             ExpressionType::BinOpCall(op, left, right) => {
                 if let Operator::And = op {
                     return builtin::and_lazy(self,ctx,left,right);
@@ -469,6 +491,7 @@ impl Interpreter {
                     _ => ast.to_error()?,
                 }
             }
+            
             ExpressionType::UnaryOpCall(op, expr) => {
                 if let Operator::Ref = op {
                     return builtin::get_ref(self, ctx,&expr.to_owned());
