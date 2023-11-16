@@ -1,40 +1,21 @@
 Rust parser and interpreter for the MFEL language
 
-FEATURES:
-- added internal stdlib (coded in mfel)
-- mutable arrays with @array, @len, @append and literals
-- Error type (detectable to catch errors)
-- object factory
+refer to syntax.mfel in the examples folder for a quick description of the language syntax with examples
 
-TODO:
+assuming the exec file is called mfel-0.6.0.exe, to run the interpreter:
 
-- eliminate defun and all def... ? add letrec instead ?
+mfel-0.6.0.exe PROGRAM_NAME.mfel
 
-- array assign and let rec parallel
-[a,b,c] = [1,2,3]
+this will run the program and print the result
 
-let rec [a,b,c] = [1,2,3];   
-IS
-let [a,b,c] = [nil,nil,nil];
-[a,b,c] = [1,2,3];
-OR
-let a; let b; let c;
-a = [1,2,3][0];
-b = [1,2,3][1];
-c = [1,2,3][2];
-(check lengths before)
+if you omit the name of the program, it will drop you into an interactive loop that evaluates code as you type it (one full line at a time).
+this is quite simplisitic and only meant for testing quick commands.
 
-- field (object) based builtins like .copy() .string() .map() ?
+ex:
 
-- curry @builtin and op (LUT for builtins with fixed arg list, op syntax maybe ?)
-- builtins and ops should behave like lambdas
+mfel-0.6.0.exe
 
-- try a tree structure for contexts: NO! a stack of stacks (list of lists) is a better analogy.
-- walker for expression and context with cycle detection
-
-- clean up the expression type (atoms, code, input, etc...)
-
-- weak references ? gc ?
-
-- lookup table for builtins ?
-- put all builtins inside the interpreter struct
+MFEL> 1+1
+2
+MFEL> let x = 20; let y = 2; while x > 0 { x -= 1; y *= 2; }; [x,y]
+[0,2097152]
