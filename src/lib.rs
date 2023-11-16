@@ -23,6 +23,8 @@ pub struct Interpreter {
 
 static _STD_STR : &str = include_str!("std.mfel");
 
+static __STR__ : &str = "__STR__";
+
 impl Interpreter {
     pub fn new() -> Result<Self> {
         let mut interpreter = Self::default();

@@ -387,7 +387,8 @@ let c = cons x y {
 let c1 = c(1,2);
 let c2 = c(2,3);
 test c1.y expect c2.x;
-test c1.__str__() expect "1:2";
+# @string automatically calls __str__ if it exsists for the object
+test @string(c1) expect "1:2";
 
 ###
 ### standard library vs builtin functions
@@ -405,7 +406,8 @@ test c1.__str__() expect "1:2";
 
 @println(c1," ",c2," ",o.x); # converts all arguments to strings and prints a concatenation of them
 # this prints: 1:2 2:3 1
-# note that when an object has a __str__ method, it is called by println
+# note that when an object has a __str__ method, it is called by @println and @string
+test @string(c1) + " " + @string(c2) + " " + @string(o.x) expect "1:2 2:3 1";
 
 # @readline() reads a line from the terminal and returns it as a string
 
@@ -658,3 +660,91 @@ test tc expect 31;
 let err = try 1/0 catch e { @string(e) };
 test err expect "division by zero";
 
+###
+### dot notation on builtin types (experimental)
+###
+
+@println("*** DOT NOTATION ON BUILTINS ***");
+
+# this experimental functionaity transforms b.x into fun { @x(b) }
+
+test [1,2,3,4].len() expect 4;
+test "123".array() expect ['1','2','3'];
+test "1\n2".lines() expect ["1","2"];
+test 2.exp() expect @exp(2);
+
+# we could do better if builtins were handled via a call table
+
+###
+### the language has a reference type that links mutably to the storage cell of another value
+### &x returns a reference to x
+### $y derefs y (if y is &x, $y will return the contents of x)
+### y <- expr mutates the storage cell that reference y points to
+###
+
+@println("*** REFS ***");
+
+let v = 200;  # v is bound to a storage cell S1 containing a reference to the value 200
+let r = &v;   # r is bound to a storage cell S2 containing a reference to the cell S1 above
+let c = v;    # v is bound to a another storage cell S3 containing a reference to the value 200
+
+# so to simplify, we now have 2 "boxes" S1 and S3 with the value 200 and a box S2 referencing box S1.
+test [v,c,$r] expect [200,200,200];
+
+# we add 1 to the value inside cell S3 so now the value of c is 201
+c = c + 1;
+test [v,c,$r] expect [200,201,200];
+
+# we add 10 to the value inside cell S1 so now the value of v is 210
+# but r also points to the same cell via an indirection layer
+# this is shown as ->210 if the value of r is printed 
+v = v + 10;
+test [v,c,$r] expect [210,201,210];
+
+# here, we use the deref operator $ to fetch the value referenced by r (the contents of cell S1 via cell S2)
+# we add 100
+# and then we store the contents not the cell of r (S2) but in the cell pointed to by the cell of r (S1)
+# so now v is 310 (cell S1) and r still points to it
+r <- $r + 100;
+test [v,c,$r] expect [310,201,310];
+
+# here we take a reference to c and add 1 through that reference
+# we do it inside a block scope so that q is only temporary
+{ let q = &c; q <- $q + 1; }
+# this adds 1 to c
+test [v,c,$r] expect [310,202,310];
+
+# a function that tests if it has a reference and increments through it
+# if it's not a ref, the increment is only local
+let reftest = fun r {
+    if @is_ref(r) {
+        r <- $r + 1;
+    } else {
+        r = r + 1;
+    }
+};
+
+# v will not change
+reftest(v);
+test v expect 310;
+
+# v will change
+reftest(&v);
+test v expect 311;
+
+# here we deref r and add 50 but we place the result in cell S2
+# so r is not a reference anymore...
+r = $r + 50;
+test [v,c,r] expect [311,202,361];
+
+let o = module {
+    let x = 1;
+    let y = 2;
+    let __str__ = \{"(" + x + "," + y + ")"}
+};
+# we can also take a ref on an object field
+let p = &o.x;
+test @string(o) expect "(1,2)";
+p <- 3;
+test @string(o) expect "(3,2)";
+# but not on array elements (as of MFEL 0.3.2)

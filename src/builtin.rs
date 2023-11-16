@@ -8,6 +8,7 @@ use log::debug;
 use regex::Regex;
 use rand::Rng;
 
+use crate::__STR__;
 use crate::context::{MemCell, Bindings};
 use crate::{expression::{Expression, self, nil, closure, ExpressionType}, context::Context, Interpreter};
 
@@ -231,9 +232,9 @@ pub fn not(_: &Context, val: &Expression) -> Result<Expression> {
 pub fn print(interpreter: &Interpreter, ctx: &Context, args: &[Expression]) -> Result<Expression> {
     for arg in args { 
         match arg.as_ref() {
-            ExpressionType::Closure(cctx, _, _) if cctx.get_binding(&interpreter.ident("__str__")).is_some() => {
-                // if the closure/object has a binding for __str__, we call it
-                let str = cctx.get_binding(&interpreter.ident("__str__")).unwrap();
+            ExpressionType::Closure(cctx, _, _) if cctx.get_binding(&interpreter.ident(__STR__)).is_some() => {
+                // if the closure/object has a binding for __STR__, we call it
+                let str = cctx.get_binding(&interpreter.ident(__STR__)).unwrap();
                 let string = interpreter.eval(cctx, 
                     &ExpressionType::FunctionCall(str, vec![]).into()
                 )?;
@@ -764,7 +765,7 @@ pub fn float(interpreter: &Interpreter, ctx: &Context, val: &Expression) -> Resu
     })
 }
 
-pub fn string(_: &Interpreter, _: &Context, val: &Expression) -> Result<Expression> {
+pub fn string(interpreter: &Interpreter, _: &Context, val: &Expression) -> Result<Expression> {
     Ok(match val.as_ref() {
         ExpressionType::Error(e) => expression::string(e.to_owned()),
         ExpressionType::Array(arr) => {
@@ -779,6 +780,13 @@ pub fn string(_: &Interpreter, _: &Context, val: &Expression) -> Result<Expressi
             } else {
                 expression::string(format!("{val}"))   
             }
+        }
+        ExpressionType::Closure(cctx, _, _) if cctx.get_binding(&interpreter.ident(__STR__)).is_some() => {
+            // if the closure/object has a binding for __STR__, we call it
+            let str = cctx.get_binding(&interpreter.ident(__STR__)).unwrap();
+            interpreter.eval(cctx, 
+                &ExpressionType::FunctionCall(str, vec![]).into()
+            )?
         }
         _ => expression::string(format!("{val}")),
     })

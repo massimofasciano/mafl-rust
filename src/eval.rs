@@ -323,7 +323,24 @@ impl Interpreter {
                             Err(anyhow!("field binding not found: {field}"))?
                         }
                     }
-                    _ => Err(anyhow!("field lookup on non-object/dict: {field}"))?,
+                    ExpressionType::Integer(_) |
+                    ExpressionType::Float(_) |
+                    ExpressionType::Boolean(_) |
+                    ExpressionType::Array(_) |
+                    ExpressionType::String(_) => {
+                        match field.as_str() {
+                            "TODO" => expression::nil(),
+                            _ => {
+                                self.eval(ctx, &ExpressionType::Fun(vec![], 
+                                    ExpressionType::FunctionCall(
+                                        ExpressionType::BuiltinVariable(field.to_owned()).into(), 
+                                        vec![target.to_owned()]
+                                    ).into()
+                                ).into())?
+                            },
+                        }
+                    }
+                    _ => Err(anyhow!("field lookup on invalid type: {field}"))?,
                 }
             }
             ExpressionType::Fun(arg_names, body) => {

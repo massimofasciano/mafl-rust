@@ -8,12 +8,7 @@ FEATURES:
 
 TODO:
 
-- don't forget to update open vars when adding new constructs!!! (like inheritance or with)  *****
-
-- open vars not always easy with live code:
-@eval
-@test
-etc...
+- eliminate defun and all def... ? add letrec instead ?
 
 - array assign and let rec parallel
 [a,b,c] = [1,2,3]
@@ -29,13 +24,6 @@ b = [1,2,3][1];
 c = [1,2,3][2];
 (check lengths before)
 
-- constructor is fun that returns @self
-- defcon defines constructor (useful ?)
-- module is zero-arg constructor that is immediately called with zero args (creating an object)
-- defmod defines module ?
-
-- eliminate defun and all def... ? add letrec instead ?
-
 - field (object) based builtins like .copy() .string() .map() ?
 
 - curry @builtin and op (LUT for builtins with fixed arg list, op syntax maybe ?)
@@ -50,11 +38,3 @@ c = [1,2,3][2];
 
 - lookup table for builtins ?
 - put all builtins inside the interpreter struct
-
-
-
-
-
-
-
-
