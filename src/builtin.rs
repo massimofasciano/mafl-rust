@@ -635,6 +635,7 @@ pub fn get_ref(interpreter: &Interpreter, ctx: &Context, ref_target: &Expression
 }
 
 pub fn test(interpreter: &Interpreter, ctx: &Context, source: &Expression, expected: &Expression) -> Result<Expression> {
+    println!("**** DEPRECATION WARNING: @test");
     let result = eval_string_as_source(interpreter, ctx, source)?;
     if &result == expected {
         println!("# test success: {source} == {expected}");

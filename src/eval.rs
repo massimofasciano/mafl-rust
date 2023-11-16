@@ -432,24 +432,20 @@ impl Interpreter {
                 expression::nil()
             }
 
-            ExpressionType::Assert(source, expr, expected) => {
+            ExpressionType::Test(source, expr, expected) => {
                 let expr = self.eval(ctx, expr)?;
                 let expected = self.eval(ctx, expected)?;
                 let source = source.trim();
-                if expr == expected {
-                    print!("# assertion {source} success");
-                    if !matches!(expected.as_ref(),ExpressionType::Boolean(true)) {
-                        print!(": result {expected}");
-                    }
-                } else {
-                    print!("# assertion {source} failure");
-                    if !matches!(expected.as_ref(),ExpressionType::Boolean(true)) {
-                        print!(": expected {expected} but got {expr}");
-                    }
+                let test = expr == expected;
+                print!("# test {} {source}", if test {"success"} else {"failure"});
+                if !matches!(expected.as_ref(),ExpressionType::Boolean(true)) {
+                    print!(": result ");
+                    if test { print!("{expected}"); } 
+                    else { print!("{expr} expected {expected}"); }
                 }
                 println!();
                 stdout().flush()?;
-                expression::boolean(expr == expected)
+                expression::boolean(test)
             }
 
             ExpressionType::BinOpCall(op, left, right) => {

@@ -18,13 +18,11 @@ let x = 20;
 
 @println("*** UNIT TESTING ***");
 
-# the @test builtin function can be used for simple unit tests
+# the assert statement can be used for simple unit tests
 let x = 2;
 let y = 3;
-@test("x + y",5);
-# it takes a string as first argument and will treat it as a program to be parsed and evaluated inside 
-# the current context. the result is compared to the second argument and a diagnostic message is printed:
-# test success: x + y == 5
+test x + y expect 5;
+# test success x + y: result 5
 
 ###
 ### assign and op-assign: change variable bindings
@@ -33,16 +31,16 @@ let y = 3;
 @println("*** ASSIGN ***");
 
 let x = 10;
-@test("x",10);
+test x expect 10;
 
 # this changes the content of the memory cell of x and places 20 into it
 x = 20;
-@test("x",20);
+test x expect 20;
 
 # a shortcut for x = x + 1;
 # adds 1 to the value inside the cell
 x += 1;
-@test("x",21);
+test x expect 21;
 # many other op-assign combos exist like *= /= -= etc...
 
 ###
@@ -51,28 +49,34 @@ x += 1;
 
 @println("*** FUN ***");
 
-# closed function: 3 arguments x, y and z
+# closed function (no external variables): 3 arguments x, y and z
 let f = fun x y z { x + y * z };
-# f(1,2,3) will return 1 + 2 * 3 = 7 (no outside effects)
+# you call a function by using a variable bound to it,
+# followed by a comma separated list of arguments between a pair of parentheses.
+test f(1,2,3) expect 7;
 
 # open function: 2 arguments x and y, 1 free variable z
 # a reference to z will be looked up when the function is defined
 # and will be kept inside a closure (lexical binding)
 let z = 40;
 let f = fun x y { x + y * z };
-@test("f(1,2)",81);
+test f(1,2) expect 81;
 
 # if the original z is modified, the function will see the change because
 # it kept a reference to it. the function can also change z and the outside
 # context will see this change in the original.
 z += 1;
-@test("f(1,2)",83);
+test f(1,2) expect 83;
 
-# if z is shadowed by a new binding after the function is defined, the old value is used
+# if z is shadowed by a new binding after the function is defined, the old value
+# is still used by the function.
 let z = 50;
-@test("f(1,2)",83);
+test f(1,2) expect 83;
 
-# something like this can be used to create an iterator
+# so a function acts as storage for captured variables. this is
+# similar to an object or struct, but the captures are by reference.
+
+# something like this can be used to create an iterator.
 let counter = {
     let count = 0;
     fun {
@@ -83,9 +87,12 @@ let counter = {
         count += 1 
     }
 };
-@test("counter()",1);
-@test("counter()",2);
-@test("counter()",3);
+
+# each time the function is called, it returns a different value.
+# the analogy with objects is quite clear here.
+test counter() expect 1;
+test counter() expect 2;
+test counter() expect 3;
 
 # when we need to refer to our anonymous function recursively, we can use the capture trick...
 # - declare f (defaults to nil)
@@ -95,11 +102,21 @@ let f;
 f = fun x {
     if x <= 1 { x } else { x * f(x-1) }
 };
-@test("f(4)",24);
+test f(4) expect 24;
 # works even if we change f
 let g = f;
 let f = fun x { 0 };
-@test("g(4)",24);
+test g(4) expect 24;
+
+# the "let rec" shortcut does this for us...
+let rec f = fun x {
+    if x <= 1 { x } else { x * f(x-1) }
+};
+test f(4) expect 24;
+# works even if we change f
+let g = f;
+let f = fun x { 0 };
+test g(4) expect 24;
 
 # we can do mutual recursion (2 functions calling each other) with
 # a variant of the capture trick...
@@ -126,46 +143,9 @@ f2 = fun x {
 # of assignment when declaring f2)
 # f1.f2 = f2;
 
-@test("f1(5)",5);
-@test("f1(15)",-15);
-@test("f1(25)",25);
-
-
-###
-### defun
-###
-
-@println("*** DEFUN ***");
-
-# we often define functions so some syntactic sugar is worth it:
-defun f x {
-    if x <= 1 { x } else { x * f(x-1) }
-};
-# it's shorter than a let+fun and we also get the circular binding on the
-# name of the function in case we need to recurse.
-@test("f(4)",24);
-
-# defun does not solve the mutual recursion issue by itself.
-# the example above can be rewritten using 2 defun but we still
-# need an external binding of f2 to be captured by f1.
-# we can change the captured f2 inside f1 by assigning to f1.f2
-
-let f2;
-defun f1 x {
-    if x < 10 {
-        x
-    } else {
-        f2(x)
-    }
-}
-defun f2 x {
-    if x > 20 {
-        x
-    } else {
-        f1(-x)
-    }
-}
-f1.f2 = f2;
+test f1(5) expect 5;
+test f1(15) expect -15;
+test f1(25) expect 25;
 
 ###
 ### a shortcut: \ instead of fun
@@ -175,17 +155,40 @@ f1.f2 = f2;
 
 let f = \x{x+1};
 # equivalent to let f = fun x { x + 1 }
-@test("f(1)",2);
+test f(1) expect 2;
 
-# works with multiple arguments
-let f = \x y z {x * y * z};
-@test("f(1,2,3)",6);
+# works with multiple arguments and can use commas if it looks better
+let f = \x,y,z{x*y*z};
+test f(1,2,3) expect 6;
 
 # works with no arguments
 let f = \{1};
-@test("f()",1);
+test f() expect 1;
 
 # this short syntax looks good when passing a function to another function (with map, filter, etc...)
+
+###
+### currying
+###
+
+@println("*** CURRYING ***");
+
+# when arguments are missing in a function call, currying is performed automatically
+
+let add = \x,y{x+y}; # a 2-arg function
+let add5 = add(5);
+
+test add(2,3) expect 5;
+test add5(2) expect 7;
+
+# extra arguments are also handled automatically when it makes sense to do so
+
+let add = \x{\y{x+y}}; # a 1 arg function returning a 1 arg function
+let add5 = add(5);
+
+test add(2,3) expect 5;
+test add5(2) expect 7;
+
 
 ###
 ### code blocks
@@ -197,16 +200,16 @@ let f = \{1};
 # in place of an expression. they create a local scope for variables.
 
 let x = 20;
-@test("x",20);
+test x expect 20;
 {
     x += 1; # we are still working on the same x as outside
-    @test("x",21);
+    test x expect 21;
     let x = 30;
     x += 1; # we are working on a local binding of x that shadows the other
-    @test("x",31);
+    test x expect 31;
 }
 # as soon as we exit the block, the old binding comes back
-@test("x",21);
+test x expect 21;
 
 # a code block has a value as an expression: the value of the last item in the block
 let v = { 
@@ -214,7 +217,7 @@ let v = {
     x += 2;
     x
 };
-@test("v",22);
+test v expect 22;
 
 # note that we did not put a semicolon on the last expression
 # if we put one, it would be equivalent to having an implicit nil 
@@ -224,10 +227,119 @@ let v = {
     x += 2;
     x; # this does nothing but it's valid
 };
-@test("v",nil);
+test v expect nil;
 
 ###
-### context with ... {...} is a shortcut for fun with ... {...}()
-### object {...} is a shortcut for fun {...; @self}
-### module m {...} is a shortcut for let m = object {...};
-###
+### special functions: cons, module and dyn
+### 
+
+@println("*** SPECIAL FUNCTIONS: CONS ***");
+
+# we saw in the section about functions that they capture bindings by reference,
+# acting like objects.
+
+# let's talk about a few constructs that will be useful:
+# 1- @self
+# 2- dot notation for field access
+
+# we have a builtin variable called @self that always refers to the current execution context
+# (all of the active variable bindings).
+# we can use the dot notation to access a variable inside a context, and this applies to @self also.
+
+let s = 1;
+# the variable s captured by the current context is the variable s (trivial)
+test @self.s expect s;
+
+# let's create a function and set a few local bindings inside
+let pf = fun x {
+    let y = x + 1;
+    # at this point, our local context has:
+    # - x: passed when called
+    # - y: created inside the function
+};
+let pv = pf(5);
+# what we did is useless because the function returns nil (last statement terminated by semicolon)
+test pv expect nil;
+
+# let's make the function return a copy of its active context instead:
+let pf = fun x {
+    let y = x + 1;
+    @self
+};
+let pv = pf(5);
+# at this point, pv is not nil but instead it's a closure
+# that captures the environment inside pf when it finished (with x and y bound).
+
+# this is really starting to look like an object or a struct (with fields)...
+test pv.x expect 5;
+test pv.y expect 6;
+
+# what we created is called a constructor. it's a function that returns a context that
+# can be used as an object.
+
+# we have a shortcut for this (cons instead of fun):
+let pf = cons x {
+    let y = x + 1;
+};
+let pv = pf(5);
+test pv.x expect 5;
+test pv.y expect 6;
+# with cons we can build instances/ojects/structs
+
+@println("*** SPECIAL FUNCTIONS: MODULE ***");
+
+# another special shortcut exists for the following special case:
+# we want to create a namespace (something like a package/module).
+
+# we could do this with cons by using no arguments and
+# immediately calling the constructor to get an instance.
+let m = cons {
+    let inv = \x{1/x};
+}();
+test m.inv(2) expect 0.5;
+
+# a shortcut called module exists for this:
+let m = module {
+    let inv = \x{1/x};
+};
+test m.inv(2) expect 0.5;
+
+# cons and module are just nice syntax. fun can cover both cases and more.
+
+# with the use and from...use constructs, we can inherit/capture bindings:
+let m2 = module {
+    use pv;
+    from m use inv;
+    let x = pv.x;
+    let y = pv.y;
+};
+pv.x += 10; 
+# by changing pv.x we also affect m2.pv.x because they are bound by reference
+test m2.pv.x expect 15;
+# but m2.x is a copy
+test m2.x expect 5;
+# the inv function is inherited
+test m2.inv(m2.y) expect 1/6;
+
+@println("*** SPECIAL FUNCTIONS: DYN ***");
+
+# we have seen that functions are basically objects (they have data and code)
+
+# sometimes, we don't want to capture any state at evaluation time but leave the 
+# binding of the variables to the call site: this is what dyn is for.
+
+let g = 10;
+let ffun = fun x { g + x };
+let fdyn = dyn x { g + x };
+
+test ffun(5) expect 15;
+test fdyn(5) expect 15;
+
+# we shadow g (bring another g into scope)
+# this is not the same thing as mutating the value of the old g
+let g = 20;
+# fun binds any variable at definition time (it captures a ref to the g that was in scope)
+test ffun(5) expect 15;
+# dyn evaluates variables at call time
+test fdyn(5) expect 25;
+

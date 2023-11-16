@@ -67,7 +67,7 @@ pub enum ExpressionType {
     Break(Expression),
     Exit(Expression),
     Throw(Expression),
-    Assert(String,Expression,Expression),
+    Test(String,Expression,Expression),
     Continue, 
     Ref(Rc<MemCell>),
     Scope(ScopeID,HashMap<Ident,Expression>),

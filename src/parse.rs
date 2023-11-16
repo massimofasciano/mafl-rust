@@ -367,13 +367,13 @@ impl Interpreter {
                     };
                     ExpressionType::Throw(body).into() 
                 },
-                Rule::assert => { 
+                Rule::test => { 
                     let body = self.parse_rule(inner[0].clone())?;
                     let source = inner[0].as_str().to_owned();
                     let expected = inner.get(1)
                         .map(|e|self.parse_rule(e.to_owned()))
                         .unwrap_or(Ok(ExpressionType::Boolean(true).into()))?;
-                    ExpressionType::Assert(source,body,expected).into() 
+                    ExpressionType::Test(source,body,expected).into() 
                 },
                 Rule::infix_identifier => { 
                     assert!(inner.len() == 1);
@@ -446,7 +446,7 @@ impl Interpreter {
             Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
             Rule::assign | Rule::fun | 
             Rule::r#let | Rule::r#loop | Rule::r#for | Rule::try_catch |
-            Rule::exit | Rule::r#break | Rule::throw | Rule::assert |
+            Rule::exit | Rule::r#break | Rule::throw | Rule::test |
             Rule::infix_identifier | Rule::r#return => {
                 let rule = parsed.as_rule();
                 let str = parsed.as_str().to_owned();

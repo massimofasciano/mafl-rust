@@ -55,6 +55,6 @@ p5.t();
 
 let qw = 10;
 module {
-assert qw == qw;
-assert qw + 3   qw+3;
+    test qw != qw;
+    test qw + 3 expect qw+3;
 }

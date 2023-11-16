@@ -55,7 +55,7 @@ impl Interpreter {
                 open
             }
 
-            ExpressionType::Assert(_,first,second) |
+            ExpressionType::Test(_,first,second) |
             ExpressionType::AssignToDeRefExpression(first, second) |
             ExpressionType::OpAssignToExpression(_, first, second) |
             ExpressionType::AssignToExpression(first, second) |
