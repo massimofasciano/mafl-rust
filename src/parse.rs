@@ -134,37 +134,6 @@ impl Interpreter {
                         // a normal function (lambda)
                         ExpressionType::Fun(args,body).into()
                     }
-            }
-                Rule::defun => {
-                    let _fun_type = Self::find_tag("fun_type", &inner).next()
-                        .map(|x|x.as_str().to_owned()).expect("missing fun type");
-                    let name = Self::find_tag("name", &inner).next()
-                        .map(|x|self.ident(x.as_str())).expect("missing name");
-                    let args = Self::find_tag("arg", &inner)
-                        .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
-                    let body = Self::find_tag("body", &inner).next()
-                        .map(|x| self.parse_rule(x.to_owned()))
-                        .expect("missing body")?;
-                    // if fun_type == "defcon" {
-                    //     // defcon is defun with @self injected at end of function body
-                    //     let new_body_vec = match body.as_ref() {
-                    //         ExpressionType::Block{r#type: BlockType::Function, body} => {
-                    //             let mut new = body.clone();
-                    //             new.push(ExpressionType::BuiltinVariable("self".to_owned()).into());
-                    //             new
-                    //         }
-                    //         _ => Err(anyhow!("not a function body"))?
-                    //     };
-                    //     body = ExpressionType::Block{r#type: BlockType::Function, body: new_body_vec}.into();
-                    // }
-                    // let f; f = fun ...
-                    ExpressionType::Block{r#type: BlockType::Sequence, body: vec![
-                        ExpressionType::Let(name.to_owned(), ExpressionType::Nil.into()).into(), 
-                        ExpressionType::AssignToExpression(
-                            ExpressionType::Variable(name.to_owned()).into(),
-                            ExpressionType::Fun(args,body).into()
-                        ).into()    
-                    ]}.into()
                 }
                 Rule::array => {
                     ExpressionType::Array(RefCell::new(
@@ -442,7 +411,7 @@ impl Interpreter {
             Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
             Rule::expr_mul | Rule::expr_apply_or_access | Rule::expr_post | 
             Rule::expr_prefix | Rule::expr_exp | Rule::expr_ref |
-            Rule::defun | Rule::r#use |
+            Rule::r#use |
             Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
             Rule::assign | Rule::fun | 
             Rule::r#let | Rule::r#loop | Rule::r#for | Rule::try_catch |

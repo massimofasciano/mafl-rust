@@ -5,21 +5,21 @@ MFEL : 55s with a constructor
 
 ###########################################################)
 
-defun sigmoid x {
+let sigmoid = fun x {
     1.0/(1.0+@exp(-x))
-}
+};
 
 let Model = cons w_x1_h1 w_x1_h2 w_x2_h1 w_x2_h2 w_b1_h1 w_b1_h2 w_h1_out w_h2_out w_b2_out {
     let self = @self;
 
-    defun forward x1 x2 {
+    let forward = fun x1 x2 {
         let h1 = sigmoid(x1 * w_x1_h1 + x2 * w_x2_h1 + w_b1_h1);
         let h2 = sigmoid(x1 * w_x1_h2 + x2 * w_x2_h2 + w_b1_h2);
         let out = sigmoid(h1 * w_h1_out + h2 * w_h2_out + w_b2_out);
         [h1,h2,out]
-    }
+    };
 
-    defun backward out x1 x2 y h1 h2 learning_rate {
+    let backward = fun out x1 x2 y h1 h2 learning_rate {
         let grad_out = out * (1.0 - out) * (y - out);
         let grad_h1 = h1 * (1.0 - h1) * w_h1_out * grad_out;
         let grad_h2 = h2 * (1.0 - h2) * w_h2_out * grad_out;
@@ -38,16 +38,16 @@ let Model = cons w_x1_h1 w_x1_h2 w_x2_h1 w_x2_h2 w_b1_h1 w_b1_h2 w_h1_out w_h2_o
         let diff = y - out;
         let loss = 0.5*diff*diff;
         loss
-    }
+    };
 
-    defun string {
+    let string = fun {
         "Model(" + w_x1_h1 + "," + w_x1_h2 + "," + w_x2_h1 + "," + w_x2_h2 + "," +
         w_b1_h1 + "," + w_b1_h2 + "," + w_h1_out + "," + w_h2_out + "," + w_b2_out + ")"
-    }
+    };
 
-    defun train epochs learning_rate target_loss data {
+    let train = fun epochs learning_rate target_loss data {
+        from @std.iter use range;
         let trace_steps = epochs // 10;
-        let range = @std.iter.range;
         let start = @now();
         @println(self);
         let loss = for epoch in range(0,epochs) {
@@ -77,7 +77,7 @@ let Model = cons w_x1_h1 w_x1_h2 w_x2_h1 w_x2_h2 w_b1_h1 w_b1_h2 w_h1_out w_h2_o
         @println(self);
         @println("Loss: ",loss);
         @println("Elapsed time: ",elapsed," seconds");
-    }
+    };
 };
 
 let data = [

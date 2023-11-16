@@ -18,7 +18,7 @@ reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
     "return" | "break" | "exit" | "continue" | "throw" | 
     "let" | "in" | "use" | "rec" | "from" |
-    "fun" | "defun" | "module" | "cons" |
+    "fun" | "module" | "cons" |
     "try" | "catch" | "test" | "expect" |
     "true" | "false" | "nil" |
     "and" | "or" | "not"
@@ -69,11 +69,6 @@ function_args = { (identifier ~ ("," ~ identifier)*)? }
 fun_type = { "fun" | "\\" | "cons" | "module" | "dyn" }
 fun = {
     (#fun_type = fun_type) ~ "("? ~ (#arg = identifier ~ ","?)* ~ ")"? ~ (#body = function_block) 
-}
-
-defun_type = { "defun" }
-defun = {
-    (#fun_type = defun_type) ~ (#name = identifier) ~ (#arg = identifier)* ~ (#body = function_block) 
 }
 
 if = {
@@ -214,14 +209,14 @@ expr_base = _{
     "(" ~ expr ~ ")" | nil_literal | 
     array | block | if | 
     while | unless | do_while | loop | for | try_catch |
-    defun | fun | assign | use | 
+    fun | assign | use | 
     continue | 
     boolean | float | integer | string_literal | char_literal | 
     variable | let | return | break | exit | throw | test
 }
 
 // expressions that behave like blocks
-expr_block = _{ block | if | while | unless | loop | for | try_catch | defun }
+expr_block = _{ block | if | while | unless | loop | for | try_catch }
 
 semicolons = _{ ";" ~ semicolons | ";" }
 nil_implicit = { "" }

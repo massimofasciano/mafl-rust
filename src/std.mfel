@@ -7,14 +7,14 @@
 ## time calculations
 let time = module {
     let start = @now();
-    defun elapsed {
+    let elapsed = fun {
         @now() - start
-    } 
+    };
 };
 
 ## iterators and iterator functions
 let iter = module {
-    defun range start end {
+    let range = fun start end {
         fun {
             if start < end {
                 let count = start;
@@ -22,43 +22,43 @@ let iter = module {
                 count            
             }
         }
-    }
-    defun collect iter {
+    };
+    let collect = fun iter {
         let out = @array(0,nil);
         for e in iter { @append(out,e); }
         out
-    }
-    defun map f iter {
+    };
+    let map = fun f iter {
         let out = @array(0,nil);
         for e in iter { @append(out,f(e)); }
         out
-    }
-    defun fold f acc iter {
+    };
+    let fold = fun f acc iter {
         for e in iter { acc = f(acc,e) }
         acc
-    }
-    defun sum iter {
-        fold(\x y{x+y}, 0, iter)
-    }
-    defun prod iter {
-        fold(\x y{x*y}, 1, iter)
-    }
-    defun filter f iter {
+    };
+    let sum = fun iter {
+        fold(\x,y{x+y}, 0, iter)
+    };
+    let prod = fun iter {
+        fold(\x,y{x*y}, 1, iter)
+    };
+    let filter = fun f iter {
         let out = @array(0,nil);
         for e in iter {
             if f(e) { @append(out,e); }
         }
         out
-    }
-    defun foreach f a {
+    };
+    let foreach = fun f a {
         for e in a { f(e) }
-    }
+    };
 };
 
 ## array functions
 let array = module {
     from iter use map fold sum prod filter foreach;
-    defun reduce f arr {
+    let reduce = fun f arr {
         if @len(arr) < 1 { 
             @error("reduce called on empty array")
         } else {
@@ -70,8 +70,8 @@ let array = module {
             }
             acc
         }
-    }
-    defun reverse arr {
+    };
+    let reverse = fun arr {
         # reverses the array in place
         let back = @len(arr)-1;
         let front = 0;
@@ -83,5 +83,5 @@ let array = module {
             front += 1;
         }
         arr
-    }
+    };
 };
