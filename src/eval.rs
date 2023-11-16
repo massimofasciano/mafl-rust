@@ -395,64 +395,91 @@ impl Interpreter {
                     _ => ast.to_error()?
                 }
             }
-            ExpressionType::Object(body) => {
-                let ctx = &ctx.with_new_context();
-                self.eval(ctx, body)?;
-                // we capture the context from the body in a closure
-                let cap_ctx = ctx.capture();
-                expression::context(cap_ctx.to_owned())
-            }
+            // ExpressionType::Object(body) => {
+            //     let ctx = &ctx.with_new_context();
+            //     self.eval(ctx, body)?;
+            //     // we capture the context from the body in a closure
+            //     let cap_ctx = ctx.capture();
+            //     expression::context(cap_ctx.to_owned())
+            // }
 
-            ExpressionType::Context(arg_names, body) => {
-                let local_ctx = Context::new();
-                for name in arg_names {
-                    if let Some(val) = ctx.get_binding(name) { 
-                        local_ctx.add_binding(name.to_owned(), val.to_owned()); 
-                    }
-                }
-                self.eval(&local_ctx, body)?
-            }
+            // ExpressionType::Context(arg_names, body) => {
+            //     let local_ctx = Context::new();
+            //     for name in arg_names {
+            //         if let Some(val) = ctx.get_binding(name) { 
+            //             local_ctx.add_binding(name.to_owned(), val.to_owned()); 
+            //         }
+            //     }
+            //     self.eval(&local_ctx, body)?
+            // }
 
-            ExpressionType::Module(modname, arg_names, body) => {
-                let local_ctx = Context::new();
-                for name in arg_names {
-                    if let Some(val) = ctx.get_binding(name) { 
-                        local_ctx.add_binding(name.to_owned(), val.to_owned()); 
-                    }
-                }
-                let val = self.eval(&local_ctx, body)?;
-                let captured = expression::context(local_ctx);
-                ctx.add_binding(modname.to_owned(), captured);
-                val
-            }
+            // ExpressionType::Module(modname, arg_names, body) => {
+            //     let local_ctx = Context::new();
+            //     for name in arg_names {
+            //         if let Some(val) = ctx.get_binding(name) { 
+            //             local_ctx.add_binding(name.to_owned(), val.to_owned()); 
+            //         }
+            //     }
+            //     let val = self.eval(&local_ctx, body)?;
+            //     let captured = expression::context(local_ctx);
+            //     ctx.add_binding(modname.to_owned(), captured);
+            //     val
+            // }
 
-            ExpressionType::Proto(captures, extends, body) => {
-                // create new context based on extends or empty if no extends present
-                let new_ctx = if let Some(extends) = extends {
-                    let closure = self.eval(ctx, extends)?;
-                    match closure.as_ref() {
+            // ExpressionType::Proto(captures, extends, body) => {
+            //     // create new context based on extends or empty if no extends present
+            //     let new_ctx = if let Some(extends) = extends {
+            //         let closure = self.eval(ctx, extends)?;
+            //         match closure.as_ref() {
+            //             ExpressionType::Closure(cctx,_,_) => {
+            //                 cctx.with_new_context()
+            //                 // Context::new().with_context(cctx.to_owned())
+            //             }
+            //             _ => Err(anyhow!("with on non-closure"))?
+            //         }
+            //     } else {
+            //         Context::new()
+            //     };
+            //     // bind all captured identifiers by ref (from old to new context)
+            //     for cap in captures {
+            //         println!("*** proto capturing {}", cap);
+            //         if let Some(mc) = ctx.get_binding_ref(cap) { 
+            //             new_ctx.add_binding_ref(cap.to_owned(), mc.to_owned()); 
+            //         } else {
+            //             Err(anyhow!("binding not found: {cap}"))?;
+            //         }
+            //     }
+            //     // evaluate the body in the new context
+            //     self.eval(&new_ctx, body)?;
+            //     // return the new context in a closure
+            //     expression::context(new_ctx.to_owned())
+            // }
+
+            ExpressionType::Use(opt_source, members) => {
+                if let Some(source) = opt_source {
+                    let source = self.eval(ctx, source)?;
+                    match source.as_ref() {
                         ExpressionType::Closure(cctx,_,_) => {
-                            cctx.with_new_context()
-                            // Context::new().with_context(cctx.to_owned())
+                            for var in members {
+                                if let Some(rc) = cctx.get_binding_ref(var) {
+                                    ctx.add_binding_ref(var.to_owned(), rc.to_owned());
+                                } else {
+                                    Err(anyhow!("use member not found: {var}"))?
+                                }
+                            }
                         }
-                        _ => Err(anyhow!("with on non-closure"))?
-                    }
+                        _ => Err(anyhow!("use source is not a closure"))?
+                    }                        
                 } else {
-                    Context::new()
-                };
-                // bind all captured identifiers by ref (from old to new context)
-                for cap in captures {
-                    println!("*** proto capturing {}", cap);
-                    if let Some(mc) = ctx.get_binding_ref(cap) { 
-                        new_ctx.add_binding_ref(cap.to_owned(), mc.to_owned()); 
-                    } else {
-                        Err(anyhow!("binding not found: {cap}"))?;
+                    for var in members {
+                        if let Some(rc) = ctx.get_binding_ref(var) {
+                            ctx.add_binding_ref(var.to_owned(), rc.to_owned());
+                        } else {
+                            Err(anyhow!("use member not found: {var}"))?
+                        }
                     }
                 }
-                // evaluate the body in the new context
-                self.eval(&new_ctx, body)?;
-                // return the new context in a closure
-                expression::context(new_ctx.to_owned())
+                expression::nil()
             }
 
             ExpressionType::BinOpCall(op, left, right) => {

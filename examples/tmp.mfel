@@ -1,63 +1,19 @@
-(#
-
-#pre (auto generated)
-
-
-let f1;
-let f2;
-let y;
-
-{
-##################################
-# mutual f1 f2 y ...
-
-# need a unique temp name here instead of _o
-let _o = object {
-defun f1 x { 
-    if x > 40 { x }
-    else { f2(x,y) }
-}
-
-defun f2 a b { 
-    f1(a+b) 
-}
-
-let y = 30;
-};
-##################################
-
-#post (auto generated)
-
-f1 = _o.f1;
-f2 = _o.f2;
-y = _o.y;
-
-}
-
-y -= 21;
-f1(1)
-
-#)
-
 let z = 100;
 
-let p1 = proto {
+let p1 = module {
     let x = 10;
 };
 @println(p1);
 
-let p2 = proto extends p1 with z {
+let p2 = module {
+    from p1 use x; use z;
     let y = x + 1;
 };
 @println(p2);
 
-#let p3 = proto with z {
-#    z += 1;
-#};
-let p3 = fun {
+let p3 = module {
     z += 1;
-    @self
-}();
+};
 @println(p3);
 
 @println(z);
@@ -65,22 +21,6 @@ let p3 = fun {
 p2.x += 1;
 @println(p2);
 @println(p1);
-
-let a;
-let b;
-let c;
-let p4 = fun {
-    let zzz = 23;
-    proto with z extends (proto with a with b c {}) with p1 zzz {
-        let m = 1;
-        let q = \{a};
-        let r = zzz;
-    }
-}();
-
-@debugln(p4);
-
-@println(@std.array.map(\x{x+1},[4,5,6]));
 
 let c1 = module {
     let count = 0;
@@ -96,8 +36,13 @@ let c1 = module {
 @println(c1.new(3));
 @println(c1.new(4));
 
-let rec f = \x { f(x) };
+from @std.array use fold;
 
-let a; let b;
-[a,b] = [1,2];
-[a,b]
+let p4 = module {
+    from p2 use x y;
+    let f = fun { x + y };
+    let r = fold(\acc,x{acc*x},2,[4,5,6]);
+};
+@println(p4.f());
+@println(p4.r);
+

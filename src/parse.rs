@@ -168,26 +168,14 @@ impl Interpreter {
                         inner.iter().map(|e| self.parse_rule(e.to_owned())).collect::<Result<Vec<_>>>()?
                     )).into()
                 } 
-                Rule::context => {
-                    assert!(inner.len() == 2);
-                    assert!(inner[0].as_rule() == Rule::function_args);
-                    let args : Vec<_> = inner[0].clone().into_inner().map(|e| self.ident(e.as_str())).collect();
-                    let body = self.parse_rule(inner[1].clone())?;
-                    ExpressionType::Context(args, body).into()
-                } 
-                Rule::object => {
-                    assert!(inner.len() == 1);
-                    let body = self.parse_rule(inner[0].clone())?;
-                    ExpressionType::Object(body).into()
-                } 
-                Rule::module => {
-                    assert!(inner.len() == 3);
-                    let var = self.ident(inner[0].as_str());
-                    assert!(inner[1].as_rule() == Rule::function_args);
-                    assert!(inner[2].as_rule() == Rule::block_syntax);
-                    let args : Vec<_> = inner[1].clone().into_inner().map(|e| self.ident(e.as_str())).collect();
-                    let body = self.parse_rule(inner[2].clone())?;
-                    ExpressionType::Module(var, args, body).into()
+                Rule::r#use => {
+                    assert!(!inner.is_empty());
+                    let opt_source = Self::find_tag("source", &inner).next()
+                        .map(|x| self.parse_rule(x.to_owned()))
+                        .map_or(Ok(None), |v| v.map(Some))?;
+                    let vars = Self::find_tag("var", &inner)
+                        .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                    ExpressionType::Use(opt_source, vars).into()
                 } 
                 Rule::r#if | Rule::unless => {
                     assert!(inner.len() == 2 || inner.len() == 3);
@@ -328,7 +316,7 @@ impl Interpreter {
                 }
                 Rule::r#for => {
                     assert!(inner.len() == 3);
-                    assert!(inner[0].as_rule() == Rule::variable);
+                    assert!(inner[0].as_rule() == Rule::identifier);
                     let var = self.ident(inner[0].as_str());
                     let expr = self.parse_rule(inner[1].clone())?;
                     assert!(inner[2].as_rule() == Rule::block_syntax);
@@ -338,7 +326,7 @@ impl Interpreter {
                 Rule::try_catch => {
                     assert!(inner.len() == 3);
                     let expr = self.parse_rule(inner[0].clone())?;
-                    assert!(inner[1].as_rule() == Rule::variable);
+                    assert!(inner[1].as_rule() == Rule::identifier);
                     let var = self.ident(inner[1].as_str());
                     assert!(inner[2].as_rule() == Rule::block_syntax);
                     let body = self.parse_rule(inner[2].clone())?;
@@ -375,17 +363,6 @@ impl Interpreter {
                         ExpressionType::Nil.into()
                     };
                     ExpressionType::Throw(body).into() 
-                },
-                Rule::proto => { 
-                    let caps = Self::find_tag("capture", &inner)
-                        .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
-                    let opt_extends = Self::find_tag("extends", &inner).next()
-                        .map(|x| self.parse_rule(x.to_owned()))
-                        .map_or(Ok(None), |v| v.map(Some))?;
-                    let body = Self::find_tag("body", &inner).next()
-                        .map(|x| self.parse_rule(x.to_owned()))
-                        .expect("missing body")?;
-                    ExpressionType::Proto(caps,opt_extends,body).into()
                 },
                 Rule::infix_identifier => { 
                     assert!(inner.len() == 1);
@@ -454,11 +431,11 @@ impl Interpreter {
             Rule::expr_eq | Rule::expr_rel | Rule::expr_add | 
             Rule::expr_mul | Rule::expr_apply_or_access | Rule::expr_post | 
             Rule::expr_prefix | Rule::expr_exp | Rule::expr_ref |
-            Rule::context | Rule::module | Rule::defun |
+            Rule::defun | Rule::r#use |
             Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
-            Rule::assign | Rule::object | Rule::fun | 
+            Rule::assign | Rule::fun | 
             Rule::r#let | Rule::r#loop | Rule::r#for | Rule::try_catch |
-            Rule::endblock | Rule::r#break | Rule::throw | Rule::proto |
+            Rule::endblock | Rule::r#break | Rule::throw | 
             Rule::infix_identifier | Rule::r#return => {
                 let rule = parsed.as_rule();
                 let str = parsed.as_str().to_owned();

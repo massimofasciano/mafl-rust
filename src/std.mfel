@@ -57,12 +57,7 @@ let iter = module {
 
 ## array functions
 let array = module {
-    let map = iter.map;
-    let fold = iter.fold;
-    let sum = iter.sum;
-    let prod = iter.prod;
-    let filter = iter.filter;
-    let foreach = iter.foreach;
+    from iter use map fold sum prod filter foreach;
     defun reduce f arr {
         if @len(arr) < 1 { 
             @error("reduce called on empty array")

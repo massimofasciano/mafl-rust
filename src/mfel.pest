@@ -17,8 +17,8 @@ block_comment = @{
 reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
     "return" | "break" | "endblock" | "continue" | "throw" | 
-    "let" | "in" | "use" | "rec" |
-    "fun" | "with" | "defun" | "proto" | "extends" |
+    "let" | "in" | "use" | "rec" | "from" |
+    "fun" | "defun" | "proto" | 
     "module" | "cons" |
     "try" | "catch" |
     "true" | "false" | "nil" |
@@ -77,27 +77,12 @@ defun = {
     (#fun_type = defun_type) ~ (#name = identifier) ~ (#arg = identifier)* ~ (#body = function_block) 
 }
 
-context = {
-    // "context" ~ "(" ~ function_args ~ ")" ~ ( ("in" ~ expr) | block )
-    "DEPRECATED"
-}
-
 proto = {
     "proto" ~ 
     ( "with" ~ "("? ~ (#capture = identifier ~ ","?)* ~ ")"? )? ~ 
     ( "extends" ~ (#extends = expr) )? ~ 
     ( "with" ~ "("? ~ (#capture = identifier ~ ","?)* ~ ")"? )? ~ 
     (#body = block_syntax)
-}
-
-module = {
-    // "module" ~ identifier ~ "(" ~ function_args ~ ")" ~ block_syntax
-    "DEPRECATED"
-}
-
-object = {
-    // "object" ~ block_syntax
-    "DEPRECATED"
 }
 
 if = {
@@ -121,11 +106,15 @@ loop = {
 }
 
 for = {
-    "for" ~ variable ~ "in" ~ expr ~ block_syntax
+    "for" ~ identifier ~ "in" ~ expr ~ block_syntax
+}
+
+use = {
+    ("from" ~ (#source = expr))? ~ "use" ~ (#var = identifier)* 
 }
 
 try_catch = {
-    "try" ~ expr ~ "catch" ~ variable ~ block_syntax
+    "try" ~ expr ~ "catch" ~ identifier ~ block_syntax
 }
 
 identifier_array = { "[" ~ (identifier ~ ("," ~ identifier)*)? ~ "]"}
@@ -229,14 +218,14 @@ expr_base = _{
     "(" ~ expr ~ ")" | nil_literal | 
     array | block | if | 
     while | unless | do_while | loop | for | try_catch |
-    defun | fun | assign | context | module | object | 
+    defun | fun | assign | use | 
     continue | 
     boolean | float | integer | string_literal | char_literal | 
     variable | let | return | break | endblock | throw | proto
 }
 
 // expressions that behave like blocks
-expr_block = _{ block | if | while | unless | loop | for | module | try_catch | defun | proto }
+expr_block = _{ block | if | while | unless | loop | for | try_catch | defun | proto }
 
 semicolons = _{ ";" ~ semicolons | ";" }
 nil_implicit = { "" }
