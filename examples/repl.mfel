@@ -1,8 +1,0 @@
-let lines = fun { @readline() };
-
-@print("MFEL> ");
-for line in lines {
-    @println(@eval(line));
-    @print("MFEL> ");
-}
-@println();

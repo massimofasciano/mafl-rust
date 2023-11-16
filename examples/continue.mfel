@@ -1,8 +1,0 @@
-for i in @std.iter.range(0,20) {
-    @println(i);
-    if i % 3 == 0 {
-        continue;
-    }
-    @println("...");
-}
-

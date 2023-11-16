@@ -1,7 +1,7 @@
 (##########################################################
 
 773575/1000000 epochs
-MFEL : 77s with module+object
+MFEL : 55s with a constructor
 
 ###########################################################)
 
@@ -40,7 +40,7 @@ let Model = cons w_x1_h1 w_x1_h2 w_x2_h1 w_x2_h2 w_b1_h1 w_b1_h2 w_h1_out w_h2_o
         loss
     }
 
-    defun __str__ {
+    defun string {
         "Model(" + w_x1_h1 + "," + w_x1_h2 + "," + w_x2_h1 + "," + w_x2_h2 + "," +
         w_b1_h1 + "," + w_b1_h2 + "," + w_h1_out + "," + w_h2_out + "," + w_b2_out + ")"
     }

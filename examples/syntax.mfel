@@ -382,13 +382,12 @@ let o = module {
 };
 test o.x+o.y expect 3;
 let c = cons x y {
-    let __str__ = \{ x + ":" + y }
+    let string = \{ x + ":" + y }
 };
 let c1 = c(1,2);
 let c2 = c(2,3);
 test c1.y expect c2.x;
-# @string automatically calls __str__ if it exsists for the object
-test @string(c1) expect "1:2";
+test c1.string() expect "1:2";
 
 ###
 ### standard library vs builtin functions
@@ -406,7 +405,7 @@ test @string(c1) expect "1:2";
 
 @println(c1," ",c2," ",o.x); # converts all arguments to strings and prints a concatenation of them
 # this prints: 1:2 2:3 1
-# note that when an object has a __str__ method, it is called by @println and @string
+# note that when an object has a string method, it is called by @println and @string
 test @string(c1) + " " + @string(c2) + " " + @string(o.x) expect "1:2 2:3 1";
 
 # @readline() reads a line from the terminal and returns it as a string
@@ -422,6 +421,15 @@ test @array(3,\x{x+1}) expect [1,2,3];
 test @array("hello") expect ['h','e','l','l','o'];
 
 test @lines("line1\nline2") expect ["line1","line2"];
+
+test @slice([1,2,3,4,5,6],2,4) expect [3,4];
+
+let arr = [4,6,7,3,2];
+@sort(arr,\a,b{a>b});
+test arr expect [7,6,4,3,2];
+
+# this only works on unix
+test @float(@command("expr",1,"+",3)) / 2 expect 2;
 
 let s = "1,2,3, 4,5 ,6";
 
@@ -443,6 +451,10 @@ test parts_regex expect ["1","2","3","4","5","6"];
 let regex = "[0-9]+";
 let matches = @matches(s, regex);
 test matches expect ["1","2","3","4","5","6"];
+
+# we can run arbitrary code from a string with @eval
+@eval("let abc = 10; abc += 1");
+test abc expect 11;
 
 # we have already seen the @self special variable
 
@@ -660,6 +672,12 @@ test tc expect 31;
 let err = try 1/0 catch e { @string(e) };
 test err expect "division by zero";
 
+# the ! operator can unwrap an exception. expr! is equivalent to try expr catch e { e }
+
+test fe()! * 10 expect 300;
+test 10! * 10 expect 100;
+test @string((1/0)!) expect "division by zero";
+
 ###
 ### dot notation on builtin types (experimental)
 ###
@@ -672,6 +690,9 @@ test [1,2,3,4].len() expect 4;
 test "123".array() expect ['1','2','3'];
 test "1\n2".lines() expect ["1","2"];
 test 2.exp() expect @exp(2);
+test 1.string() expect "1";
+test ['a','b','c'].string() expect "abc";
+test [1,2,3].string() expect "[1,2,3]";
 
 # we could do better if builtins were handled via a call table
 
@@ -740,11 +761,91 @@ test [v,c,r] expect [311,202,361];
 let o = module {
     let x = 1;
     let y = 2;
-    let __str__ = \{"(" + x + "," + y + ")"}
+    let string = \{"(" + x + "," + y + ")"}
 };
 # we can also take a ref on an object field
 let p = &o.x;
 test @string(o) expect "(1,2)";
 p <- 3;
-test @string(o) expect "(3,2)";
+test o.string() expect "(3,2)";
 # but not on array elements (as of MFEL 0.3.2)
+
+###
+### copy/clone
+###
+
+@println("*** COPY / CLONE ***");
+
+# @copy makes a shallow copy
+# @clone makes a deep copy (not safe with cycles)
+# they work on arrays and objects
+
+let a = [1,2,[3,4],5];
+let b = a;
+let c = @copy(a);
+let d = @clone(a);
+
+test a expect [1,2,[3,4],5];
+test b expect [1,2,[3,4],5];
+test c expect [1,2,[3,4],5];
+test d expect [1,2,[3,4],5];
+
+b[1] = 12;
+
+test a expect [1,12,[3,4],5];
+test b expect [1,12,[3,4],5];
+test c expect [1,2,[3,4],5];
+test d expect [1,2,[3,4],5];
+
+b[2][1] = 14;
+
+test a expect [1,12,[3,14],5];
+test b expect [1,12,[3,14],5];
+test c expect [1,2,[3,14],5];
+test d expect [1,2,[3,4],5];
+
+@append(b,6);
+
+test a expect [1,12,[3,14],5,6];
+test b expect [1,12,[3,14],5,6];
+test c expect [1,2,[3,14],5];
+test d expect [1,2,[3,4],5];
+
+@append(b[2],15);
+
+test a expect [1,12,[3,14,15],5,6];
+test b expect [1,12,[3,14,15],5,6];
+test c expect [1,2,[3,14,15],5];
+test d expect [1,2,[3,4],5];
+
+###
+### dict operations
+###
+
+@println("*** DICT FUNCTIONS ***");
+
+### dict functions operate on objects (the captured data of functions)
+
+let o = @dict();
+@insert(o,"x",1);
+@insert(o,"y",2);
+
+test @get(o,"x") expect 1;
+test @get(o,"y") expect 2;
+test @is_error(@get(o,"z")!);
+
+let p = @dict(o);  # p extends o (like inheritance)
+@insert(p,"y",12);
+@insert(p,"z",13);
+
+test @get(p,"x") expect 1;
+test @get(p,"y") expect 12;
+test @get(p,"z") expect 13;
+
+test @get(o,"x") expect 1;
+test @get(o,"y") expect 2;
+test @is_error(@get(o,"z")!);
+
+@set(p,"x",p.x + 1);
+test @get(o,"x") expect 2;
+test @get(p,"x") expect 2;
