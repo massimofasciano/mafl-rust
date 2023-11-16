@@ -84,31 +84,26 @@ struct Scope {
 
 impl Context {
     pub fn new() -> Self {
-        debug!("new");
         Self{inner:Rc::new(Scope::new())}
     }
     pub fn with_new_context(&self) -> Self {
-        debug!("with new scope");
         let scope = Scope::new();
         *scope.parent.borrow_mut() = Some(self.to_owned());
         Self { inner: scope.into() }
     }
     pub fn with_context(&self, ctx: Context) -> Self {
-        debug!("with context");
         let scope = Scope::new();
         *scope.bindings.borrow_mut() = ctx.bindings_ref();
         *scope.parent.borrow_mut() = Some(self.to_owned());
         Self { inner: scope.into() }
     }
     pub fn capture(&self) -> Self {
-        debug!("capture");
         self.flatten_ref()
     }
     pub fn scope_id(&self) -> ScopeID {
         self.inner.id
     }
     pub fn append(&self, ctx: &Self) {
-        debug!("append");
         let mut end = self.to_owned();
         loop {
             let parent = end.parent();
@@ -130,17 +125,14 @@ impl Context {
         }
     }
     pub fn add_binding(&self, var: Ident, value: Expression) -> Option<Expression> {
-        debug!("add binding: {var} <- {value}");
         let scope = &self.inner;
         scope.bindings.borrow_mut().insert(var, MemCell::new_ref(value)).map(|old| old.get())
     }
     pub fn add_binding_ref(&self, var: Ident, value: Rc<MemCell>) -> Option<Rc<MemCell>> {
-        debug!("add binding ref: {var} <- {}",value.get());
         let scope = &self.inner;
         scope.bindings.borrow_mut().insert(var, value)
     }
     pub fn get_binding(&self, var: &Ident) -> Option<Expression> {
-        debug!("get binding: {var}");
         let scope = &self.inner;
         if let Some(rc) = scope.bindings.borrow().get(var) {
             Some(rc.get())
@@ -151,7 +143,6 @@ impl Context {
         }
     }
     pub fn get_binding_ref(&self, var: &Ident) -> Option<Rc<MemCell>> {
-        debug!("get binding ref: {var}");
         let scope = &self.inner;
         if let Some(rc) = scope.bindings.borrow().get(var) {
             Some(rc.to_owned())
@@ -162,7 +153,6 @@ impl Context {
         }
     }
     pub fn set_binding(&self, var: Ident, value: Expression) -> Option<Expression> {
-        debug!("set binding: {var} <- {value}");
         let scope = &self.inner;
         if let Some(rc) = scope.bindings.borrow().get(&var) {
             Some(rc.set(value))
@@ -173,7 +163,6 @@ impl Context {
         }
     }
     pub fn set_binding_ref(&self, var: Ident, value: Rc<MemCell>) -> Option<Rc<MemCell>> {
-        debug!("set binding ref: {var} <- {}",value.get());
         let scope = &self.inner;
         if scope.bindings.borrow().contains_key(&var) {
             scope.bindings.borrow_mut().insert(var, value)
@@ -184,13 +173,11 @@ impl Context {
         }
     }
     pub fn flatten_ref(&self) -> Self {
-        debug!("copy merge");
         let scope = Scope::new();
         *scope.bindings.borrow_mut() = self.bindings_ref();
         scope.into()
     }
     pub fn bindings_ref(&self) -> Bindings {
-        debug!("bindings");
         let mut bindings = HashMap::new();
         let mut current = self.to_owned();
         loop {
@@ -208,17 +195,14 @@ impl Context {
         bindings
     }
     pub fn flatten_clone(&self) -> Self {
-        debug!("copy merge");
         let scope = Scope::new();
         *scope.bindings.borrow_mut() = self.bindings_cloned();
         scope.into()
     }
     pub fn bindings_cloned(&self) -> Bindings {
-        debug!("bindings cloned");
         self.bindings_ref().into_iter().map(| (k, rc) | { (k, rc.duplicate_ref()) }).collect()
     }
     pub fn from_bindings(bindings: Bindings) -> Self {
-        debug!("with bindings");
         let scope = Scope::new();
         *scope.bindings.borrow_mut() = bindings;
         scope.into()
@@ -227,21 +211,18 @@ impl Context {
 
 impl Default for Context {
     fn default() -> Self {
-        debug!("default");
         Self{ inner:Scope::new().into() }
     }
 }
 
 impl From<Scope> for Context {
     fn from(scope: Scope) -> Self {
-        debug!("from scope");
         Self{ inner:Rc::new(scope) }
     }
 }
 
 impl From<Rc<Scope>> for Context {
     fn from(rc_scope: Rc<Scope>) -> Self {
-        debug!("from scope");
         Self{ inner: rc_scope }
     }
 }
@@ -257,12 +238,17 @@ impl Scope {
 impl Default for Scope {
     fn default() -> Self {
         let id = next_scope_id();
-        debug!("default scope id={id}");
         Self {
             bindings: RefCell::new(HashMap::new()),
             parent: RefCell::new(None),
             id,
         }
+    }
+}
+
+impl Drop for Scope {
+    fn drop(&mut self) {
+        debug!("dropping scope id={}", self.id);
     }
 }
 

@@ -155,7 +155,6 @@ impl Interpreter {
                 let val = self.eval(ctx,val)?;
                 match target.as_ref() {
                     ExpressionType::Variable(id) => {
-                        debug!("eval assign to identifier: {id}");
                         let val = self.eval(ctx,&val)?;
                         if ctx.set_binding(id.to_owned(), val.to_owned()).is_none() {
                             Err(anyhow!("binding not found {id}"))?
@@ -164,7 +163,6 @@ impl Interpreter {
                         }
                     },
                     ExpressionType::Field(target, field) => {
-                        debug!("eval assign to dict/object with key/field {field}");
                         let target = self.eval(ctx, target)?;
                         match target.as_ref() {
                             ExpressionType::Closure(closure_ctx, _arg_names, _body) => {
@@ -180,7 +178,6 @@ impl Interpreter {
                         }
                     },
                     ExpressionType::ArrayAccess(target, index) => {
-                        debug!("eval assign to array with index {index}");
                         let target = self.eval(ctx, target)?;
                         match target.as_ref() {
                             ExpressionType::Array(arr) => {
@@ -199,24 +196,6 @@ impl Interpreter {
                         _ => Err(anyhow!("index assign on non-array"))?
                         }
                     }
-                    // this requires a special expression type
-                    // ExpressionType::Array(rc) => {
-                    //     let vars = rc.borrow().to_owned();
-                    //     if let ExpressionType::Array(rc_val) = val.as_ref() {
-                    //         let vals = rc_val.borrow().to_owned();
-                    //         for (var, val) in vars.iter().zip(vals) {
-                    //             if let ExpressionType::String(id) = var.as_ref() {
-                    //                 self.eval(ctx, &ExpressionType::AssignToExpression(
-                    //                     ExpressionType::Variable(id.to_owned()).into(), val).into())?;
-                    //             } else {
-                    //                 Err(anyhow!("assign to non-identifier"))?
-                    //             }
-                    //         }
-                    //     } else {
-                    //         Err(anyhow!("array assign on non-array"))?
-                    //     }
-                    //     val.to_owned()
-                    // }
                     _ => ast.to_error()?,
                 }
             }
@@ -349,7 +328,7 @@ impl Interpreter {
                 let open_vars = self.open(&ctx.capture(), ast)?;
                 let captured = Context::new();
                 for open_var in open_vars {
-                    println!("*** fun capturing {}",open_var);
+                    debug!("*** fun capturing {}",open_var);
                     if let Some(mc) = ctx.get_binding_ref(&open_var) { 
                         captured.add_binding_ref(open_var.to_owned(), mc); 
                     } else {
