@@ -21,8 +21,14 @@ impl Interpreter {
                 ExpressionType::Exit(self.eval(ctx, br)?).into(),
             ExpressionType::Return(br) =>
                 ExpressionType::Return(self.eval(ctx, br)?).into(),
-            ExpressionType::Throw(br) =>
-                ExpressionType::Throw(self.eval(ctx, br)?).into(),
+            ExpressionType::Throw(e) => {
+                let exception = self.eval(ctx, e)?;
+                if let ExpressionType::Error(msg) = exception.as_ref() {
+                    Err(anyhow!(msg.to_owned()))?
+                } else {
+                    ExpressionType::Throw(e.to_owned()).into()
+                }
+            }
             ExpressionType::Continue => ExpressionType::Continue.into(),
 
             ExpressionType::Block{r#type: block_type, body: exprs} => {
