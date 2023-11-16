@@ -59,6 +59,7 @@ pub enum ExpressionType {
     Block{r#type: BlockType, body: Expressions},
     Loop(Expression),
     Fun(Idents,Expression),
+    Dyn(Idents,Expression),
     Use(Option<Expression>,Idents),
     Closure(Context,Idents,Expression),
     Array(RefCell<Expressions>),

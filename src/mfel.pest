@@ -66,12 +66,12 @@ array = { "[" ~ (expr ~ ("," ~ expr)*)? ~ "]"}
 
 function_args = { (identifier ~ ("," ~ identifier)*)? }
 
-fun_type = { "fun" | "\\" | "cons" | "module" }
+fun_type = { "fun" | "\\" | "cons" | "module" | "dyn" }
 fun = {
     (#fun_type = fun_type) ~ "("? ~ (#arg = identifier ~ ","?)* ~ ")"? ~ (#body = function_block) 
 }
 
-defun_type = { "defun" | "defcon" }
+defun_type = { "defun" }
 defun = {
     (#fun_type = defun_type) ~ (#name = identifier) ~ (#arg = identifier)* ~ (#body = function_block) 
 }

@@ -10,7 +10,10 @@ TODO:
 
 - don't forget to update open vars when adding new constructs!!! (like inheritance or with)  *****
 
-- implement USE expr (to import all symbols from closure expr by ref flattened)
+- open vars not always easy with live code:
+@eval
+@test
+etc...
 
 - array assign and let rec parallel
 [a,b,c] = [1,2,3]
@@ -24,7 +27,7 @@ let a; let b; let c;
 a = [1,2,3][0];
 b = [1,2,3][1];
 c = [1,2,3][2];
-(check lenghts before)
+(check lengths before)
 
 - constructor is fun that returns @self
 - defcon defines constructor (useful ?)
@@ -32,9 +35,6 @@ c = [1,2,3][2];
 - defmod defines module ?
 
 - eliminate defun and all def... ? add letrec instead ?
-
-- context should take ref
-- replace context with object ?
 
 - field (object) based builtins like .copy() .string() .map() ?
 
@@ -51,8 +51,6 @@ c = [1,2,3][2];
 - lookup table for builtins ?
 - put all builtins inside the interpreter struct
 
-- context inheritance syntax (maybe context (a,b,c) <: parent {})
-- use statement or @use builtin to import contexts (ex: @use(@std.iter)). maybe @import ?
 
 
 

@@ -16,6 +16,7 @@ impl Interpreter {
                 open
             }
 
+            ExpressionType::Dyn(_,_) |
             ExpressionType::BuiltinVariable(_) |
             ExpressionType::Continue |
             ExpressionType::Nil |
@@ -142,49 +143,6 @@ impl Interpreter {
                 }
                 open
             }
-
-            // ExpressionType::Context(closed, expr) => {
-            //     let ctx = Context::new();
-            //     for closed_var in closed {
-            //         ctx.add_binding(closed_var.to_owned(), expression::nil()); 
-            //     }
-            //     let mut open = self.open(&ctx, expr)?;
-            //     // remove the context arguments from open vars...
-            //     for closed_var in closed {
-            //         open.remove(closed_var);
-            //     }
-            //     open                
-            // }
-
-            // ExpressionType::Object(expr) => {
-            //     let ctx = Context::new();
-            //     self.open(&ctx, expr)?                
-            // }
-
-            // ExpressionType::Module(closed_var, closed, expr) => {
-            //     let ctx = Context::new();
-            //     ctx.add_binding(closed_var.to_owned(), expression::nil()); 
-            //     for closed_var in closed {
-            //         ctx.add_binding(closed_var.to_owned(), expression::nil()); 
-            //     }
-            //     let mut open = self.open(&ctx, expr)?;
-            //     // remove the module name and arguments from open vars...
-            //     open.remove(closed_var);
-            //     for closed_var in closed {
-            //         open.remove(closed_var);
-            //     }
-            //     open                
-            // }
-
-            // ExpressionType::Proto(closed, opt_expr, _) => {
-            //     let mut open = if let Some(expr) = opt_expr {
-            //         self.open(ctx, expr)?
-            //     } else {
-            //         HashSet::new()
-            //     };
-            //     open.extend(closed.iter().cloned());
-            //     open                
-            // }
 
             _ => Err(anyhow!("unhandled case for open vars: {:?}",ast))?
         })

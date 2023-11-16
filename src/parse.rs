@@ -127,33 +127,36 @@ impl Interpreter {
                         }
                         // if it's a module, we call the function to instantiate
                         ExpressionType::FunctionCall(ExpressionType::Fun(vec![],body).into(),vec![]).into()
+                    } else if fun_type == "dyn" {
+                        // a dynamic function
+                        ExpressionType::Dyn(args,body).into()
                     } else {
-                        // a normal function
+                        // a normal function (lambda)
                         ExpressionType::Fun(args,body).into()
                     }
-                }
+            }
                 Rule::defun => {
-                    let fun_type = Self::find_tag("fun_type", &inner).next()
+                    let _fun_type = Self::find_tag("fun_type", &inner).next()
                         .map(|x|x.as_str().to_owned()).expect("missing fun type");
                     let name = Self::find_tag("name", &inner).next()
                         .map(|x|self.ident(x.as_str())).expect("missing name");
                     let args = Self::find_tag("arg", &inner)
                         .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
-                    let mut body = Self::find_tag("body", &inner).next()
+                    let body = Self::find_tag("body", &inner).next()
                         .map(|x| self.parse_rule(x.to_owned()))
                         .expect("missing body")?;
-                    if fun_type == "defcon" {
-                        // defcon is defun with @self injected at end of function body
-                        let new_body_vec = match body.as_ref() {
-                            ExpressionType::Block{r#type: BlockType::Function, body} => {
-                                let mut new = body.clone();
-                                new.push(ExpressionType::BuiltinVariable("self".to_owned()).into());
-                                new
-                            }
-                            _ => Err(anyhow!("not a function body"))?
-                        };
-                        body = ExpressionType::Block{r#type: BlockType::Function, body: new_body_vec}.into();
-                    }
+                    // if fun_type == "defcon" {
+                    //     // defcon is defun with @self injected at end of function body
+                    //     let new_body_vec = match body.as_ref() {
+                    //         ExpressionType::Block{r#type: BlockType::Function, body} => {
+                    //             let mut new = body.clone();
+                    //             new.push(ExpressionType::BuiltinVariable("self".to_owned()).into());
+                    //             new
+                    //         }
+                    //         _ => Err(anyhow!("not a function body"))?
+                    //     };
+                    //     body = ExpressionType::Block{r#type: BlockType::Function, body: new_body_vec}.into();
+                    // }
                     // let f; f = fun ...
                     ExpressionType::Block{r#type: BlockType::Sequence, body: vec![
                         ExpressionType::Let(name.to_owned(), ExpressionType::Nil.into()).into(), 

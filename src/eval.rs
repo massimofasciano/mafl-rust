@@ -6,6 +6,7 @@ impl Interpreter {
 
     pub fn eval(&self, ctx: &Context, ast: &Expression) -> Result<Expression> {
         Ok(match ast.as_ref() {
+            ExpressionType::Dyn(_,_) |
             ExpressionType::Nil |
             ExpressionType::Integer(_) |
             ExpressionType::Float(_) |
@@ -353,8 +354,8 @@ impl Interpreter {
                 closure
             }
 
-            ExpressionType::FunctionCall(lambda, arg_values) => {
-                match self.eval(ctx,lambda)?.as_ref() {
+            ExpressionType::FunctionCall(fnct, arg_values) => {
+                match self.eval(ctx,fnct)?.as_ref() {
                     ExpressionType::BuiltinFunction(name) => {
                         let mut eval_args = vec![];
                         for v in arg_values.iter() {
@@ -368,10 +369,31 @@ impl Interpreter {
                         self.builtin_fn(ctx, name, &eval_args)?
                     }
                     ExpressionType::Closure(closure_ctx, arg_names, body) => {
-                        // dynamic binding (default to global)
-                        // let function_ctx = ctx.with_context(closure_ctx.to_owned());
-                        // lexical binding (default to empty)
+                        // lexical binding (using closure context)
                         let function_ctx = Context::new().with_context(closure_ctx.to_owned());
+                        for (name,value) in arg_names.iter().zip(arg_values) {
+                            let value = self.eval(ctx,value)?;
+                            // propagate exception
+                            if let ExpressionType::Throw(val) = value.as_ref() {
+                                return Ok(ExpressionType::Throw(val.to_owned()).into());
+                            }
+                            function_ctx.add_binding(name.to_owned(), value.to_owned());
+                        }
+                        #[allow(clippy::comparison_chain)]
+                        if arg_names.len() > arg_values.len() {
+                            debug!("performing currying: {arg_names:?} {arg_values:?}");
+                            expression::closure(function_ctx, arg_names[arg_values.len()..].to_vec(), body.to_owned())
+                        } else if arg_names.len() < arg_values.len() {
+                            debug!("extra args supplied: {arg_names:?} {arg_values:?}");
+                            let uncurried = self.eval(&function_ctx,body)?;
+                            self.eval(&function_ctx,&ExpressionType::FunctionCall(uncurried,arg_values[arg_names.len()..].to_vec()).into())?
+                        } else {
+                            self.eval(&function_ctx,body)?
+                        }
+                    },
+                    ExpressionType::Dyn(arg_names, body) => {
+                        // dynamic binding (using global context)
+                        let function_ctx = ctx.with_new_context();
                         for (name,value) in arg_names.iter().zip(arg_values) {
                             let value = self.eval(ctx,value)?;
                             // propagate exception
@@ -395,65 +417,6 @@ impl Interpreter {
                     _ => ast.to_error()?
                 }
             }
-            // ExpressionType::Object(body) => {
-            //     let ctx = &ctx.with_new_context();
-            //     self.eval(ctx, body)?;
-            //     // we capture the context from the body in a closure
-            //     let cap_ctx = ctx.capture();
-            //     expression::context(cap_ctx.to_owned())
-            // }
-
-            // ExpressionType::Context(arg_names, body) => {
-            //     let local_ctx = Context::new();
-            //     for name in arg_names {
-            //         if let Some(val) = ctx.get_binding(name) { 
-            //             local_ctx.add_binding(name.to_owned(), val.to_owned()); 
-            //         }
-            //     }
-            //     self.eval(&local_ctx, body)?
-            // }
-
-            // ExpressionType::Module(modname, arg_names, body) => {
-            //     let local_ctx = Context::new();
-            //     for name in arg_names {
-            //         if let Some(val) = ctx.get_binding(name) { 
-            //             local_ctx.add_binding(name.to_owned(), val.to_owned()); 
-            //         }
-            //     }
-            //     let val = self.eval(&local_ctx, body)?;
-            //     let captured = expression::context(local_ctx);
-            //     ctx.add_binding(modname.to_owned(), captured);
-            //     val
-            // }
-
-            // ExpressionType::Proto(captures, extends, body) => {
-            //     // create new context based on extends or empty if no extends present
-            //     let new_ctx = if let Some(extends) = extends {
-            //         let closure = self.eval(ctx, extends)?;
-            //         match closure.as_ref() {
-            //             ExpressionType::Closure(cctx,_,_) => {
-            //                 cctx.with_new_context()
-            //                 // Context::new().with_context(cctx.to_owned())
-            //             }
-            //             _ => Err(anyhow!("with on non-closure"))?
-            //         }
-            //     } else {
-            //         Context::new()
-            //     };
-            //     // bind all captured identifiers by ref (from old to new context)
-            //     for cap in captures {
-            //         println!("*** proto capturing {}", cap);
-            //         if let Some(mc) = ctx.get_binding_ref(cap) { 
-            //             new_ctx.add_binding_ref(cap.to_owned(), mc.to_owned()); 
-            //         } else {
-            //             Err(anyhow!("binding not found: {cap}"))?;
-            //         }
-            //     }
-            //     // evaluate the body in the new context
-            //     self.eval(&new_ctx, body)?;
-            //     // return the new context in a closure
-            //     expression::context(new_ctx.to_owned())
-            // }
 
             ExpressionType::Use(opt_source, members) => {
                 if let Some(source) = opt_source {
