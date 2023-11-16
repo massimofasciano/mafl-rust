@@ -9,5 +9,6 @@ env_logger = "0.10.0"
 log = "0.4.20"
 pest = "2.7.5"
 pest_derive = { version = "2.7.5", features = ["grammar-extras"] }
+rand = "0.8.5"
 regex = "1.10.2"
 unescape = "0.1.0"

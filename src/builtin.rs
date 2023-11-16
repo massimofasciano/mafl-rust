@@ -6,6 +6,7 @@ use std::time::{SystemTime, UNIX_EPOCH, Duration};
 use anyhow::{Result,anyhow};
 use log::debug;
 use regex::Regex;
+use rand::Rng;
 
 use crate::context::{MemCell, Bindings};
 use crate::{expression::{Expression, self, nil, closure, ExpressionType}, context::Context, Interpreter};
@@ -782,3 +783,16 @@ pub fn string(_: &Interpreter, _: &Context, val: &Expression) -> Result<Expressi
     })
 }
 
+pub fn randint(_: &Interpreter, _: &Context, min: &Expression, max: &Expression) -> Result<Expression> {
+    let mut rng = rand::thread_rng();
+    Ok(match (min.as_ref(),max.as_ref()) {
+        (ExpressionType::Integer(min), ExpressionType::Integer(max)) => 
+            expression::integer(rng.gen_range(*min..=*max)),
+        _ => Err(anyhow!("randint requires 2 integers"))?
+    })
+}
+
+pub fn randfloat(_: &Interpreter, _: &Context) -> Result<Expression> {
+    let mut rng = rand::thread_rng();
+    Ok(expression::float(rng.gen()))
+}

@@ -24,8 +24,12 @@ fn main() -> Result<()> {
             print!("MFEL> "); stdout().flush()?;
             let next_line = stdin.lock().lines().next();
             if let Some(line_result) = next_line {
-                let result = interpreter.run(&line_result?)?;
-                interpreter.println(result)?;
+                match interpreter.run(&line_result?) {
+                    Ok(result) => {
+                        interpreter.println(result)?;
+                    }
+                    Err(error) => println!("Error: {error}"),
+                }
             } else {
                 break;
             }

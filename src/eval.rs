@@ -605,6 +605,8 @@ impl Interpreter {
             },
             ("sort", [target]) => builtin::sort(self, ctx, target, None),
             ("sort", [target, compare]) => builtin::sort(self, ctx, target, Some(compare)),
+            ("random", [min, max]) => builtin::randint(self, ctx, min, max),
+            ("random", []) => builtin::randfloat(self, ctx),
             _ => Err(anyhow!("builtin {name}")),
         }
     }
