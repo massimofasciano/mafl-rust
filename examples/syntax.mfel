@@ -343,3 +343,318 @@ test ffun(5) expect 15;
 # dyn evaluates variables at call time
 test fdyn(5) expect 25;
 
+###
+### base types
+###
+
+@println("*** BASE TYPES ***");
+
+# integer
+test 1+1 expect 2;
+test 5//2 expect 2; # integer division
+test 13%4 expect 1; # modulo
+
+# float
+test 1/2 expect 0.5;
+test 4.5*2 expect 9;
+
+# boolean
+test true;
+test not false;
+test 1 < 3;
+
+# character and string
+let s = "hello there!";
+test "hello" + " " + "there" + "!" expect s;
+test s[1] expect 'e';
+test s[-1] expect '!';
+
+# array
+let arr = [1,2,3,4,5];
+arr[3] += 10;
+test arr expect [1,2,3,14,5];
+
+# closure (the result of evaluating a fun/cons/module)
+# it bevaves like an object with fields
+let o = module {
+    let x = 1;
+    let y = 2;
+};
+test o.x+o.y expect 3;
+let c = cons x y {
+    let __str__ = \{ x + ":" + y }
+};
+let c1 = c(1,2);
+let c2 = c(2,3);
+test c1.y expect c2.x;
+test c1.__str__() expect "1:2";
+
+###
+### standard library vs builtin functions
+###
+
+@println("*** BUILTINS AND STD ***");
+
+# we need special builtin functions to perform operations that cannot be written in the language
+# for example: 
+# - operating system interaction
+# - operations on atomic types
+# - faster versions of functions
+
+# here are a few examples of builtin functions (there are many more in the source code of the interpreter)
+
+@println(c1," ",c2," ",o.x); # converts all arguments to strings and prints a concatenation of them
+# this prints: 1:2 2:3 1
+# note that when an object has a __str__ method, it is called by println
+
+# @readline() reads a line from the terminal and returns it as a string
+
+let s = "hi there!";
+let a = [1,2,3,4];
+test @len(s) expect 9;
+test @len(a) expect 4;
+
+test @string(3) expect "3";
+test @array(3,1) expect [1,1,1];
+test @array(3,\x{x+1}) expect [1,2,3];
+test @array("hello") expect ['h','e','l','l','o'];
+
+test @lines("line1\nline2") expect ["line1","line2"];
+
+let s = "1,2,3, 4,5 ,6";
+
+# split a string using a delimiter (basic string)
+let delim = ",";
+let parts = @split(s,delim);
+test parts expect ["1","2","3"," 4","5 ","6"];
+
+# trim whitespace before and after strings
+let trimmed = @std.iter.map(@trim,parts);
+test trimmed expect ["1","2","3","4","5","6"];
+
+# split a string using a delimiter (regular expression)
+let rdelim = "[ ,]+";
+let parts_regex = @split(s,rdelim);
+test parts_regex expect ["1","2","3","4","5","6"];
+
+# gather all strings matching regular expression
+let regex = "[0-9]+";
+let matches = @matches(s, regex);
+test matches expect ["1","2","3","4","5","6"];
+
+# we have already seen the @self special variable
+
+# the @std special variable points to a module that is
+# built into the interpreter but using native language
+# constructs instead of interpreter (Rust) code.
+
+from @std.array use map fold;
+test map(\x{1/x},[1,2,3,4,5]) expect [1,1/2,1/3,1/4,1/5];
+test fold(\a,x{a+x},0,[1,2,3,4,5]) expect 15;
+
+###
+### basic control
+###
+
+@println("*** BASIC CONTROL ***");
+
+# if with optional else
+let rec f = fun x {
+    if x < 2 { 
+        x 
+    } else {
+        2 * f(x - 1)
+    }
+};
+test f(5) expect 16;
+# unless is if with the test inverted and no else block
+
+# while
+let r = 10;
+let i = r;
+while i > 0 {
+    r *= i;
+    i -= 1;
+}
+test r expect 36288000;
+
+# do ... while (test) has the test after the body
+let r = 10;
+let i = r;
+do {
+    r *= i;
+    i -= 1;
+} while (i > 0);
+test r expect 36288000;
+
+# loop is an infinite loop. you can only escape with exceptions (break, return, etc...)
+let r = 10;
+let i = r;
+loop {
+    if i <= 0 { break; } 
+    r *= i;
+    i -= 1;
+}
+test r expect 36288000;
+
+###
+### for..in and iterators
+###
+
+@println("*** ITERATORS AND FOR ***");
+
+# an iterator is a function that returns a possibly different value on each call or nil when finished
+# we had an example in the sections above (counter).
+# assuming it's still in scope...
+test counter() expect 4;
+test counter() expect 5;
+test counter() expect 6;
+
+# you can use an iterator in a for loop
+# assuming the same counter is still in scope, it will return 7, 8, 9, ...
+let r = 1;
+for c in counter {
+    if c >=10 { break }
+    r *= c;
+}
+test r expect 504;
+test counter() expect 11;
+
+# arrays can also be used in place of iterators
+let r = 1;
+for a in [1,2,3,4,5,6] {
+    r *= a;
+}
+test r expect 720;
+
+# the standard library contains functions that work on iterators
+from @std.iter use range collect;
+test collect(range(3,7)) expect [3,4,5,6];
+# map was already imported above from @std.array but that is simply an alias to @std.iter.map
+test map(\x{x*10},range(0,10)) expect [0,10,20,30,40,50,60,70,80,90];
+
+###
+### destructuring
+###
+
+@println("*** DESTRUCTURING ***");
+
+# we can split an array with a let binding. 
+# this is useful when returning multiple values
+# from a function.
+
+let div_mod = fun x y {
+    [x // y, x mod y]
+};
+let [q,r] = div_mod(13,5);
+test q expect 2;
+test r expect 3;
+
+###
+### pipeline operator
+###
+
+@println("*** PIPELINE ***");
+
+# sometimes we have a series of 1 argument functions to apply one after the other
+# the pipeline syntax makes this easier
+
+# x | f1 | f2 | f3 | f4
+# is equivalent to
+# f4(f3(f2(f1(x))))
+
+let square = \x{x*x};
+let add = \x,y{x+y};
+
+test 2 | square | add(1) | fun a { a * 10 } expect 50;
+
+###
+### comments
+###
+
+@println("*** COMMENTS ***");
+
+# a line comment starts with # and ends with a new line
+
+@println("this code is active"); # but this is a comment
+
+(# 
+a block comment starts with a (# and ends with #)
+as you can see above, they can be nested.
+#)
+
+# note how block comments can be commented out by 
+# putting a # infront of the opening (#
+# and the closing #) is self-commenting.
+(# this is really cool when you want to activate and deactivate blocks quickly #)
+
+#(#
+@println("this code will run because the start of the block comment is commented out");
+#)
+
+@println("comments are not (# active #) inside #of strings");
+
+###
+### exceptions
+###
+
+@println("*** EXCEPTIONS (SPECIAL CONTROL) ***");
+
+# exceptions are constructs that allow exiting the normal flow of operations
+# and possibly returning a value
+
+# we have multiple kinds:
+# - exit: exits the first block it finds (with optional value)
+# - break: exits the first loop it finds (with optional value)
+# - continue: next iteration of the first loop it finds
+# - return: exits the first function it finds (with optional value)
+# - throw: has to be caught manually (with optional value)
+# - error: has to be caught manually
+
+let i = 0;
+let r = {
+    i += 1;
+    exit i;
+    i += 1
+};
+test r expect 1;
+
+let i = 0;
+let r = loop {
+    { exit; i += 1; }
+    i += 1;
+    break i;
+    i += 1
+};
+test r expect 1;
+
+let f = fun {
+    let i = 0;
+    let r = loop {
+        { exit; i += 1; }
+        i += 1;
+        return 20;
+        i += 1
+    };
+    r
+};
+test f() expect 20;
+
+let fe = fun {
+    let i = 0;
+    let r = loop {
+        { exit; i += 1; }
+        i += 1;
+        throw 30;
+        i += 1
+    };
+    r
+};
+let tc = try fe() catch e {
+    e + 1
+};
+test tc expect 31;
+
+let err = try 1/0 catch e { @string(e) };
+test err expect "division by zero";
+
