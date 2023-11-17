@@ -35,8 +35,8 @@ impl Interpreter {
 
             ExpressionType::Block{r#type: block_type, body: exprs} => {
                 let block_ctx = match block_type {
-                    BlockType::Sequence => ctx.to_owned(),
-                    BlockType::Block | BlockType::If | BlockType::Function =>
+                    BlockType::Sequence | BlockType::Function => ctx.to_owned(),
+                    BlockType::Block | BlockType::If =>
                         ctx.with_new_context(),
                 };
                 let mut last_value = expression::nil();
@@ -87,11 +87,27 @@ impl Interpreter {
                 last_value
             }
 
+            ExpressionType::Unbind(id) => {
+                ctx.remove_binding(id).ok_or(anyhow!("binding not found: {id}"))?
+            }
+
+            ExpressionType::Alias(id, expr) => {
+                let expr_ref = builtin::get_ref(self, ctx,&expr.to_owned())?;
+                match expr_ref.as_ref() {
+                    ExpressionType::Ref(rc) => {
+                        ctx.add_binding_ref(id.to_owned(), rc.to_owned());
+                        rc.get()
+                    }
+                    _ => Err(anyhow!("invalid alias expression"))?
+                }
+            }
+
             ExpressionType::Let(id, val) => {
                 let val = self.eval(ctx,val)?;
                 ctx.add_binding(id.to_owned(), val.to_owned());
                 val
             }
+
             ExpressionType::LetArray(ids, val) => {
                 let val = self.eval(ctx,val)?;
                 match val.as_ref() {
@@ -374,7 +390,7 @@ impl Interpreter {
                     }
                     ExpressionType::Closure(closure_ctx, arg_names, body) => {
                         // lexical binding (using closure context)
-                        let function_ctx = Context::new().with_context(closure_ctx.to_owned());
+                        let function_ctx = closure_ctx.flatten_ref();
                         for (name,value) in arg_names.iter().zip(arg_values) {
                             let value = self.eval(ctx,value)?;
                             // propagate exception

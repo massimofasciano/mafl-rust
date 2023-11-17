@@ -1,0 +1,10 @@
+let x = 20;
+
+let m = module {
+    alias y = x;
+    unbind x;
+};
+
+@debugln(m);
+
+

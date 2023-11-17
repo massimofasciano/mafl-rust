@@ -18,7 +18,7 @@ reserved = _{
     "if" | "else" | "while" | "unless" | "do" | "for" |
     "return" | "break" | "exit" | "continue" | "throw" | 
     "let" | "in" | "use" | "rec" | "from" |
-    "fun" | "module" | "cons" |
+    "fun" | "module" | "cons" | "alias" | "unbind" |
     "try" | "catch" | "test" | "expect" |
     "true" | "false" | "nil" |
     "and" | "or" | "not"
@@ -108,6 +108,14 @@ identifier_array = { "[" ~ (identifier ~ ("," ~ identifier)*)? ~ "]"}
 rec = { "rec" }
 let = {
     "let" ~ (#rec = rec)? ~ (#var = (identifier | identifier_array)) ~ ("=" ~ (#val = expr))?
+}
+
+alias = {
+    "alias" ~ identifier ~ "=" ~ expr
+}
+
+unbind = {
+    "unbind" ~ identifier
 }
 
 field_access = { "." ~ identifier }
@@ -212,7 +220,7 @@ expr_base = _{
     fun | assign | use | 
     continue | 
     boolean | float | integer | string_literal | char_literal | 
-    variable | let | return | break | exit | throw | test
+    variable | let | alias | return | break | exit | throw | test | unbind
 }
 
 // expressions that behave like blocks

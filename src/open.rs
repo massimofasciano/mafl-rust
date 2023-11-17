@@ -94,11 +94,18 @@ impl Interpreter {
                 open
             }
 
+            ExpressionType::Alias(id, val) |
             ExpressionType::Let(id, val) => {
                 let open = self.open(ctx,val)?;
                 ctx.add_binding(id.to_owned(), expression::nil());
                 open
             }
+
+            ExpressionType::Unbind(id) => {
+                ctx.remove_binding(id);
+                HashSet::new()
+            }
+
             ExpressionType::LetArray(ids, val) => {
                 let open = self.open(ctx,val)?;
                 for id in ids {

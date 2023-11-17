@@ -124,6 +124,10 @@ impl Context {
             None
         }
     }
+    pub fn remove_binding(&self, var: &Ident) -> Option<Expression> {
+        let scope = &self.inner;
+        scope.bindings.borrow_mut().remove(var).map(|old| old.get())
+    }
     pub fn add_binding(&self, var: Ident, value: Expression) -> Option<Expression> {
         let scope = &self.inner;
         scope.bindings.borrow_mut().insert(var, MemCell::new_ref(value)).map(|old| old.get())

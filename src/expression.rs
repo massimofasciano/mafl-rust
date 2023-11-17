@@ -52,6 +52,8 @@ pub enum ExpressionType {
     TryCatch(Expression,Ident,Expression),
     Let(Ident,Expression),
     LetArray(Idents,Expression),
+    Alias(Ident,Expression),
+    Unbind(Ident),
     AssignToExpression(Expression,Expression),
     AssignToDeRefExpression(Expression,Expression),
     OpAssignToExpression(Operator,Expression,Expression),

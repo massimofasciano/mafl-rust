@@ -1,3 +1,10 @@
+- grammar issue: how to have an identifier that is a prefix of another ???
+
+bind/unbind
+let/letrec
+for/forget
+alias/unalias
+
 - array assign and let rec parallel
 [a,b,c] = [1,2,3]
 
