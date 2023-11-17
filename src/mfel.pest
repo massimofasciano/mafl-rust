@@ -15,10 +15,10 @@ block_comment = @{
 }
 
 reserved = _{
-    "if" | "else" | "while" | "unless" | "do" | "for" |
+    "if" | "else" | "while" | "unless" | "do" | "for" ~ !"get" | "forget" |
     "return" | "break" | "exit" | "continue" | "throw" | 
     "let" | "in" | "use" | "rec" | "from" |
-    "fun" | "module" | "cons" | "alias" | "unbind" |
+    "fun" | "module" | "cons" | "alias" | "bind" | "unbind" | "unalias" |
     "try" | "catch" | "test" | "expect" |
     "true" | "false" | "nil" |
     "and" | "or" | "not"
@@ -105,17 +105,17 @@ try_catch = {
 
 identifier_array = { "[" ~ (identifier ~ ("," ~ identifier)*)? ~ "]"}
 
-rec = { "rec" }
+let_type = { "rec" }
 let = {
-    "let" ~ (#rec = rec)? ~ (#var = (identifier | identifier_array)) ~ ("=" ~ (#val = expr))?
+    "let" ~ (#let_type = let_type)? ~ (#var = (identifier | identifier_array)) ~ ("=" ~ (#val = expr))?
 }
 
 alias = {
-    "alias" ~ identifier ~ "=" ~ expr
+    ("alias"|"bind") ~ identifier ~ "=" ~ expr
 }
 
 unbind = {
-    "unbind" ~ identifier
+    ("unbind"|"forget") ~ identifier
 }
 
 field_access = { "." ~ identifier }

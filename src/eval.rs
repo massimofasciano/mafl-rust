@@ -470,6 +470,11 @@ impl Interpreter {
                 let expected = self.eval(ctx, expected)?;
                 let source = source.trim();
                 let test = expr == expected;
+                if test {
+                    *self.test_success_count.borrow_mut() += 1;
+                } else {
+                    *self.test_failure_count.borrow_mut() += 1;
+                }
                 print!("# test {} {source}", if test {"success"} else {"failure"});
                 if !matches!(expected.as_ref(),ExpressionType::Boolean(true)) {
                     print!(": result ");

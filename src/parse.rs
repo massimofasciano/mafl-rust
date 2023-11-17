@@ -179,7 +179,7 @@ impl Interpreter {
                 } 
                 Rule::r#let => {
                     assert!(inner.len() == 1 || inner.len() == 2 || inner.len() == 3);
-                    let rec =  Some("rec") == Self::find_tag("rec", &inner).next()
+                    let rec =  Some("rec") == Self::find_tag("let_type", &inner).next()
                         .map(|x|x.as_str());
                     let var_rule = Self::find_tag("var", &inner).next()
                         .expect("missing var");

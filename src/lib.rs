@@ -1,4 +1,4 @@
-use std::{cell::{RefCell, Cell}, collections::HashMap};
+use std::{cell::RefCell, collections::HashMap};
 use context::Context;
 use expression::{Expression, Ident};
 use pest::Parser;
@@ -14,11 +14,13 @@ pub mod open;
 
 #[derive(Debug,Clone)]
 pub struct Interpreter {
-    pub env: Expression,
-    pub std: Expression,
+    env: Expression,
+    std: Expression,
     ctx: Context,
     vars: RefCell<HashMap<String,usize>>,
-    last_var: Cell<usize>,
+    last_var: RefCell<usize>,
+    test_success_count: RefCell<usize>,
+    test_failure_count: RefCell<usize>,
 }
 
 static _STD_STR : &str = include_str!("std.mfel");
@@ -62,9 +64,13 @@ impl Interpreter {
         if let Some(num) = num {
             num
         } else {
-            let num = self.last_var.get();
+            let num = {
+                let mut last_var = self.last_var.borrow_mut();
+                let tmp = *last_var;
+                *last_var += 1;
+                tmp
+            };
             self.vars.borrow_mut().insert(id.to_owned(), num);
-            self.last_var.set(num+1);
             num
         }
     }
@@ -78,6 +84,11 @@ impl Interpreter {
         // format!("_{}",id)
         id.to_owned()
     }
+    pub fn test_report(&self) -> (usize, usize) {
+        let success_count = *self.test_success_count.borrow();
+        let failure_count = *self.test_failure_count.borrow();
+        (success_count, failure_count)
+    }
 }
 
 impl Default for Interpreter {
@@ -87,7 +98,9 @@ impl Default for Interpreter {
             std: expression::nil(),
             ctx: Context::new(),
             vars: RefCell::new(HashMap::new()),
-            last_var: Cell::new(0),
+            last_var: RefCell::new(0),
+            test_success_count: RefCell::new(0),
+            test_failure_count: RefCell::new(0),
         }
     }
 }

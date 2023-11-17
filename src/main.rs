@@ -17,6 +17,13 @@ fn main() -> Result<()> {
         println!();
         println!("*** DEBUG INFO: full program evaluates to:");
         interpreter.println(result)?;
+        let (success_count, failure_count) = interpreter.test_report();
+        if success_count > 0 || failure_count > 0 {
+            println!();
+            println!("*** UNIT TEST SUMMARY: ");
+            println!("{success_count} tests succeeded.");
+            println!("{failure_count} tests failed.");
+        }
     } else {
         // REPL
         let stdin = stdin();
