@@ -1,11 +1,22 @@
-let x = 20;
-
-let m = module {
-    let ref y = x;
-    forget x;
+let printf = fun fmt vals {
+    let delim = "@";
+    let parts = @split(fmt,delim);
+    @println(parts);
+    let i = 0;
+    for v in vals {
+        if i >= @len(parts)-1 { break };
+        @print(parts[i]);
+        @print(@string(v));
+        i += 1;
+    }
+    while i < @len(parts) {
+        @print(parts[i]);
+        i += 1;
+    }
 };
-
-@debugln(m);
-
-m.y += 1;
-x
+printf("x=@ y=@ z=@ @@end\n",[1,2,3,4]);
+printf("x=@ y=@ z=@\n",[1,2,3,4]);
+printf("x=@ y=@ z=@\n",[1,2,3]);
+printf("hello\n",[1,2,3,4]);
+printf("x=@ y=@ z=@\n",[]);
+printf("@\n",[1]);

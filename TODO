@@ -1,11 +1,6 @@
-- documentation for alias and unbind
+- printf
 
-- grammar issue: how to have an identifier that is a prefix of another ???
-
-bind/unbind
-let/letrec
-for/forget
-alias/unalias
+- fix builtin arity and make call table
 
 - array assign and let rec parallel
 [a,b,c] = [1,2,3]
