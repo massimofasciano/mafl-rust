@@ -87,11 +87,11 @@ impl Interpreter {
                 last_value
             }
 
-            ExpressionType::Unbind(id) => {
+            ExpressionType::Forget(id) => {
                 ctx.remove_binding(id).ok_or(anyhow!("binding not found: {id}"))?
             }
 
-            ExpressionType::Alias(id, expr) => {
+            ExpressionType::LetRef(id, expr) => {
                 let expr_ref = builtin::get_ref(self, ctx,&expr.to_owned())?;
                 match expr_ref.as_ref() {
                     ExpressionType::Ref(rc) => {

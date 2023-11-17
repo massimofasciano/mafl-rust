@@ -14,14 +14,16 @@ block_comment = @{
     (!block_comment_end ~ ANY)* ~ (block_comment_end | EOI) 
 }
 
-reserved = _{
-    "if" | "else" | "while" | "unless" | "do" | "for" ~ !"get" | "forget" |
-    "return" | "break" | "exit" | "continue" | "throw" | 
-    "let" | "in" | "use" | "rec" | "from" |
-    "fun" | "module" | "cons" | "alias" | "bind" | "unbind" | "unalias" |
+reserved = _{ 
+    "if" | "else" | "while" | "unless" | "do" | 
+    "for" ~ !"get" | "forget" |
+    "let" | "rec" | "ref" | 
+    "in" | "use" | "from" | 
+    "fun" | "module" | "cons" | 
     "try" | "catch" | "test" | "expect" |
     "true" | "false" | "nil" |
-    "and" | "or" | "not"
+    "and" | "or" | "not" |
+    "return" | "break" | "exit" | "continue" | "throw"
 }
 
 identifier_syntax = @{
@@ -105,17 +107,13 @@ try_catch = {
 
 identifier_array = { "[" ~ (identifier ~ ("," ~ identifier)*)? ~ "]"}
 
-let_type = { "rec" }
+let_type = { !identifier ~ ("rec" | "ref") }
 let = {
     "let" ~ (#let_type = let_type)? ~ (#var = (identifier | identifier_array)) ~ ("=" ~ (#val = expr))?
 }
 
-alias = {
-    ("alias"|"bind") ~ identifier ~ "=" ~ expr
-}
-
-unbind = {
-    ("unbind"|"forget") ~ identifier
+forget = {
+    "forget" ~ identifier
 }
 
 field_access = { "." ~ identifier }
@@ -220,7 +218,7 @@ expr_base = _{
     fun | assign | use | 
     continue | 
     boolean | float | integer | string_literal | char_literal | 
-    variable | let | alias | return | break | exit | throw | test | unbind
+    variable | let | return | break | exit | throw | test | forget
 }
 
 // expressions that behave like blocks

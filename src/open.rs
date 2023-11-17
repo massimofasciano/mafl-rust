@@ -94,14 +94,14 @@ impl Interpreter {
                 open
             }
 
-            ExpressionType::Alias(id, val) |
+            ExpressionType::LetRef(id, val) |
             ExpressionType::Let(id, val) => {
                 let open = self.open(ctx,val)?;
                 ctx.add_binding(id.to_owned(), expression::nil());
                 open
             }
 
-            ExpressionType::Unbind(id) => {
+            ExpressionType::Forget(id) => {
                 ctx.remove_binding(id);
                 HashSet::new()
             }
