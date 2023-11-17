@@ -698,12 +698,12 @@ test [1,2,3].string() expect "[1,2,3]";
 
 ###
 ### the language has a reference type that links mutably to the storage cell of another value
-### &x returns a reference to x
-### $y derefs y (if y is &x, $y will return the contents of x)
+### &x returns a reference to x as an object that can be manipulated
+### $y dereferences y (if y is &x, $y will return the contents of x)
 ### y <- expr mutates the storage cell that reference y points to
 ###
 
-@println("*** REFS ***");
+@println("*** REFERENCE OBJECT AND DEREFERENCE ***");
 
 let v = 200;  # v is bound to a storage cell S1 containing a reference to the value 200
 let r = &v;   # r is bound to a storage cell S2 containing a reference to the cell S1 above
@@ -769,6 +769,49 @@ test @string(o) expect "(1,2)";
 p <- 3;
 test o.string() expect "(3,2)";
 # but not on array elements (as of MFEL 0.3.2)
+
+###
+### the language also allows creating a variable binding that is linked
+### to the same cell as another (aliasing).
+###
+### let ref x = y  creates a binding x that points to the memory cell of y (x is an alias of y)
+### let x = y      creates a binding x that points to a new memory cell containing the same value as y (a copy)
+### let x = &y     creates a binding x that points to a new memory cell containing a reference to the memory cell of y
+###
+### the explicit reference (&) exists because it is an actual object value that can be passed around (to functions)
+###
+### forget x       removes the binding x from the current context
+###
+
+@println("*** LET REF AND FORGET ***");
+
+let v = 10;
+let ref w = v;
+let r = &v;
+let c = v;
+
+# they are all 10 but r needs an explicit dereference operator
+test [v,w,$r,c] expect [10,10,10,10];
+
+# anything done to w is equivalent to doing it to v
+w += 1;
+test [v,w,$r,c] expect [11,11,11,10];
+
+# the combination of let ref and forget can be used when creating objects that capture
+# by reference from outside but want to change the name of the bindings
+
+let p = module {
+    let ref z = v;
+    forget v;
+};
+# the p object contains a single member called z that is aliased to v (from outside)
+test @array(p) expect [["z",11]];
+
+p.z += 1;
+# p.z is aliased to outside v
+# w is aliased to v also
+# they all point to the same cell so changing p.z also changes w
+test w expect 12;
 
 ###
 ### copy/clone
