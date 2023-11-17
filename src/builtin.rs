@@ -289,7 +289,7 @@ pub fn eval_string_as_source(interpreter: &Interpreter, ctx: &Context, arg: &Exp
     }
 }
 
-pub fn array(interpreter: &Interpreter, ctx: &Context, size: &Expression, init: &Expression) -> Result<Expression> {
+pub fn make_array(interpreter: &Interpreter, ctx: &Context, size: &Expression, init: &Expression) -> Result<Expression> {
     let mut arr : Vec<Expression> = vec![];
     if let ExpressionType::Integer(size) = size.as_ref() {
         let size = *size;
@@ -515,12 +515,12 @@ pub fn insert(interpreter: &Interpreter, _ctx: &Context, container: &Expression,
     })
 }
 
-pub fn dict(_ctx: &Context) -> Result<Expression> {
+pub fn make_dict(_ctx: &Context) -> Result<Expression> {
     debug!("new dict");
     Ok(expression::context(Context::new()))
 }
 
-pub fn dict_extend(_ctx: &Context, parent: &Expression) -> Result<Expression> {
+pub fn extend_dict(_ctx: &Context, parent: &Expression) -> Result<Expression> {
     debug!("extend dict");
     Ok(match parent.as_ref() {
         ExpressionType::Closure(c,a,b) => {

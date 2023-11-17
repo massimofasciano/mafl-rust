@@ -24,12 +24,12 @@ let iter = module {
         }
     };
     let collect = fun iter {
-        let out = @array(0,nil);
+        let out = @make_array(0,nil);
         for e in iter { @append(out,e); }
         out
     };
     let map = fun f iter {
-        let out = @array(0,nil);
+        let out = @make_array(0,nil);
         for e in iter { @append(out,f(e)); }
         out
     };
@@ -44,7 +44,7 @@ let iter = module {
         fold(\x,y{x*y}, 1, iter)
     };
     let filter = fun f iter {
-        let out = @array(0,nil);
+        let out = @make_array(0,nil);
         for e in iter {
             if f(e) { @append(out,e); }
         }
