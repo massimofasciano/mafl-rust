@@ -912,9 +912,25 @@ test @get(o,"x") expect 1;
 test @get(o,"y") expect 2;
 test @is_error(@get(o,"z")!);
 
+test @is_error(@remove(p,"x")!); # we can't remove x because it belongs to our "parent"
+test @get(p,"x") expect 1;
+
 @set(p,"x",p.x + 1);
 test @get(o,"x") expect 2;
 test @get(p,"x") expect 2;
+
+let pf = @flatten_dict(p);  # all references are now at the same level
+@set(pf,"x",pf.x + 1);
+
+test @get(pf,"x") expect 3;
+test @get(pf,"y") expect 12;
+test @get(pf,"z") expect 13;
+test @get(p,"x") expect 3;
+test @get(o,"x") expect 3;
+
+test not(@is_error(@remove(pf,"x")!)); # we can remove x because of the flattening
+test @is_error(@get(pf,"x")!);
+
 
 ###
 ### local/closed scoping

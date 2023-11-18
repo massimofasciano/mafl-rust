@@ -516,8 +516,23 @@ pub fn insert(interpreter: &Interpreter, _ctx: &Context, container: &Expression,
     })
 }
 
+pub fn remove(interpreter: &Interpreter, _ctx: &Context, container: &Expression, key: &Expression) -> Result<Expression> {
+    Ok(match container.as_ref() {
+        ExpressionType::Closure(c,_,_) => {
+            match key.as_ref() {
+                ExpressionType::String(s) => {
+                    c.remove_binding(&interpreter.ident(s))
+                        .ok_or(anyhow!("binding not found: {s}"))?
+                }
+                _ => Err(anyhow!("remove on closure with non-string key {key:?}"))?,
+            }
+        }
+        _ => Err(anyhow!("remove {key:?}"))?,
+    })
+}
+
 pub fn make_dict(_ctx: &Context) -> Result<Expression> {
-    debug!("new dict");
+    debug!("make dict");
     Ok(expression::context(Context::new()))
 }
 
@@ -527,7 +542,17 @@ pub fn extend_dict(_ctx: &Context, parent: &Expression) -> Result<Expression> {
         ExpressionType::Closure(c,a,b) => {
             closure(c.with_new_context(),a.to_owned(),b.to_owned())
         }
-        _ => Err(anyhow!("dict_extend"))?,
+        _ => Err(anyhow!("extend_dict"))?,
+    })
+}
+
+pub fn flatten_dict(_ctx: &Context, dict: &Expression) -> Result<Expression> {
+    debug!("flatten dict");
+    Ok(match dict.as_ref() {
+        ExpressionType::Closure(c,a,b) => {
+            closure(c.flatten_ref(),a.to_owned(),b.to_owned())
+        }
+        _ => Err(anyhow!("flatten_dict"))?,
     })
 }
 
@@ -544,35 +569,35 @@ pub fn make_error(msg: &Expression) -> Result<Expression> {
     })
 }
 
-pub fn get_var(interpreter: &Interpreter, ctx: &Context, key: &Expression) -> Result<Expression> {
-    debug!("get_var {key:?}");
-    Ok(match key.as_ref() {
-        ExpressionType::String(s) => 
-            ctx.get_binding(&interpreter.ident(s)).ok_or(anyhow!("binding not found: {s}"))?,
-        _ => Err(anyhow!("get on closure with non-string key {key:?}"))?,
-    })
-}
+// pub fn get_var(interpreter: &Interpreter, ctx: &Context, key: &Expression) -> Result<Expression> {
+//     debug!("get_var {key:?}");
+//     Ok(match key.as_ref() {
+//         ExpressionType::String(s) => 
+//             ctx.get_binding(&interpreter.ident(s)).ok_or(anyhow!("binding not found: {s}"))?,
+//         _ => Err(anyhow!("get on closure with non-string key {key:?}"))?,
+//     })
+// }
 
-pub fn assign_var(interpreter: &Interpreter, ctx: &Context, key: &Expression, value: &Expression) -> Result<Expression> {
-    debug!("set_var {key:?} {value:?}");
-    Ok(match key.as_ref() {
-        ExpressionType::String(s) => 
-            ctx.set_binding(interpreter.ident(s), value.to_owned())
-                .ok_or(anyhow!("binding not found: {s}"))?,
-        _ => Err(anyhow!("set on closure with non-string key {key:?}"))?,
-    })
-}
+// pub fn assign_var(interpreter: &Interpreter, ctx: &Context, key: &Expression, value: &Expression) -> Result<Expression> {
+//     debug!("set_var {key:?} {value:?}");
+//     Ok(match key.as_ref() {
+//         ExpressionType::String(s) => 
+//             ctx.set_binding(interpreter.ident(s), value.to_owned())
+//                 .ok_or(anyhow!("binding not found: {s}"))?,
+//         _ => Err(anyhow!("set on closure with non-string key {key:?}"))?,
+//     })
+// }
 
-pub fn let_var(interpreter: &Interpreter, ctx: &Context, key: &Expression, value: &Expression) -> Result<Expression> {
-    debug!("insert_var {key:?} {value:?}");
-    Ok(match key.as_ref() {
-        ExpressionType::String(s) => {
-            ctx.add_binding(interpreter.ident(s), value.to_owned());
-            value.to_owned()
-        }
-        _ => Err(anyhow!("insert on closure with non-string key {key:?}"))?,
-    })
-}
+// pub fn let_var(interpreter: &Interpreter, ctx: &Context, key: &Expression, value: &Expression) -> Result<Expression> {
+//     debug!("insert_var {key:?} {value:?}");
+//     Ok(match key.as_ref() {
+//         ExpressionType::String(s) => {
+//             ctx.add_binding(interpreter.ident(s), value.to_owned());
+//             value.to_owned()
+//         }
+//         _ => Err(anyhow!("insert on closure with non-string key {key:?}"))?,
+//     })
+// }
 
 #[allow(clippy::only_used_in_recursion)]
 pub fn shallow_copy(_: &Context, val: &Expression) -> Result<Expression> {
@@ -636,17 +661,17 @@ pub fn get_ref(interpreter: &Interpreter, ctx: &Context, ref_target: &Expression
     })
 }
 
-pub fn test(interpreter: &Interpreter, ctx: &Context, source: &Expression, expected: &Expression) -> Result<Expression> {
-    println!("**** DEPRECATION WARNING: @test");
-    let result = eval_string_as_source(interpreter, ctx, source)?;
-    if &result == expected {
-        println!("# test success: {source} == {expected}");
-    } else {
-        println!("# test failure: {source} == {result} != {expected}");
-    }
-    stdout().flush()?;
-    Ok(nil())
-}
+// pub fn test(interpreter: &Interpreter, ctx: &Context, source: &Expression, expected: &Expression) -> Result<Expression> {
+//     println!("**** DEPRECATION WARNING: @test");
+//     let result = eval_string_as_source(interpreter, ctx, source)?;
+//     if &result == expected {
+//         println!("# test success: {source} == {expected}");
+//     } else {
+//         println!("# test failure: {source} == {result} != {expected}");
+//     }
+//     stdout().flush()?;
+//     Ok(nil())
+// }
 
 pub fn now(_: &Context) -> Result<Expression> {
     debug!("now");
