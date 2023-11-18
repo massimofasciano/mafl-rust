@@ -62,6 +62,7 @@ pub enum ExpressionType {
     Loop(Expression),
     Fun(Idents,Expression),
     Dyn(Idents,Expression),
+    Closed(Idents,Expression),
     Use(Option<Expression>,Idents),
     Closure(Context,Idents,Expression),
     Array(RefCell<Expressions>),

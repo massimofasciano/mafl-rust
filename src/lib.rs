@@ -19,13 +19,13 @@ pub struct Interpreter {
     ctx: Context,
     vars: RefCell<HashMap<String,usize>>,
     last_var: RefCell<usize>,
-    test_success_count: RefCell<usize>,
-    test_failure_count: RefCell<usize>,
+    test_pass_count: RefCell<usize>,
+    test_fail_count: RefCell<usize>,
 }
 
 static _STD_STR : &str = include_str!("std.mfel");
 
-static __STR__ : &str = "string";
+const __STR__ : &str = "string";
 
 impl Interpreter {
     pub fn new() -> Result<Self> {
@@ -85,9 +85,9 @@ impl Interpreter {
         id.to_owned()
     }
     pub fn test_report(&self) -> (usize, usize) {
-        let success_count = *self.test_success_count.borrow();
-        let failure_count = *self.test_failure_count.borrow();
-        (success_count, failure_count)
+        let pass_count = *self.test_pass_count.borrow();
+        let fail_count = *self.test_fail_count.borrow();
+        (pass_count, fail_count)
     }
 }
 
@@ -99,8 +99,8 @@ impl Default for Interpreter {
             ctx: Context::new(),
             vars: RefCell::new(HashMap::new()),
             last_var: RefCell::new(0),
-            test_success_count: RefCell::new(0),
-            test_failure_count: RefCell::new(0),
+            test_pass_count: RefCell::new(0),
+            test_fail_count: RefCell::new(0),
         }
     }
 }

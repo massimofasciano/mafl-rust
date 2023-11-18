@@ -124,6 +124,13 @@ impl Interpreter {
                 open
             }
 
+            
+            ExpressionType::Closed(vars, _) => {
+                let mut open = HashSet::new();
+                open.extend(vars.to_owned());
+                open
+            }
+
             ExpressionType::Fun(closed,expr) => {
                 let ctx = Context::new();
                 for closed_var in closed {

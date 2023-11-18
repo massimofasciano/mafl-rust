@@ -20,3 +20,13 @@ printf("x=@ y=@ z=@\n",[1,2,3]);
 printf("hello\n",[1,2,3,4]);
 printf("x=@ y=@ z=@\n",[]);
 printf("@\n",[1]);
+
+let x = 100;
+let y = 200;
+let z = 300;
+let c = closed x y {
+    module {
+        use x y;
+    }
+};
+@debugln(c);

@@ -135,6 +135,14 @@ impl Interpreter {
                         ExpressionType::Fun(args,body).into()
                     }
                 }
+                Rule::closed => {
+                    let vars = Self::find_tag("var", &inner)
+                        .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                    let body = Self::find_tag("body", &inner).next()
+                        .map(|x| self.parse_rule(x.to_owned()))
+                        .expect("missing body")?;
+                    ExpressionType::Closed(vars,body).into()
+                }
                 Rule::array => {
                     ExpressionType::Array(RefCell::new(
                         inner.iter().map(|e| self.parse_rule(e.to_owned())).collect::<Result<Vec<_>>>()?
@@ -428,7 +436,7 @@ impl Interpreter {
             Rule::expr_prefix | Rule::expr_exp | Rule::expr_ref |
             Rule::r#use | Rule::forget |
             Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
-            Rule::assign | Rule::fun | 
+            Rule::assign | Rule::fun | Rule::closed |
             Rule::r#let | Rule::r#loop | Rule::r#for | Rule::try_catch |
             Rule::exit | Rule::r#break | Rule::throw | Rule::test |
             Rule::infix_identifier | Rule::r#return => {

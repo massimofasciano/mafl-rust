@@ -471,9 +471,9 @@ impl Interpreter {
                 let source = source.trim();
                 let test = expr == expected;
                 if test {
-                    *self.test_success_count.borrow_mut() += 1;
+                    *self.test_pass_count.borrow_mut() += 1;
                 } else {
-                    *self.test_failure_count.borrow_mut() += 1;
+                    *self.test_fail_count.borrow_mut() += 1;
                 }
                 print!("# test {} {source}", if test {"success"} else {"failure"});
                 if !matches!(expected.as_ref(),ExpressionType::Boolean(true)) {
@@ -484,6 +484,19 @@ impl Interpreter {
                 println!();
                 stdout().flush()?;
                 expression::boolean(test)
+            }
+
+            ExpressionType::Closed(vars, body) => {
+                let closed_ctx = Context::new();
+                for open_var in vars {
+                    debug!("*** closed capturing {}",open_var);
+                    if let Some(mc) = ctx.get_binding_ref(open_var) { 
+                        closed_ctx.add_binding_ref(open_var.to_owned(), mc); 
+                    } else {
+                        Err(anyhow!("binding not found: {open_var}"))?;
+                    };
+                }
+                self.eval(&closed_ctx,body)?
             }
 
             ExpressionType::BinOpCall(op, left, right) => {

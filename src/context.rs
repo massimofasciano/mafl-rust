@@ -260,10 +260,12 @@ impl Drop for Scope {
 mod tests {
     use crate::{expression::integer, Interpreter};
     use super::Context;
+    use anyhow::{Result, Ok};
 
     #[test]
-    fn ref_test() {
-        let interpreter = Interpreter::new().unwrap();
+    fn ref_test() -> Result<()> {
+        // let interpreter = Interpreter::new()?;
+        let interpreter = Interpreter::default();
         let v1 = interpreter.ident("v1");
         let v2 = interpreter.ident("v2");
         let v3 = interpreter.ident("v3");
@@ -325,9 +327,6 @@ mod tests {
         assert_eq!(ctx1_cap.get_binding(&v12),Some(integer(112)));
         assert_eq!(ctx1.get_binding(&v10),Some(integer(110)));
         assert_eq!(ctx1.get_binding(&v11),Some(integer(111)));
-        // old capture behavior before Memcells
-        // assert_eq!(ctx1.get_binding(&v12),Some(integer(112))); 
-        // new capture behavior with Memcells+flatten_ref
         assert_eq!(ctx1.get_binding(&v12),None);
 
         let ctx4m = ctx4.flatten_clone();
@@ -349,5 +348,6 @@ mod tests {
         ctx4r.set_binding(v1.to_owned(), integer(3411));
         assert_eq!(ctx1.get_binding(&v1),Some(integer(3411)));
         assert_eq!(ctx4r.get_binding(&v1),Some(integer(3411)));
+        Ok(())
     }
 }

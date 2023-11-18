@@ -17,12 +17,11 @@ fn main() -> Result<()> {
         println!();
         println!("*** DEBUG INFO: full program evaluates to:");
         interpreter.println(result)?;
-        let (success_count, failure_count) = interpreter.test_report();
-        if success_count > 0 || failure_count > 0 {
+        let (pass_count, fail_count) = interpreter.test_report();
+        if pass_count > 0 || fail_count > 0 {
             println!();
             println!("*** UNIT TEST SUMMARY: ");
-            println!("{success_count} tests succeeded.");
-            println!("{failure_count} tests failed.");
+            println!("{pass_count} passed. {fail_count} failed.");
         }
     } else {
         // REPL
