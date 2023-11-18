@@ -1,39 +1,39 @@
 use std::io::{stdout, Write};
 
-use crate::{expression::{ExpressionType, Expression, self, Operator, BlockType}, builtin::{self}, context::Context, Interpreter, PragmaLevel};
+use crate::{expression::{Expr, R, self, Operator, BlockType}, builtin::{self}, context::Context, Interpreter, PragmaLevel};
 use anyhow::{Result,anyhow};
 use log::debug;
 
 impl Interpreter {
 
-    pub fn eval(&self, ctx: &Context, ast: &Expression) -> Result<Expression> {
+    pub fn eval(&self, ctx: &Context, ast: &R<Expr>) -> Result<R<Expr>> {
         Ok(match ast.as_ref() {
-            ExpressionType::Dyn(_,_) |
-            ExpressionType::Nil |
-            ExpressionType::Integer(_) |
-            ExpressionType::Float(_) |
-            ExpressionType::Character(_) |
-            ExpressionType::Boolean(_) |
-            ExpressionType::String(_)
+            Expr::Dyn(_,_) |
+            Expr::Nil |
+            Expr::Integer(_) |
+            Expr::Float(_) |
+            Expr::Character(_) |
+            Expr::Boolean(_) |
+            Expr::String(_)
                 => ast.to_owned(),
 
-            ExpressionType::Break(br) =>
-                ExpressionType::Break(self.eval(ctx, br)?).into(),
-            ExpressionType::Exit(br) =>
-                ExpressionType::Exit(self.eval(ctx, br)?).into(),
-            ExpressionType::Return(br) =>
-                ExpressionType::Return(self.eval(ctx, br)?).into(),
-            ExpressionType::Throw(e) => {
+            Expr::Break(br) =>
+                Expr::Break(self.eval(ctx, br)?).into(),
+            Expr::Exit(br) =>
+                Expr::Exit(self.eval(ctx, br)?).into(),
+            Expr::Return(br) =>
+                Expr::Return(self.eval(ctx, br)?).into(),
+            Expr::Throw(e) => {
                 let exception = self.eval(ctx, e)?;
-                if let ExpressionType::Error(msg) = exception.as_ref() {
+                if let Expr::Error(msg) = exception.as_ref() {
                     Err(anyhow!(msg.to_owned()))?
                 } else {
-                    ExpressionType::Throw(e.to_owned()).into()
+                    Expr::Throw(e.to_owned()).into()
                 }
             }
-            ExpressionType::Continue => ExpressionType::Continue.into(),
+            Expr::Continue => Expr::Continue.into(),
 
-            ExpressionType::Block{r#type: block_type, body: exprs} => {
+            Expr::Block{r#type: block_type, body: exprs} => {
                 let block_ctx = match block_type {
                     BlockType::Sequence | BlockType::Function => ctx.to_owned(),
                     BlockType::Block | BlockType::If =>
@@ -45,11 +45,11 @@ impl Interpreter {
                     match block_type {
                         BlockType::Sequence | BlockType::Block => {
                             match last_value.as_ref() {
-                                ExpressionType::Return(_) |
-                                ExpressionType::Break(_) |
-                                ExpressionType::Throw(_) |
-                                ExpressionType::Continue => break,
-                                ExpressionType::Exit(val) => {
+                                Expr::Return(_) |
+                                Expr::Break(_) |
+                                Expr::Throw(_) |
+                                Expr::Continue => break,
+                                Expr::Exit(val) => {
                                     last_value = val.to_owned();
                                     break
                                 }
@@ -58,24 +58,24 @@ impl Interpreter {
                         }
                         BlockType::If => {
                             match last_value.as_ref() {
-                                ExpressionType::Exit(_) |
-                                ExpressionType::Return(_) |
-                                ExpressionType::Break(_) |
-                                ExpressionType::Throw(_) |
-                                ExpressionType::Continue => break,
+                                Expr::Exit(_) |
+                                Expr::Return(_) |
+                                Expr::Break(_) |
+                                Expr::Throw(_) |
+                                Expr::Continue => break,
                                 _ => {},
                             }
                         }
                         BlockType::Function => {
                             match last_value.as_ref() {
-                                ExpressionType::Throw(_) => break,
-                                ExpressionType::Break(val) |
-                                ExpressionType::Exit(val) |
-                                ExpressionType::Return(val) => {
+                                Expr::Throw(_) => break,
+                                Expr::Break(val) |
+                                Expr::Exit(val) |
+                                Expr::Return(val) => {
                                     last_value = val.to_owned();
                                     break
                                 }
-                                ExpressionType::Continue => {
+                                Expr::Continue => {
                                     last_value = expression::nil();
                                     break
                                 }
@@ -87,14 +87,14 @@ impl Interpreter {
                 last_value
             }
 
-            ExpressionType::Forget(id) => {
+            Expr::Forget(id) => {
                 ctx.remove_binding(id).ok_or(anyhow!("binding not found: {id}"))?
             }
 
-            ExpressionType::LetRef(id, expr) => {
+            Expr::LetRef(id, expr) => {
                 let expr_ref = builtin::get_ref(self, ctx,&expr.to_owned())?;
                 match expr_ref.as_ref() {
-                    ExpressionType::Ref(rc) => {
+                    Expr::Ref(rc) => {
                         ctx.add_binding_ref(id.to_owned(), rc.to_owned());
                         rc.get()
                     }
@@ -102,7 +102,7 @@ impl Interpreter {
                 }
             }
 
-            ExpressionType::Let(id, val) => {
+            Expr::Let(id, val) => {
                 let val = self.eval(ctx,val)?;
                 let replaced = ctx.add_binding(id.to_owned(), val.to_owned());
                 if replaced.is_some() {
@@ -116,13 +116,13 @@ impl Interpreter {
                 val
             }
 
-            ExpressionType::LetArray(ids, val) => {
+            Expr::LetArray(ids, val) => {
                 let val = self.eval(ctx,val)?;
                 match val.as_ref() {
-                    ExpressionType::Array(rc) => {
+                    Expr::Array(rc) => {
                         let vals = rc.borrow().to_owned();
                         for (var, val) in ids.iter().zip(vals) {
-                            self.eval(ctx, &ExpressionType::Let(var.to_owned(), val).into())?;
+                            self.eval(ctx, &Expr::Let(var.to_owned(), val).into())?;
                         }
                         val.to_owned()
                     }
@@ -131,11 +131,11 @@ impl Interpreter {
                     }
                 }
             }
-            ExpressionType::ArrayAccess(target, index) => {
+            Expr::ArrayAccess(target, index) => {
             let target = self.eval(ctx, target)?;
                 match target.as_ref() {
-                    ExpressionType::Array(arr) => {
-                        if let ExpressionType::Integer(index) = self.eval(ctx, index)?.as_ref() {
+                    Expr::Array(arr) => {
+                        if let Expr::Integer(index) = self.eval(ctx, index)?.as_ref() {
                             let index = (if *index >= 0 { *index } else { arr.borrow().len() as i64 + *index}) as usize;
                             if let Some(result) = arr.borrow().get(index) {
                                 result.to_owned()
@@ -146,8 +146,8 @@ impl Interpreter {
                             Err(anyhow!("index by non-integer"))?
                         }
                     }
-                    ExpressionType::String(s) => {
-                        if let ExpressionType::Integer(index) = self.eval(ctx, index)?.as_ref() {
+                    Expr::String(s) => {
+                        if let Expr::Integer(index) = self.eval(ctx, index)?.as_ref() {
                             let index = (if *index >= 0 { *index } else { s.len() as i64 + *index}) as usize;
                             if let Some(result) = s.chars().nth(index) {
                                 expression::character(result)
@@ -161,26 +161,26 @@ impl Interpreter {
                     _ => Err(anyhow!("index on non-array/string"))?
                 }
             }
-            ExpressionType::AssignToDeRefExpression(target, val) => {
+            Expr::AssignToDeRefExpression(target, val) => {
                 let deref = self.eval(ctx,target)?;
                 let val = self.eval(ctx,val)?;
                 match deref.as_ref() {
-                    ExpressionType::Ref(mc) => {
+                    Expr::Ref(mc) => {
                         mc.set(val.to_owned());
                         val
                     }
                     _ => Err(anyhow!("deref on non-ref"))?
                 }
             }
-            ExpressionType::OpAssignToExpression(op, target, val) => {
-                self.eval(ctx,&ExpressionType::AssignToExpression(target.to_owned(), 
-                    ExpressionType::BinOpCall(op.to_owned(), target.to_owned(), val.to_owned()).into()
+            Expr::OpAssignToExpression(op, target, val) => {
+                self.eval(ctx,&Expr::AssignToExpression(target.to_owned(), 
+                    Expr::BinOpCall(op.to_owned(), target.to_owned(), val.to_owned()).into()
                 ).into())?
             }
-            ExpressionType::AssignToExpression(target, val) => {
+            Expr::AssignToExpression(target, val) => {
                 let val = self.eval(ctx,val)?;
                 match target.as_ref() {
-                    ExpressionType::Variable(id) => {
+                    Expr::Variable(id) => {
                         let val = self.eval(ctx,&val)?;
                         if ctx.set_binding(id.to_owned(), val.to_owned()).is_none() {
                             Err(anyhow!("binding not found {id}"))?
@@ -188,10 +188,10 @@ impl Interpreter {
                             val
                         }
                     },
-                    ExpressionType::Field(target, field) => {
+                    Expr::Field(target, field) => {
                         let target = self.eval(ctx, target)?;
                         match target.as_ref() {
-                            ExpressionType::Closure(closure_ctx, _arg_names, _body) => {
+                            Expr::Closure(closure_ctx, _arg_names, _body) => {
                                 if let Some(value) = closure_ctx.get_binding_ref(field) {
                                     let mut cell_mut = value.get_refmut();
                                     *cell_mut = val;
@@ -203,11 +203,11 @@ impl Interpreter {
                             _ => ast.to_error()?,
                         }
                     },
-                    ExpressionType::ArrayAccess(target, index) => {
+                    Expr::ArrayAccess(target, index) => {
                         let target = self.eval(ctx, target)?;
                         match target.as_ref() {
-                            ExpressionType::Array(arr) => {
-                                if let ExpressionType::Integer(index) = self.eval(ctx, index)?.as_ref() {
+                            Expr::Array(arr) => {
+                                if let Expr::Integer(index) = self.eval(ctx, index)?.as_ref() {
                                     let index = (if *index >= 0 { *index } else { arr.borrow().len() as i64 + *index}) as usize;
                                     if let Some(result) = arr.borrow_mut().get_mut(index) {
                                         *result = val;
@@ -225,90 +225,90 @@ impl Interpreter {
                     _ => ast.to_error()?,
                 }
             }
-            ExpressionType::BuiltinVariable(name) => {
+            Expr::BuiltinVariable(name) => {
                 if let Some(result) = self.builtin_var(ctx, name) {
                     result?
                 } else {
-                    ExpressionType::BuiltinFunction(name.to_owned()).into()
+                    Expr::BuiltinFunction(name.to_owned()).into()
                 }
             }
-            ExpressionType::Variable(s) => {
+            Expr::Variable(s) => {
                 if let Some(value) = ctx.get_binding(s) {
                     value.to_owned()
                 } else {
                     Err(anyhow!("binding not found: {s}"))?
                 }
             }
-            ExpressionType::If(cond, then, r#else) => {
+            Expr::If(cond, then, r#else) => {
                 let cond = self.eval(ctx,cond)?;
                 match cond.as_ref() {
-                    ExpressionType::Boolean(b) =>
+                    Expr::Boolean(b) =>
                         if *b { self.eval(ctx,then)? } 
                         else  { self.eval(ctx,r#else)? }
                     _ => ast.to_error()?,
                 }
             }
 
-            ExpressionType::Loop(body) => {
+            Expr::Loop(body) => {
                 let mut body_value;
                 let ctx = &ctx.with_new_context();
                 #[allow(clippy::while_let_loop)]
                 loop {
                     body_value = self.eval(ctx,body)?;
                     match body_value.as_ref() {
-                        ExpressionType::Exit(val) |
-                        ExpressionType::Break(val) => {
+                        Expr::Exit(val) |
+                        Expr::Break(val) => {
                             body_value = val.to_owned();
                             break
                         }
-                        ExpressionType::Continue => continue,
-                        ExpressionType::Return(_) | 
-                        ExpressionType::Throw(_) => break,
+                        Expr::Continue => continue,
+                        Expr::Return(_) | 
+                        Expr::Throw(_) => break,
                         _ => {},
                     }
                 }
                 body_value
             }
 
-            ExpressionType::Iterate(var, iterator, body) => {
+            Expr::Iterate(var, iterator, body) => {
                 let iterator = self.eval(ctx, iterator)?;
                 let mut body_value = expression::nil();
                 let ctx = &ctx.with_new_context();
                 ctx.add_binding(var.to_owned(), expression::nil());
                 match self.eval(ctx,&iterator)?.as_ref() {
-                    ExpressionType::Array(arr) => {
+                    Expr::Array(arr) => {
                         for v in arr.borrow().iter() {
                             ctx.set_binding(var.to_owned(), v.to_owned());
                             body_value = self.eval(ctx,body)?;
                             match body_value.as_ref() {
-                                ExpressionType::Exit(val) |
-                                ExpressionType::Break(val) => {
+                                Expr::Exit(val) |
+                                Expr::Break(val) => {
                                     body_value = val.to_owned();
                                     break
                                 }
-                                ExpressionType::Continue => continue,
-                                ExpressionType::Return(_) | 
-                                ExpressionType::Throw(_) => break,
+                                Expr::Continue => continue,
+                                Expr::Return(_) | 
+                                Expr::Throw(_) => break,
                                 _ => {},
                             }
                         }
                     },
-                    ExpressionType::Closure(_,_,_) => {
+                    Expr::Closure(_,_,_) => {
                         loop {
-                            let apply = ExpressionType::FunctionCall(iterator.to_owned(), vec![]).into();
+                            let apply = Expr::FunctionCall(iterator.to_owned(), vec![]).into();
                             let next = self.eval(ctx, &apply)?;
                             if next == expression::nil() { break; }
                             ctx.set_binding(var.to_owned(), next.to_owned());
                             body_value = self.eval(ctx,body)?;
                             match body_value.as_ref() {
-                                ExpressionType::Exit(val) |
-                                ExpressionType::Break(val) => {
+                                Expr::Exit(val) |
+                                Expr::Break(val) => {
                                     body_value = val.to_owned();
                                     break
                                 }
-                                ExpressionType::Continue => continue,
-                                ExpressionType::Return(_) | 
-                                ExpressionType::Throw(_) => break,
+                                Expr::Continue => continue,
+                                Expr::Return(_) | 
+                                Expr::Throw(_) => break,
                                 _ => {},
                             }
                         }
@@ -317,17 +317,17 @@ impl Interpreter {
                 }
                 body_value
             }
-            ExpressionType::TryCatch(expr, var, body) => {
+            Expr::TryCatch(expr, var, body) => {
                 let result = self.eval(ctx, expr);
                 match result {
                     Err(err) => {
                         let ctx = &ctx.with_new_context();
-                        ctx.add_binding(var.to_owned(), ExpressionType::Error(err.to_string()).into());
+                        ctx.add_binding(var.to_owned(), Expr::Error(err.to_string()).into());
                         self.eval(ctx,body)?
                     }
                     Ok(expr) => {
                         match expr.as_ref() {
-                            ExpressionType::Throw(val) => {
+                            Expr::Throw(val) => {
                                 let ctx = &ctx.with_new_context();
                                 ctx.add_binding(var.to_owned(), val.to_owned());
                                 self.eval(ctx,body)?
@@ -337,27 +337,27 @@ impl Interpreter {
                     }
                 }
             }
-            ExpressionType::Field(target, field) => {
+            Expr::Field(target, field) => {
                 let target = self.eval(ctx, target)?;
                 match target.as_ref() {
-                    ExpressionType::Closure(closure_ctx, _arg_names, _body) => {
+                    Expr::Closure(closure_ctx, _arg_names, _body) => {
                         if let Some(value) = closure_ctx.get_binding(field) {
                             value.to_owned()
                         } else {
                             Err(anyhow!("field binding not found: {field}"))?
                         }
                     }
-                    ExpressionType::Integer(_) |
-                    ExpressionType::Float(_) |
-                    ExpressionType::Boolean(_) |
-                    ExpressionType::Array(_) |
-                    ExpressionType::String(_) => {
+                    Expr::Integer(_) |
+                    Expr::Float(_) |
+                    Expr::Boolean(_) |
+                    Expr::Array(_) |
+                    Expr::String(_) => {
                         match field.as_str() {
                             "TODO" => expression::nil(),
                             _ => {
-                                self.eval(ctx, &ExpressionType::Fun(vec![], 
-                                    ExpressionType::FunctionCall(
-                                        ExpressionType::BuiltinVariable(field.to_owned()).into(), 
+                                self.eval(ctx, &Expr::Fun(vec![], 
+                                    Expr::FunctionCall(
+                                        Expr::BuiltinVariable(field.to_owned()).into(), 
                                         vec![target.to_owned()]
                                     ).into()
                                 ).into())?
@@ -367,7 +367,7 @@ impl Interpreter {
                     _ => Err(anyhow!("field lookup on invalid type: {field}"))?,
                 }
             }
-            ExpressionType::Fun(arg_names, body) => {
+            Expr::Fun(arg_names, body) => {
                 let open_vars = self.open(&ctx.capture(), ast)?;
                 let captured = Context::new();
                 for open_var in open_vars {
@@ -378,32 +378,32 @@ impl Interpreter {
                         Err(anyhow!("binding not found: {open_var}"))?;
                     };
                 }
-                let closure : Expression = ExpressionType::Closure(captured.to_owned(), arg_names.to_owned(), body.to_owned()).into();
+                let closure : R<Expr> = Expr::Closure(captured.to_owned(), arg_names.to_owned(), body.to_owned()).into();
                 closure
             }
 
-            ExpressionType::FunctionCall(fnct, arg_values) => {
+            Expr::FunctionCall(fnct, arg_values) => {
                 match self.eval(ctx,fnct)?.as_ref() {
-                    ExpressionType::BuiltinFunction(name) => {
+                    Expr::BuiltinFunction(name) => {
                         let mut eval_args = vec![];
                         for v in arg_values.iter() {
                             let value = self.eval(ctx,v)?;
                             // propagate exception
-                            if let ExpressionType::Throw(val) = value.as_ref() {
-                                return Ok(ExpressionType::Throw(val.to_owned()).into());
+                            if let Expr::Throw(val) = value.as_ref() {
+                                return Ok(Expr::Throw(val.to_owned()).into());
                             }
                             eval_args.push(value);
                         }
                         self.builtin_fn(ctx, name, &eval_args)?
                     }
-                    ExpressionType::Closure(closure_ctx, arg_names, body) => {
+                    Expr::Closure(closure_ctx, arg_names, body) => {
                         // lexical binding (using closure context)
                         let function_ctx = closure_ctx.flatten_ref();
                         for (name,value) in arg_names.iter().zip(arg_values) {
                             let value = self.eval(ctx,value)?;
                             // propagate exception
-                            if let ExpressionType::Throw(val) = value.as_ref() {
-                                return Ok(ExpressionType::Throw(val.to_owned()).into());
+                            if let Expr::Throw(val) = value.as_ref() {
+                                return Ok(Expr::Throw(val.to_owned()).into());
                             }
                             function_ctx.add_binding(name.to_owned(), value.to_owned());
                         }
@@ -414,19 +414,19 @@ impl Interpreter {
                         } else if arg_names.len() < arg_values.len() {
                             debug!("extra args supplied: {arg_names:?} {arg_values:?}");
                             let uncurried = self.eval(&function_ctx,body)?;
-                            self.eval(&function_ctx,&ExpressionType::FunctionCall(uncurried,arg_values[arg_names.len()..].to_vec()).into())?
+                            self.eval(&function_ctx,&Expr::FunctionCall(uncurried,arg_values[arg_names.len()..].to_vec()).into())?
                         } else {
                             self.eval(&function_ctx,body)?
                         }
                     },
-                    ExpressionType::Dyn(arg_names, body) => {
+                    Expr::Dyn(arg_names, body) => {
                         // dynamic binding (using global context)
                         let function_ctx = ctx.with_new_context();
                         for (name,value) in arg_names.iter().zip(arg_values) {
                             let value = self.eval(ctx,value)?;
                             // propagate exception
-                            if let ExpressionType::Throw(val) = value.as_ref() {
-                                return Ok(ExpressionType::Throw(val.to_owned()).into());
+                            if let Expr::Throw(val) = value.as_ref() {
+                                return Ok(Expr::Throw(val.to_owned()).into());
                             }
                             function_ctx.add_binding(name.to_owned(), value.to_owned());
                         }
@@ -437,7 +437,7 @@ impl Interpreter {
                         } else if arg_names.len() < arg_values.len() {
                             debug!("extra args supplied: {arg_names:?} {arg_values:?}");
                             let uncurried = self.eval(&function_ctx,body)?;
-                            self.eval(&function_ctx,&ExpressionType::FunctionCall(uncurried,arg_values[arg_names.len()..].to_vec()).into())?
+                            self.eval(&function_ctx,&Expr::FunctionCall(uncurried,arg_values[arg_names.len()..].to_vec()).into())?
                         } else {
                             self.eval(&function_ctx,body)?
                         }
@@ -446,11 +446,11 @@ impl Interpreter {
                 }
             }
 
-            ExpressionType::Use(opt_source, members) => {
+            Expr::Use(opt_source, members) => {
                 if let Some(source) = opt_source {
                     let source = self.eval(ctx, source)?;
                     match source.as_ref() {
-                        ExpressionType::Closure(cctx,_,_) => {
+                        Expr::Closure(cctx,_,_) => {
                             for var in members {
                                 if let Some(rc) = cctx.get_binding_ref(var) {
                                     ctx.add_binding_ref(var.to_owned(), rc.to_owned());
@@ -473,7 +473,7 @@ impl Interpreter {
                 expression::nil()
             }
 
-            ExpressionType::Test(source, expr, expected) => {
+            Expr::Test(source, expr, expected) => {
                 let expr = self.eval(ctx, expr)?;
                 let expected = self.eval(ctx, expected)?;
                 let source = source.trim();
@@ -484,7 +484,7 @@ impl Interpreter {
                     *self.test_fail_count.borrow_mut() += 1;
                 }
                 print!("# test {} {source}", if test {"passed"} else {"failed"});
-                if !matches!(expected.as_ref(),ExpressionType::Boolean(true)) {
+                if !matches!(expected.as_ref(),Expr::Boolean(true)) {
                     print!(": result ");
                     if test { print!("{expected}"); } 
                     else { print!("{expr} expected {expected}"); }
@@ -494,7 +494,7 @@ impl Interpreter {
                 expression::boolean(test)
             }
 
-            ExpressionType::Closed(vars, body) => {
+            Expr::Closed(vars, body) => {
                 let closed_ctx = Context::new();
                 for open_var in vars {
                     debug!("*** closed capturing {}",open_var);
@@ -507,7 +507,7 @@ impl Interpreter {
                 self.eval(&closed_ctx,body)?
             }
 
-            ExpressionType::BinOpCall(op, left, right) => {
+            Expr::BinOpCall(op, left, right) => {
                 if let Operator::And = op {
                     return builtin::and_lazy(self,ctx,left,right);
                 }
@@ -517,19 +517,19 @@ impl Interpreter {
                 let left = self.eval(ctx,left)?;
                 let right = self.eval(ctx,right)?;
                 // propagate exception
-                if let ExpressionType::Throw(val) = left.as_ref() {
-                    return Ok(ExpressionType::Throw(val.to_owned()).into());
+                if let Expr::Throw(val) = left.as_ref() {
+                    return Ok(Expr::Throw(val.to_owned()).into());
                 }
                 // propagate exception
-                if let ExpressionType::Throw(val) = right.as_ref() {
-                    return Ok(ExpressionType::Throw(val.to_owned()).into());
+                if let Expr::Throw(val) = right.as_ref() {
+                    return Ok(Expr::Throw(val.to_owned()).into());
                 }
                 match op {
                     Operator::Identifier(fname) => {
-                        let fvar = ExpressionType::Variable(fname.to_owned()).into();
-                        self.eval(ctx,&ExpressionType::FunctionCall(fvar, vec![left,right]).into())?
+                        let fvar = Expr::Variable(fname.to_owned()).into();
+                        self.eval(ctx,&Expr::FunctionCall(fvar, vec![left,right]).into())?
                     },
-                    Operator::Pipe => self.eval(ctx,&ExpressionType::FunctionCall(right, vec![left]).into())?,
+                    Operator::Pipe => self.eval(ctx,&Expr::FunctionCall(right, vec![left]).into())?,
                     Operator::Add => builtin::add(ctx,&left,&right)?,
                     Operator::Sub => builtin::sub(ctx,&left,&right)?,
                     Operator::Mul => builtin::mul(ctx,&left,&right)?,
@@ -547,7 +547,7 @@ impl Interpreter {
                 }
             }
             
-            ExpressionType::UnaryOpCall(op, expr) => {
+            Expr::UnaryOpCall(op, expr) => {
                 if let Operator::Ref = op {
                     return builtin::get_ref(self, ctx,&expr.to_owned());
                 }
@@ -556,11 +556,11 @@ impl Interpreter {
                     let result = self.eval(ctx, expr);
                     return Ok(match result {
                         Err(err) => {
-                            ExpressionType::Error(err.to_string()).into()
+                            Expr::Error(err.to_string()).into()
                         }
                         Ok(expr) => {
                             match expr.as_ref() {
-                                ExpressionType::Throw(val) => {
+                                Expr::Throw(val) => {
                                     val.to_owned()
                                 }
                                 _ => expr,     
@@ -569,7 +569,7 @@ impl Interpreter {
                     })
                 }
                 let expr = self.eval(ctx,expr)?;
-                if let ExpressionType::Throw(val) = expr.as_ref() {
+                if let Expr::Throw(val) = expr.as_ref() {
                     return Ok(val.to_owned());
                 }
                 match op {
@@ -577,7 +577,7 @@ impl Interpreter {
                     Operator::Not => builtin::not(ctx,&expr)?,
                     Operator::DeRef => {
                         match expr.as_ref() {
-                            ExpressionType::Ref(rc) => {
+                            Expr::Ref(rc) => {
                                 rc.get()
                             }
                             _ => Err(anyhow!("deref on non-ref"))?
@@ -586,17 +586,17 @@ impl Interpreter {
                     _ => ast.to_error()?,
                 }
             }
-            ExpressionType::Closure(cctx, args, body) => {
-                ExpressionType::Closure(cctx.capture(), args.to_owned(), body.to_owned()).into()
+            Expr::Closure(cctx, args, body) => {
+                Expr::Closure(cctx.capture(), args.to_owned(), body.to_owned()).into()
             } 
-            ExpressionType::Array(vals) => {
+            Expr::Array(vals) => {
                 expression::array({
                     let mut new = vec![];
                     for v in vals.borrow().iter() {
                         let value = self.eval(ctx,v)?;
                         // propagate exception
-                        if let ExpressionType::Throw(val) = value.as_ref() {
-                            return Ok(ExpressionType::Throw(val.to_owned()).into());
+                        if let Expr::Throw(val) = value.as_ref() {
+                            return Ok(Expr::Throw(val.to_owned()).into());
                         }
                         new.push(value);
                     }
@@ -607,7 +607,7 @@ impl Interpreter {
         })
     }
 
-    pub fn builtin_var(&self, ctx: &Context, name: &str) -> Option<Result<Expression>> {
+    pub fn builtin_var(&self, ctx: &Context, name: &str) -> Option<Result<R<Expr>>> {
         match name {
             "env" => Some(Ok(self.env.to_owned())),
             "std" => { Some(Ok(self.std.to_owned())) }
@@ -620,7 +620,7 @@ impl Interpreter {
         }
     }
 
-    pub fn builtin_fn(&self, ctx: &Context, name: &str, args: &[Expression]) -> Result<Expression> {
+    pub fn builtin_fn(&self, ctx: &Context, name: &str, args: &[R<Expr>]) -> Result<R<Expr>> {
         match (name, args) {
             ("pragma", [id, val]) => { builtin::pragma(self, ctx, id, val) },
             ("call", [callable, args]) => { builtin::call(self, ctx, callable, args) },

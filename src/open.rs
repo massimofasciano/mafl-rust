@@ -1,14 +1,14 @@
 use std::collections::HashSet;
 
-use crate::{expression::{ExpressionType, Expression, self, BlockType, Ident}, context::Context, Interpreter};
+use crate::{expression::{Expr, R, self, BlockType, Ident}, context::Context, Interpreter};
 use anyhow::{Result,anyhow};
 
 impl Interpreter {
 
     #[allow(clippy::only_used_in_recursion)]
-    pub fn open(&self, ctx: &Context, ast: &Expression) -> Result<HashSet<Ident>> {
+    pub fn open(&self, ctx: &Context, ast: &R<Expr>) -> Result<HashSet<Ident>> {
         Ok(match ast.as_ref() {
-            ExpressionType::Variable(s) => {
+            Expr::Variable(s) => {
                 let mut open = HashSet::new();
                 if ctx.get_binding(s).is_none() {
                     open.insert(s.to_owned());
@@ -16,27 +16,27 @@ impl Interpreter {
                 open
             }
 
-            ExpressionType::Dyn(_,_) |
-            ExpressionType::BuiltinVariable(_) |
-            ExpressionType::Continue |
-            ExpressionType::Nil |
-            ExpressionType::Integer(_) |
-            ExpressionType::Float(_) |
-            ExpressionType::Character(_) |
-            ExpressionType::Boolean(_) |
-            ExpressionType::String(_)
+            Expr::Dyn(_,_) |
+            Expr::BuiltinVariable(_) |
+            Expr::Continue |
+            Expr::Nil |
+            Expr::Integer(_) |
+            Expr::Float(_) |
+            Expr::Character(_) |
+            Expr::Boolean(_) |
+            Expr::String(_)
                 => HashSet::new(),
 
-            ExpressionType::Field(expr, _) |
-            ExpressionType::Loop(expr) |
-            ExpressionType::UnaryOpCall(_, expr) |
-            ExpressionType::Exit(expr) |
-            ExpressionType::Return(expr) |
-            ExpressionType::Throw(expr) |
-            ExpressionType::Break(expr) =>
+            Expr::Field(expr, _) |
+            Expr::Loop(expr) |
+            Expr::UnaryOpCall(_, expr) |
+            Expr::Exit(expr) |
+            Expr::Return(expr) |
+            Expr::Throw(expr) |
+            Expr::Break(expr) =>
                 self.open(ctx, expr)?,
 
-            ExpressionType::Array(rc_exprs) => {
+            Expr::Array(rc_exprs) => {
                 let rc = rc_exprs.borrow();
                 let exprs = rc.iter();
                 let mut open = HashSet::new();
@@ -46,7 +46,7 @@ impl Interpreter {
                 open
             }
 
-            ExpressionType::FunctionCall(expr, exprs) => {
+            Expr::FunctionCall(expr, exprs) => {
                 let mut open = HashSet::new();
                 open.extend(self.open(ctx, expr)?);
                 for expr in exprs {
@@ -55,19 +55,19 @@ impl Interpreter {
                 open
             }
 
-            ExpressionType::Test(_,first,second) |
-            ExpressionType::AssignToDeRefExpression(first, second) |
-            ExpressionType::OpAssignToExpression(_, first, second) |
-            ExpressionType::AssignToExpression(first, second) |
-            ExpressionType::ArrayAccess(first, second) |
-            ExpressionType::BinOpCall(_, first, second) => {
+            Expr::Test(_,first,second) |
+            Expr::AssignToDeRefExpression(first, second) |
+            Expr::OpAssignToExpression(_, first, second) |
+            Expr::AssignToExpression(first, second) |
+            Expr::ArrayAccess(first, second) |
+            Expr::BinOpCall(_, first, second) => {
                 let mut open = HashSet::new();
                 open.extend(self.open(ctx, first)?);
                 open.extend(self.open(ctx, second)?);
                 open
             }
 
-            ExpressionType::If(first, second, third) => {
+            Expr::If(first, second, third) => {
                 let mut open = HashSet::new();
                 open.extend(self.open(ctx, first)?);
                 open.extend(self.open(ctx, second)?);
@@ -75,7 +75,7 @@ impl Interpreter {
                 open
             }
 
-            ExpressionType::Block{r#type: block_type, body: exprs} => {
+            Expr::Block{r#type: block_type, body: exprs} => {
                 let mut open = HashSet::new();
                 let block_ctx = match block_type {
                     BlockType::Sequence => ctx.to_owned(),
@@ -94,19 +94,19 @@ impl Interpreter {
                 open
             }
 
-            ExpressionType::LetRef(id, val) |
-            ExpressionType::Let(id, val) => {
+            Expr::LetRef(id, val) |
+            Expr::Let(id, val) => {
                 let open = self.open(ctx,val)?;
                 ctx.add_binding(id.to_owned(), expression::nil());
                 open
             }
 
-            ExpressionType::Forget(id) => {
+            Expr::Forget(id) => {
                 ctx.remove_binding(id);
                 HashSet::new()
             }
 
-            ExpressionType::LetArray(ids, val) => {
+            Expr::LetArray(ids, val) => {
                 let open = self.open(ctx,val)?;
                 for id in ids {
                     ctx.add_binding(id.to_owned(), expression::nil());
@@ -114,8 +114,8 @@ impl Interpreter {
                 open
             }
 
-            ExpressionType::TryCatch(iter, closed_var, body) |
-            ExpressionType::Iterate(closed_var,iter, body) => {
+            Expr::TryCatch(iter, closed_var, body) |
+            Expr::Iterate(closed_var,iter, body) => {
                 let mut open = HashSet::new();
                 open.extend(self.open(ctx, iter)?);
                 let new_ctx = ctx.capture();
@@ -125,13 +125,13 @@ impl Interpreter {
             }
 
             
-            ExpressionType::Closed(vars, _) => {
+            Expr::Closed(vars, _) => {
                 let mut open = HashSet::new();
                 open.extend(vars.to_owned());
                 open
             }
 
-            ExpressionType::Fun(closed,expr) => {
+            Expr::Fun(closed,expr) => {
                 let ctx = Context::new();
                 for closed_var in closed {
                     ctx.add_binding(closed_var.to_owned(), expression::nil()); 
@@ -144,7 +144,7 @@ impl Interpreter {
                 open                
             }
 
-            ExpressionType::Use(opt_source,members) => {
+            Expr::Use(opt_source,members) => {
                 let mut open = HashSet::new();
                 if let Some(source) = opt_source {
                     open.extend(self.open(ctx, source)?);

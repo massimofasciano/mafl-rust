@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::HashMap};
 use context::Context;
-use expression::{Expression, Ident, Value, ExpressionType};
+use expression::{R, Ident, Value, Expr};
 use pest::Parser;
 use crate::expression::{MfelParser, Rule};
 use anyhow::{anyhow, Result};
@@ -14,8 +14,8 @@ pub mod open;
 
 #[derive(Debug,Clone)]
 pub struct Interpreter {
-    env: Expression,
-    std: Expression,
+    env: R<Expr>,
+    std: R<Expr>,
     ctx: Context,
     vars: RefCell<HashMap<String,usize>>,
     last_var: RefCell<usize>,
@@ -50,18 +50,18 @@ impl Interpreter {
         self.std = expression::closure(ctx, vec![], expression::nil());
         Ok(())
     }
-    pub fn run(&self, source: &str) -> Result<Expression> {
+    pub fn run(&self, source: &str) -> Result<R<Expr>> {
         let expr = self.parse_source(source)?;
         // println!("{expr:#?}");
         self.eval(&self.ctx,&expr)
     }
-    pub fn print(&self, e: Expression) -> Result<Expression> {
+    pub fn print(&self, e: R<Expr>) -> Result<R<Expr>> {
         self.builtin_fn(&self.ctx, "print", &[e])
     }
-    pub fn println(&self, e: Expression) -> Result<Expression> {
+    pub fn println(&self, e: R<Expr>) -> Result<R<Expr>> {
         self.builtin_fn(&self.ctx, "println", &[e])
     }
-    pub fn parse_source(&self, source: &str) -> Result<Expression> {
+    pub fn parse_source(&self, source: &str) -> Result<R<Expr>> {
         let parsed = MfelParser::parse(Rule::file, source)?
             .next().ok_or(anyhow!("parse error"))?; 
         // println!("{:#?}",parsed);
@@ -97,21 +97,21 @@ impl Interpreter {
         let fail_count = *self.test_fail_count.borrow();
         (pass_count, fail_count)
     }
-    pub fn expr_to_value(&self, expr: Expression) -> Result<Value> {
+    pub fn expr_to_value(&self, expr: R<Expr>) -> Result<Value> {
         Ok(match expr.as_ref() {
-            ExpressionType::Nil => Value::Nil,
-            ExpressionType::Integer(i) => Value::Integer(*i),
-            ExpressionType::Float(f) => Value::Float(*f),
-            ExpressionType::Character(c) => Value::Character(*c),
-            ExpressionType::Boolean(b) => Value::Boolean(*b),
-            ExpressionType::String(s) => Value::String(s.to_owned()),
-            ExpressionType::Array(rc) => {
+            Expr::Nil => Value::Nil,
+            Expr::Integer(i) => Value::Integer(*i),
+            Expr::Float(f) => Value::Float(*f),
+            Expr::Character(c) => Value::Character(*c),
+            Expr::Boolean(b) => Value::Boolean(*b),
+            Expr::String(s) => Value::String(s.to_owned()),
+            Expr::Array(rc) => {
                 let v = rc.borrow().iter()
                     .map(|e| { self.expr_to_value(e.to_owned()) })
                     .collect::<Result<Vec<_>>>()?;
                 Value::Array(v)
             }
-            ExpressionType::Closure(ctx,_,_) => {
+            Expr::Closure(ctx,_,_) => {
                 let d = ctx.bindings_cloned().iter()
                     .map(|(id, mc)| -> Result<(String,Value)> { 
                         Ok((self.ident_to_string(id), self.expr_to_value(mc.get())?)) 

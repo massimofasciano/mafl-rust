@@ -1,6 +1,6 @@
 use std::{collections::HashMap, cell::RefCell, rc::Rc};
 use log::debug;
-use crate::expression::{Expression, Ident};
+use crate::expression::{R, Expr, Ident};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub type ScopeID = usize;
@@ -19,12 +19,12 @@ fn next_mem_id() -> MemID {
 
 #[derive(Debug)]
 pub struct MemCell {
-    inner: RefCell<Expression>,
+    inner: RefCell<R<Expr>>,
     id : MemID,
 }
 
 impl MemCell {
-    pub fn new(e : Expression) -> Self {
+    pub fn new(e : R<Expr>) -> Self {
         let new = Self {
             inner: RefCell::new(e),
             id : next_mem_id(),
@@ -32,16 +32,16 @@ impl MemCell {
         debug!("new cell id={}",new.id); 
         new
     }
-    pub fn new_ref(e : Expression) -> Rc<Self> {
+    pub fn new_ref(e : R<Expr>) -> Rc<Self> {
         Rc::new(Self::new(e))
     }
-    pub fn get(&self) -> Expression {
+    pub fn get(&self) -> R<Expr> {
         self.inner.borrow().to_owned()
     }
-    pub fn get_refmut(&self) -> std::cell::RefMut<Expression> {
+    pub fn get_refmut(&self) -> std::cell::RefMut<R<Expr>> {
         self.inner.borrow_mut()
     }
-    pub fn set(&self, e: Expression) -> Expression {
+    pub fn set(&self, e: R<Expr>) -> R<Expr> {
         let old = self.get();
         *self.inner.borrow_mut() = e;
         old
@@ -124,11 +124,11 @@ impl Context {
             None
         }
     }
-    pub fn remove_binding(&self, var: &Ident) -> Option<Expression> {
+    pub fn remove_binding(&self, var: &Ident) -> Option<R<Expr>> {
         let scope = &self.inner;
         scope.bindings.borrow_mut().remove(var).map(|old| old.get())
     }
-    pub fn add_binding(&self, var: Ident, value: Expression) -> Option<Expression> {
+    pub fn add_binding(&self, var: Ident, value: R<Expr>) -> Option<R<Expr>> {
         let scope = &self.inner;
         scope.bindings.borrow_mut().insert(var, MemCell::new_ref(value)).map(|old| old.get())
     }
@@ -136,7 +136,7 @@ impl Context {
         let scope = &self.inner;
         scope.bindings.borrow_mut().insert(var, value)
     }
-    pub fn get_binding(&self, var: &Ident) -> Option<Expression> {
+    pub fn get_binding(&self, var: &Ident) -> Option<R<Expr>> {
         let scope = &self.inner;
         if let Some(rc) = scope.bindings.borrow().get(var) {
             Some(rc.get())
@@ -156,7 +156,7 @@ impl Context {
             None
         }
     }
-    pub fn set_binding(&self, var: Ident, value: Expression) -> Option<Expression> {
+    pub fn set_binding(&self, var: Ident, value: R<Expr>) -> Option<R<Expr>> {
         let scope = &self.inner;
         if let Some(rc) = scope.bindings.borrow().get(&var) {
             Some(rc.set(value))

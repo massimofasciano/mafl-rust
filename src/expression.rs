@@ -7,12 +7,8 @@ use crate::context::{Context, MemCell, ScopeID};
 #[grammar = "mfel.pest"]
 pub struct MfelParser;
 
-pub type Expression = Rc<ExpressionType>;
-pub type Expressions = Vec<Expression>;
-pub type Strings = Vec<String>;
+pub type R<Expr> = Rc<Expr>;
 pub type Ident = String;
-// pub type Ident = usize;
-pub type Idents = Vec<Ident>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Operator {
@@ -32,7 +28,7 @@ pub enum BlockType {
 }
 
 #[derive(Debug,Clone)]
-pub enum ExpressionType {
+pub enum Expr {
     Integer(i64),
     Float(f64),
     Character(char),
@@ -43,98 +39,98 @@ pub enum ExpressionType {
     Variable(Ident),
     BuiltinVariable(String),
     BuiltinFunction(String),
-    FunctionCall(Expression,Expressions),
-    Field(Expression,Ident),
-    BinOpCall(Operator,Expression,Expression),
-    UnaryOpCall(Operator,Expression),
-    If(Expression,Expression,Expression),
-    Iterate(Ident,Expression,Expression),
-    TryCatch(Expression,Ident,Expression),
-    Let(Ident,Expression),
-    LetArray(Idents,Expression),
-    LetRef(Ident,Expression),
+    FunctionCall(R<Expr>,Vec<R<Expr>>),
+    Field(R<Expr>,Ident),
+    BinOpCall(Operator,R<Expr>,R<Expr>),
+    UnaryOpCall(Operator,R<Expr>),
+    If(R<Expr>,R<Expr>,R<Expr>),
+    Iterate(Ident,R<Expr>,R<Expr>),
+    TryCatch(R<Expr>,Ident,R<Expr>),
+    Let(Ident,R<Expr>),
+    LetArray(Vec<Ident>,R<Expr>),
+    LetRef(Ident,R<Expr>),
     Forget(Ident),
-    AssignToExpression(Expression,Expression),
-    AssignToDeRefExpression(Expression,Expression),
-    OpAssignToExpression(Operator,Expression,Expression),
-    ArrayAccess(Expression,Expression),
-    Block{r#type: BlockType, body: Expressions},
-    Loop(Expression),
-    Fun(Idents,Expression),
-    Dyn(Idents,Expression),
-    Closed(Idents,Expression),
-    Use(Option<Expression>,Idents),
-    Closure(Context,Idents,Expression),
-    Array(RefCell<Expressions>),
-    Return(Expression),
-    Break(Expression),
-    Exit(Expression),
-    Throw(Expression),
-    Test(String,Expression,Expression),
+    AssignToExpression(R<Expr>,R<Expr>),
+    AssignToDeRefExpression(R<Expr>,R<Expr>),
+    OpAssignToExpression(Operator,R<Expr>,R<Expr>),
+    ArrayAccess(R<Expr>,R<Expr>),
+    Block{r#type: BlockType, body: Vec<R<Expr>>},
+    Loop(R<Expr>),
+    Fun(Vec<Ident>,R<Expr>),
+    Dyn(Vec<Ident>,R<Expr>),
+    Closed(Vec<Ident>,R<Expr>),
+    Use(Option<R<Expr>>,Vec<Ident>),
+    Closure(Context,Vec<Ident>,R<Expr>),
+    Array(RefCell<Vec<R<Expr>>>),
+    Return(R<Expr>),
+    Break(R<Expr>),
+    Exit(R<Expr>),
+    Throw(R<Expr>),
+    Test(String,R<Expr>,R<Expr>),
     Continue, 
     Ref(Rc<MemCell>),
-    Scope(ScopeID,HashMap<Ident,Expression>),
+    Scope(ScopeID,HashMap<Ident,R<Expr>>),
     ScopeCycle(ScopeID),
-    ClosurePrintable(Expression,Idents,Expression),
-    ArrayPrintable(Expressions),
-    ExceptionPrintable(Expression),
+    ClosurePrintable(R<Expr>,Vec<Ident>,R<Expr>),
+    ArrayPrintable(Vec<R<Expr>>),
+    ExceptionPrintable(R<Expr>),
     ParsedOperator(Operator),
     ParsedIdentifier(Ident),
 }
 
-impl PartialEq for ExpressionType {
+impl PartialEq for Expr {
     fn eq(&self, other: &Self) -> bool {
         match (self,other) {
-            (ExpressionType::Integer(a),ExpressionType::Integer(b)) => a == b,
-            (ExpressionType::Float(a),ExpressionType::Float(b)) => a == b,
-            (ExpressionType::Float(a), ExpressionType::Integer(b)) => (*a) == (*b as f64),
-            (ExpressionType::Integer(a), ExpressionType::Float(b)) => (*a as f64) == (*b),
-            (ExpressionType::Character(a),ExpressionType::Character(b)) => a == b,
-            (ExpressionType::String(a),ExpressionType::String(b)) => a == b,
-            (ExpressionType::Error(a),ExpressionType::Error(b)) => a == b,
-            (ExpressionType::Boolean(a),ExpressionType::Boolean(b)) => a == b,
-            (ExpressionType::Nil,ExpressionType::Nil) => true,
-            (ExpressionType::Array(a),ExpressionType::Array(b)) => a == b,
-            (ExpressionType::ParsedOperator(a),ExpressionType::ParsedOperator(b)) => a == b,
+            (Expr::Integer(a),Expr::Integer(b)) => a == b,
+            (Expr::Float(a),Expr::Float(b)) => a == b,
+            (Expr::Float(a), Expr::Integer(b)) => (*a) == (*b as f64),
+            (Expr::Integer(a), Expr::Float(b)) => (*a as f64) == (*b),
+            (Expr::Character(a),Expr::Character(b)) => a == b,
+            (Expr::String(a),Expr::String(b)) => a == b,
+            (Expr::Error(a),Expr::Error(b)) => a == b,
+            (Expr::Boolean(a),Expr::Boolean(b)) => a == b,
+            (Expr::Nil,Expr::Nil) => true,
+            (Expr::Array(a),Expr::Array(b)) => a == b,
+            (Expr::ParsedOperator(a),Expr::ParsedOperator(b)) => a == b,
             _ => false,
         }
     }
 }
 
-impl ExpressionType {
-    pub fn to_error(&self) -> Result<Expression> {
+impl Expr {
+    pub fn to_error(&self) -> Result<R<Expr>> {
         Err(anyhow!("{:#?}",self))
     }
 }
 
-fn decycle(e: Expression, env: &mut HashSet<ScopeID>) -> Expression {
+fn decycle(e: R<Expr>, env: &mut HashSet<ScopeID>) -> R<Expr> {
     match e.as_ref() {
-        ExpressionType::Break(rc) =>
-            ExpressionType::ExceptionPrintable(decycle(rc.to_owned(),env)).into(),
-        ExpressionType::Return(rc) => 
-            ExpressionType::ExceptionPrintable(decycle(rc.to_owned(),env)).into(),
-        ExpressionType::Throw(rc) =>
-            ExpressionType::ExceptionPrintable(decycle(rc.to_owned(),env)).into(),
-        ExpressionType::Array(arr) => {
+        Expr::Break(rc) =>
+            Expr::ExceptionPrintable(decycle(rc.to_owned(),env)).into(),
+        Expr::Return(rc) => 
+            Expr::ExceptionPrintable(decycle(rc.to_owned(),env)).into(),
+        Expr::Throw(rc) =>
+            Expr::ExceptionPrintable(decycle(rc.to_owned(),env)).into(),
+        Expr::Array(arr) => {
             let mut safe = vec![];
             for rc in arr.borrow().iter() {
                 match rc.as_ref() {
-                    ExpressionType::Closure(_,_ ,_) => {
+                    Expr::Closure(_,_ ,_) => {
                         safe.push(decycle(rc.to_owned(),env));
                     }
-                    ExpressionType::Array(_) => {
+                    Expr::Array(_) => {
                         safe.push(decycle(rc.to_owned(),env));
                     }
                     _ => safe.push(rc.to_owned()),
                 }
             }
-            ExpressionType::ArrayPrintable(safe).into()
+            Expr::ArrayPrintable(safe).into()
         }
-        ExpressionType::Closure(ctx, args, body) => {
+        Expr::Closure(ctx, args, body) => {
             let scope_id = ctx.scope_id();
             if env.contains(&scope_id) {
-                ExpressionType::ClosurePrintable(
-                    ExpressionType::ScopeCycle(scope_id).into(), 
+                Expr::ClosurePrintable(
+                    Expr::ScopeCycle(scope_id).into(), 
                     args.to_owned(), body.to_owned()
                 ).into()
             } else {
@@ -143,10 +139,10 @@ fn decycle(e: Expression, env: &mut HashSet<ScopeID>) -> Expression {
                 for (k, v) in ctx.bindings_ref() {
                     let value = v.get();
                     match value.as_ref() {
-                        ExpressionType::Closure(_, _, _) => {
+                        Expr::Closure(_, _, _) => {
                             safe.insert(k, decycle(value, env));
                         }
-                        ExpressionType::Array(_) => {
+                        Expr::Array(_) => {
                             safe.insert(k, decycle(value, env));
                         }
                         _ => {
@@ -154,8 +150,8 @@ fn decycle(e: Expression, env: &mut HashSet<ScopeID>) -> Expression {
                         }
                     }
                 }
-                ExpressionType::ClosurePrintable(
-                    ExpressionType::Scope(scope_id, safe).into(),
+                Expr::ClosurePrintable(
+                    Expr::Scope(scope_id, safe).into(),
                     args.to_owned(),body.to_owned()
                 ).into()
             }
@@ -164,65 +160,65 @@ fn decycle(e: Expression, env: &mut HashSet<ScopeID>) -> Expression {
     }
 }
 
-impl std::fmt::Display for ExpressionType {
+impl std::fmt::Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ExpressionType::Nil => write!(f,"nil"),
-            ExpressionType::Boolean(a) => write!(f,"{a}"),
-            ExpressionType::Float(a) => write!(f,"{a}"),
-            ExpressionType::Integer(a) => write!(f,"{a}"),
-            ExpressionType::Character(a) => write!(f,"{a:?}"),
-            ExpressionType::String(a) => write!(f,"{a:?}"),
-            ExpressionType::Error(a) => write!(f,"Error<{a:?}>"),
-            ExpressionType::ArrayPrintable(v) =>
+            Expr::Nil => write!(f,"nil"),
+            Expr::Boolean(a) => write!(f,"{a}"),
+            Expr::Float(a) => write!(f,"{a}"),
+            Expr::Integer(a) => write!(f,"{a}"),
+            Expr::Character(a) => write!(f,"{a:?}"),
+            Expr::String(a) => write!(f,"{a:?}"),
+            Expr::Error(a) => write!(f,"Error<{a:?}>"),
+            Expr::ArrayPrintable(v) =>
                 write!(f,"[{}]",v.iter().map(|x|x.to_string()).collect::<Vec<_>>().join(", ")),
-            ExpressionType::Ref(mc) => write!(f,"->{}",mc.get()),
-            ExpressionType::ExceptionPrintable(a) => write!(f,"Exception<{a}>"),
-            ExpressionType::Throw(_) | 
-            ExpressionType::Return(_) | 
-            ExpressionType::Break(_) | 
-            ExpressionType::Array(_) | 
-            ExpressionType::Closure(_, _, _) => 
+            Expr::Ref(mc) => write!(f,"->{}",mc.get()),
+            Expr::ExceptionPrintable(a) => write!(f,"Exception<{a}>"),
+            Expr::Throw(_) | 
+            Expr::Return(_) | 
+            Expr::Break(_) | 
+            Expr::Array(_) | 
+            Expr::Closure(_, _, _) => 
                 write!(f,"{}",decycle(self.to_owned().into(),&mut HashSet::new()).deref()),
             _ => write!(f,"{:#?}",self),
         }
     }
 }
 
-pub fn integer(i: i64) -> Expression {
-    ExpressionType::Integer(i).into()
+pub fn integer(i: i64) -> R<Expr> {
+    Expr::Integer(i).into()
 }
 
-pub fn float(f: f64) -> Expression {
-    ExpressionType::Float(f).into()
+pub fn float(f: f64) -> R<Expr> {
+    Expr::Float(f).into()
 }
 
-pub fn boolean(b: bool) -> Expression {
-    ExpressionType::Boolean(b).into()
+pub fn boolean(b: bool) -> R<Expr> {
+    Expr::Boolean(b).into()
 }
 
-pub fn character(c: char) -> Expression {
-    ExpressionType::Character(c).into()
+pub fn character(c: char) -> R<Expr> {
+    Expr::Character(c).into()
 }
 
-pub fn string(s: String) -> Expression {
-    ExpressionType::String(s).into()
+pub fn string(s: String) -> R<Expr> {
+    Expr::String(s).into()
 }
 
-pub fn nil() -> Expression {
-    ExpressionType::Nil.into()
+pub fn nil() -> R<Expr> {
+    Expr::Nil.into()
 }
 
-pub fn closure(ctx: Context, args: Idents, body: Expression) -> Expression {
-    ExpressionType::Closure(ctx,args,body).into()
+pub fn closure(ctx: Context, args: Vec<Ident>, body: R<Expr>) -> R<Expr> {
+    Expr::Closure(ctx,args,body).into()
 }
 
-pub fn context(ctx: Context) -> Expression {
+pub fn context(ctx: Context) -> R<Expr> {
     closure(ctx,vec![],nil())
 }
 
-pub fn array(vals: Expressions) -> Expression {
-    ExpressionType::Array(RefCell::new(vals)).into()
+pub fn array(vals: Vec<R<Expr>>) -> R<Expr> {
+    Expr::Array(RefCell::new(vals)).into()
 }
 
 #[derive(Debug,Clone)]
