@@ -968,7 +968,7 @@ closed x {
 test [x,y] expect [111,21];
 
 ###
-### END (this program returns true no tests failed)
+### END (this program returns true if no tests failed)
 ###
 
 @test_fail_count == 0

@@ -1,4 +1,4 @@
-- printf
+- printf ? as a pure @std.io function? or as a builtin ?
 
 - fix builtin arity and make call table
 - curry @builtin and op (LUT for builtins with fixed arg list, op syntax maybe ?)
