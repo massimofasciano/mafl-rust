@@ -1,5 +1,7 @@
 - printf
 
+- doc for closed construct
+
 - fix builtin arity and make call table
 
 - array assign and let rec parallel

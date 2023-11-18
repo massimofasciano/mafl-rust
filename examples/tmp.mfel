@@ -30,3 +30,6 @@ let c = closed x y {
     }
 };
 @debugln(c);
+
+@println(@version);
+@println(@os);

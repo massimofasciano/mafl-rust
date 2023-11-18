@@ -428,8 +428,12 @@ let arr = [4,6,7,3,2];
 @sort_by(\a,b{a>b},arr);
 test arr expect [7,6,4,3,2];
 
-@println("this next one only works on unix...");
-test (@float(@command("expr",1,"+",3)) / 2)! expect 2;
+# this next one only works on unix systems with the expr utility
+if @os == "linux" {
+    test (@float(@command("expr",1,"+",3)) / 2)! expect 2;
+} else {
+    @println("skipping test on ",@os);
+}
 
 let s = "1,2,3, 4,5 ,6";
 
