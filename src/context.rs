@@ -264,7 +264,8 @@ mod tests {
 
     #[test]
     fn ref_test() -> Result<()> {
-        // let interpreter = Interpreter::new()?;
+        // don't need to call new because we don't use the full interpreter with stdlib
+        // we just need the ident feature.
         let interpreter = Interpreter::default();
         let v1 = interpreter.ident("v1");
         let v2 = interpreter.ident("v2");

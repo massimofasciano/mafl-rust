@@ -33,3 +33,5 @@ let c = closed x y {
 
 @println(@version);
 @println(@os);
+@println(@test_pass_count);
+@println(@test_fail_count);

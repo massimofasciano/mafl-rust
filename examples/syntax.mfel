@@ -896,3 +896,9 @@ test @is_error(@get(o,"z")!);
 @set(p,"x",p.x + 1);
 test @get(o,"x") expect 2;
 test @get(p,"x") expect 2;
+
+###
+### END (this program returns true no tests failed)
+###
+
+@test_fail_count == 0

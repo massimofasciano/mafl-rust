@@ -108,3 +108,24 @@ impl Default for Interpreter {
 pub fn unescape_string(sr: &str) -> Result<String> {
     unescape::unescape(sr).ok_or(anyhow!("error unescaping string: {sr}"))
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{Interpreter, expression};
+    use anyhow::Result;
+
+    #[test]
+    fn syntax_test() -> Result<()> {
+        // need extra stack during test... (set it at 8MB like the main thread)
+        // RUST_MIN_STACK=8388608 cargo test
+        let interpreter = Interpreter::new()?;
+        // this program returns true if no tests failed
+        let file = "examples/syntax.mfel";
+        // run the program
+        let source = std::fs::read_to_string(file)?;
+        let result = interpreter.run(&source)?;
+        // result should be true
+        assert_eq!(result, expression::boolean(true));
+        Ok(())
+    }
+}

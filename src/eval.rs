@@ -606,6 +606,8 @@ impl Interpreter {
             "self" => Some(Ok(expression::context(ctx.to_owned()))),
             "version" => option_env!("CARGO_PKG_VERSION").map(|s| { Ok(expression::string(s.to_owned())) }),
             "os" => Some(Ok(expression::string(std::env::consts::OS.to_owned()))),
+            "test_pass_count" => Some(Ok(expression::integer(*self.test_pass_count.borrow() as i64))),
+            "test_fail_count" => Some(Ok(expression::integer(*self.test_fail_count.borrow() as i64))),
             _ => None,
         }
     }

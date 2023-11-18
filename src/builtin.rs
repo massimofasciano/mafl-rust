@@ -395,7 +395,8 @@ pub fn include(interpreter: &Interpreter, ctx: &Context, file_expr: &Expression)
 
 pub fn include_str(interpreter: &Interpreter, ctx: &Context, s: &str) -> Result<Expression> {
     debug!("include_str");
-    interpreter.eval(ctx, &interpreter.parse_source(s)?)
+    let ast = interpreter.parse_source(s)?;
+    interpreter.eval(ctx, &ast)
 }
 
 pub fn read_file(_ctx: &Context, file_expr: &Expression) -> Result<Expression> {
