@@ -1,6 +1,6 @@
 use std::io::{stdout, Write};
 
-use crate::{expression::{ExpressionType, Expression, self, Operator, BlockType}, builtin::{self}, context::Context, Interpreter};
+use crate::{expression::{ExpressionType, Expression, self, Operator, BlockType}, builtin::{self}, context::Context, Interpreter, PragmaLevel};
 use anyhow::{Result,anyhow};
 use log::debug;
 
@@ -104,7 +104,15 @@ impl Interpreter {
 
             ExpressionType::Let(id, val) => {
                 let val = self.eval(ctx,val)?;
-                ctx.add_binding(id.to_owned(), val.to_owned());
+                let replaced = ctx.add_binding(id.to_owned(), val.to_owned());
+                if replaced.is_some() {
+                    let msg = format!("shadowed {id} in local context");
+                    match *self.pragma_shadow_local.borrow() {
+                        PragmaLevel::Allow => {},
+                        PragmaLevel::Warn => { eprintln!("# warning: {msg}.") },
+                        PragmaLevel::Error => { Err(anyhow!(msg))?},
+                    }
+                }
                 val
             }
 
@@ -475,7 +483,7 @@ impl Interpreter {
                 } else {
                     *self.test_fail_count.borrow_mut() += 1;
                 }
-                print!("# test {} {source}", if test {"success"} else {"failure"});
+                print!("# test {} {source}", if test {"passed"} else {"failed"});
                 if !matches!(expected.as_ref(),ExpressionType::Boolean(true)) {
                     print!(": result ");
                     if test { print!("{expected}"); } 
@@ -614,6 +622,7 @@ impl Interpreter {
 
     pub fn builtin_fn(&self, ctx: &Context, name: &str, args: &[Expression]) -> Result<Expression> {
         match (name, args) {
+            ("pragma", [id, val]) => { builtin::pragma(self, ctx, id, val) },
             ("call", [callable, args]) => { builtin::call(self, ctx, callable, args) },
             ("println", args) => { builtin::println(self, ctx, args) },
             ("print", args) => { builtin::print(self, ctx, args) },

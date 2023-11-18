@@ -35,3 +35,14 @@ let c = closed x y {
 @println(@os);
 @println(@test_pass_count);
 @println(@test_fail_count);
+
+let x = x + 1;
+@pragma("shadow_local","allow");
+let x = x + 1;
+{
+    let x = x + 2;
+}
+
+test 2 + 3 expect 5;
+test 2 * 3 expect 5;
+test 2 + 3 < 2 * 3;

@@ -21,6 +21,14 @@ pub struct Interpreter {
     last_var: RefCell<usize>,
     test_pass_count: RefCell<usize>,
     test_fail_count: RefCell<usize>,
+    pragma_shadow_local: RefCell<PragmaLevel>,
+}
+
+#[derive(Debug,Clone)]
+pub enum PragmaLevel {
+    Allow,
+    Warn,
+    Error,
 }
 
 static _STD_STR : &str = include_str!("std.mfel");
@@ -101,6 +109,7 @@ impl Default for Interpreter {
             last_var: RefCell::new(0),
             test_pass_count: RefCell::new(0),
             test_fail_count: RefCell::new(0),
+            pragma_shadow_local: RefCell::new(PragmaLevel::Allow),
         }
     }
 }

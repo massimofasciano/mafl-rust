@@ -1,4 +1,27 @@
 ###
+### unit testing
+###
+
+@println("*** UNIT TESTING ***");
+
+# the test statement can be used for simple unit tests
+test 2 + 3 expect 5;
+
+# it evaluates the test expression and compares the result to the expect part.
+# it prints a message indicating if the test passed or failed:
+# test passed 2 + 3: result 5
+# test failed 2 * 3: result 6 expected 5
+
+# it can also be used as a boolean test by omitting the expect part
+test 2 + 3 < 2 * 3;
+# test passed 2 + 3 < 2 * 3
+
+# unit test results are recorded by the interpreter and are summarized at the end of the execution
+# they can also be looked at via the special variables @test_pass_count and @test_fail_count
+test @test_pass_count expect 2;
+test @test_fail_count expect 0;
+
+###
 ### let: create variable bindings
 ###
 
@@ -12,17 +35,13 @@ let x = 10;
 let x = 20;
 # this becomes even more important when using nested code blocks with local scopes
 
-###
-### unit testing
-###
-
-@println("*** UNIT TESTING ***");
-
-# the assert statement can be used for simple unit tests
-let x = 2;
-let y = 3;
-test x + y expect 5;
-# test success x + y: result 5
+# when a variable is shadowed in the same local context, like we just did above, it
+# could be a mistake. normally, we declare with let and then modify with assignment.
+# by default, the interpreter will not complain but this can be changed:
+@pragma("shadow_local","warn"); # this will print a warning
+let x = 20; # warning: shadowed x in local context.
+@pragma("shadow_local","allow"); # default behavior: no warning
+# @pragma("shadow_local","error"); # this would cause an error and abort the program
 
 ###
 ### assign and op-assign: change variable bindings
@@ -896,6 +915,41 @@ test @is_error(@get(o,"z")!);
 @set(p,"x",p.x + 1);
 test @get(o,"x") expect 2;
 test @get(p,"x") expect 2;
+
+###
+### local/closed scoping
+###
+
+@println("*** CLOSED (local scoping) ***");
+
+# sometimes we wish to control what variables are visible to our code from the current
+# execution context. by default, a function will capture whatever it needs from outside.
+# we can limit that with the closed construct. it limits access to only the
+# listed variables (can be empty if none specified).
+
+let x = 10;
+let y = 20;
+let z = 30;
+let c = closed x y {
+    x += 1;
+    y += 1;
+    try z += 1 catch e { }; # z is not visible
+    x+y
+};
+test [c,x,y,z] expect [32,11,21,30];
+
+# this is not a very useful construct but it can sometimes avoid problems
+# when running code that cound affect the running context.
+
+# let's imagine we are taking a string from the user and evaluating it.
+# we might not want that evaluated code to change our execution environment.
+
+closed x {
+    # assume we read this from the terminal with let input = @readline();
+    let input = "x += 100; try y += 100 catch e { }"; 
+    @eval(input);
+}
+test [x,y] expect [111,21];
 
 ###
 ### END (this program returns true no tests failed)

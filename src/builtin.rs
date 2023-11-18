@@ -8,7 +8,7 @@ use log::debug;
 use regex::Regex;
 use rand::Rng;
 
-use crate::__STR__;
+use crate::{__STR__, PragmaLevel};
 use crate::context::{MemCell, Bindings};
 use crate::{expression::{Expression, self, nil, closure, ExpressionType}, context::Context, Interpreter};
 
@@ -806,3 +806,30 @@ pub fn randfloat(_: &Interpreter, _: &Context) -> Result<Expression> {
     let mut rng = rand::thread_rng();
     Ok(expression::float(rng.gen()))
 }
+
+pub fn pragma(interpreter: &Interpreter, _ctx: &Context, id: &Expression, val: &Expression) -> Result<Expression> {
+    Ok(match id.as_ref() {
+        ExpressionType::String(id) => {
+            match id.as_str() {
+                "shadow_local" => {
+                    match val.as_ref() {
+                        ExpressionType::String(val) => {
+                            let pragma_level = match val.as_str() {
+                                "warn" => { PragmaLevel::Warn },
+                                "allow" => { PragmaLevel::Allow },
+                                "error" => { PragmaLevel::Error },
+                                _ => Err(anyhow!("unknown pragma level for {id}: {val}"))?,
+                            };
+                            *interpreter.pragma_shadow_local.borrow_mut() = pragma_level;
+                        }
+                        _ => Err(anyhow!("pragma value is not a string"))?,
+                    }
+                }
+                _ => Err(anyhow!("unknown pragma id: {id}"))?,
+            }
+            val.to_owned()
+        }
+        _ => Err(anyhow!("pragma id not a string"))?,
+    })
+}
+
