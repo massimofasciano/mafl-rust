@@ -171,11 +171,11 @@ impl std::fmt::Display for ExpressionType {
             ExpressionType::Boolean(a) => write!(f,"{a}"),
             ExpressionType::Float(a) => write!(f,"{a}"),
             ExpressionType::Integer(a) => write!(f,"{a}"),
-            ExpressionType::Character(a) => write!(f,"{a}"),
-            ExpressionType::String(a) => write!(f,"{a}"),
-            ExpressionType::Error(a) => write!(f,"Error<{a}>"),
-            ExpressionType::ArrayPrintable(a) =>
-                write!(f,"[{}]",a.iter().map(|x|x.to_string()).collect::<Vec<_>>().join(",")),
+            ExpressionType::Character(a) => write!(f,"{a:?}"),
+            ExpressionType::String(a) => write!(f,"{a:?}"),
+            ExpressionType::Error(a) => write!(f,"Error<{a:?}>"),
+            ExpressionType::ArrayPrintable(v) =>
+                write!(f,"[{}]",v.iter().map(|x|x.to_string()).collect::<Vec<_>>().join(", ")),
             ExpressionType::Ref(mc) => write!(f,"->{}",mc.get()),
             ExpressionType::ExceptionPrintable(a) => write!(f,"Exception<{a}>"),
             ExpressionType::Throw(_) | 
@@ -224,3 +224,33 @@ pub fn context(ctx: Context) -> Expression {
 pub fn array(vals: Expressions) -> Expression {
     ExpressionType::Array(RefCell::new(vals)).into()
 }
+
+#[derive(Debug,Clone)]
+pub enum Value {
+    Nil,
+    Integer(i64),
+    Float(f64),
+    Character(char),
+    Boolean(bool),
+    String(String),
+    Array(Vec<Value>),
+    Dict(HashMap<String,Value>),
+}
+
+impl std::fmt::Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Value::Nil => write!(f,"nil"),
+            Value::Boolean(b) => write!(f,"{b}"),
+            Value::Float(x) => write!(f,"{x}"),
+            Value::Integer(i) => write!(f,"{i}"),
+            Value::Character(c) => write!(f,"{c:?}"),
+            Value::String(s) => write!(f,"{s:?}"),
+            Value::Array(v) => 
+                write!(f,"[{}]",v.iter().map(Self::to_string).collect::<Vec<_>>().join(", ")),
+            Value::Dict(d) => 
+                write!(f,"{{{}}}",d.iter().map(|(k,v)| { format!("{k}: {v}") }).collect::<Vec<_>>().join(", ")),
+        }
+    }
+}
+

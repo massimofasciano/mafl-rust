@@ -660,7 +660,7 @@ impl Interpreter {
             ("ge", [lhs, rhs]) => builtin::ge(ctx, lhs, rhs),
             ("le", [lhs, rhs]) => builtin::le(ctx, lhs, rhs),
             ("make_array", [size, init]) => builtin::make_array(self, ctx, size, init),
-            ("array", [init]) => builtin::to_array(ctx, init),
+            ("array", [init]) => builtin::to_array(self, ctx, init),
             ("slice", [container, start, end]) => builtin::slice(ctx, container, start, end),
             ("copy", [container]) => builtin::shallow_copy(ctx, container),
             ("clone", [container]) => builtin::deep_copy(ctx, container),

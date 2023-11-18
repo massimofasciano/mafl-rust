@@ -309,7 +309,7 @@ pub fn make_array(interpreter: &Interpreter, ctx: &Context, size: &Expression, i
     }
 }
 
-pub fn to_array(ctx: &Context, init: &Expression) -> Result<Expression> {
+pub fn to_array(interpreter: &Interpreter, ctx: &Context, init: &Expression) -> Result<Expression> {
     let mut arr = vec![];
     match init.as_ref() {
         ExpressionType::String(s) => {
@@ -320,7 +320,7 @@ pub fn to_array(ctx: &Context, init: &Expression) -> Result<Expression> {
         } 
         ExpressionType::Closure(cctx, _args, _body) => {
             for (s, cell) in cctx.bindings_ref() {
-                let pair = vec![expression::string(Interpreter::ident_to_string(&s)),cell.get()];
+                let pair = vec![expression::string(interpreter.ident_to_string(&s)),cell.get()];
                 arr.push(expression::array(pair));
             }
             Ok(expression::array(arr))

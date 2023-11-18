@@ -46,3 +46,5 @@ let x = x + 1;
 test 2 + 3 expect 5;
 test 2 * 3 expect 5;
 test 2 + 3 < 2 * 3;
+
+c

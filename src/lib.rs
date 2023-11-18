@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::HashMap};
 use context::Context;
-use expression::{Expression, Ident};
+use expression::{Expression, Ident, Value, ExpressionType};
 use pest::Parser;
 use crate::expression::{MfelParser, Rule};
 use anyhow::{anyhow, Result};
@@ -88,7 +88,7 @@ impl Interpreter {
         id.to_owned()
         // self.var_num(id)
     } 
-    pub fn ident_to_string(id: &Ident) -> String {
+    pub fn ident_to_string(&self, id: &Ident) -> String {
         // format!("_{}",id)
         id.to_owned()
     }
@@ -96,6 +96,31 @@ impl Interpreter {
         let pass_count = *self.test_pass_count.borrow();
         let fail_count = *self.test_fail_count.borrow();
         (pass_count, fail_count)
+    }
+    pub fn expr_to_value(&self, expr: Expression) -> Result<Value> {
+        Ok(match expr.as_ref() {
+            ExpressionType::Nil => Value::Nil,
+            ExpressionType::Integer(i) => Value::Integer(*i),
+            ExpressionType::Float(f) => Value::Float(*f),
+            ExpressionType::Character(c) => Value::Character(*c),
+            ExpressionType::Boolean(b) => Value::Boolean(*b),
+            ExpressionType::String(s) => Value::String(s.to_owned()),
+            ExpressionType::Array(rc) => {
+                let v = rc.borrow().iter()
+                    .map(|e| { self.expr_to_value(e.to_owned()) })
+                    .collect::<Result<Vec<_>>>()?;
+                Value::Array(v)
+            }
+            ExpressionType::Closure(ctx,_,_) => {
+                let d = ctx.bindings_cloned().iter()
+                    .map(|(id, mc)| -> Result<(String,Value)> { 
+                        Ok((self.ident_to_string(id), self.expr_to_value(mc.get())?)) 
+                    })
+                    .collect::<Result<HashMap<String,Value>>>()?;
+                Value::Dict(d)
+            }
+            _ => Err(anyhow!("can't convert this expression to a value"))?
+        })
     }
 }
 

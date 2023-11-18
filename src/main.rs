@@ -16,13 +16,17 @@ fn main() -> Result<()> {
         let result = interpreter.run(&source)?;
         println!();
         println!("*** DEBUG INFO: full program evaluates to:");
-        interpreter.println(result)?;
+        interpreter.println(result.to_owned())?;
         let (pass_count, fail_count) = interpreter.test_report();
         if pass_count > 0 || fail_count > 0 {
             println!();
             println!("*** UNIT TEST SUMMARY: ");
             println!("{pass_count} passed. {fail_count} failed.");
         }
+        let value = interpreter.expr_to_value(result)?;
+        println!();
+        println!("*** Program result as a value:");
+        println!("{value}");        
     } else {
         // REPL
         let stdin = stdin();
@@ -33,6 +37,7 @@ fn main() -> Result<()> {
                 match interpreter.run(&line_result?) {
                     Ok(result) => {
                         interpreter.println(result)?;
+                        // println!("{}",interpreter.expr_to_value(result)?);
                     }
                     Err(error) => println!("Error: {error}"),
                 }
