@@ -231,9 +231,9 @@ pub fn not(_: &Context, val: &R<Expr>) -> Result<R<Expr>> {
 pub fn print(interpreter: &Interpreter, ctx: &Context, args: &[R<Expr>]) -> Result<R<Expr>> {
     for arg in args { 
         match arg.as_ref() {
-            Expr::Closure(cctx, _, _) if cctx.get_binding(&interpreter.ident(__STR__)).is_some() => {
+            Expr::Closure(cctx, _, _) if cctx.get_binding(__STR__).is_some() => {
                 // if the closure/object has a binding for __STR__, we call it
-                let str = cctx.get_binding(&interpreter.ident(__STR__)).unwrap();
+                let str = cctx.get_binding(__STR__).unwrap();
                 let string = interpreter.eval(cctx, 
                     &Expr::FunctionCall(str, vec![]).into()
                 )?;
@@ -308,7 +308,7 @@ pub fn make_array(interpreter: &Interpreter, ctx: &Context, size: &R<Expr>, init
     }
 }
 
-pub fn to_array(interpreter: &Interpreter, ctx: &Context, init: &R<Expr>) -> Result<R<Expr>> {
+pub fn to_array(_interpreter: &Interpreter, ctx: &Context, init: &R<Expr>) -> Result<R<Expr>> {
     let mut arr = vec![];
     match init.as_ref() {
         Expr::String(s) => {
@@ -319,7 +319,7 @@ pub fn to_array(interpreter: &Interpreter, ctx: &Context, init: &R<Expr>) -> Res
         } 
         Expr::Closure(cctx, _args, _body) => {
             for (s, cell) in cctx.bindings_ref() {
-                let pair = vec![expression::string(interpreter.ident_to_string(&s)),cell.get()];
+                let pair = vec![expression::string(s),cell.get()];
                 arr.push(expression::array(pair));
             }
             Ok(expression::array(arr))
@@ -454,7 +454,7 @@ pub fn read_line(_ctx: &Context) -> Result<R<Expr>> {
     }
 }
 
-pub fn get(interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, key: &R<Expr>) -> Result<R<Expr>> {
+pub fn get(_interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, key: &R<Expr>) -> Result<R<Expr>> {
     Ok(match container.as_ref() {
         Expr::Array(a) => {
             match key.as_ref() {
@@ -466,7 +466,7 @@ pub fn get(interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, key: 
         Expr::Closure(c,_,_) => {
             match key.as_ref() {
                 Expr::String(s) => 
-                    c.get_binding(&interpreter.ident(s)).ok_or(anyhow!("binding not found: {s}"))?,
+                    c.get_binding(s).ok_or(anyhow!("binding not found: {s}"))?,
                 _ => Err(anyhow!("get on closure with non-string key {key:?}"))?,
             }
         }
@@ -474,7 +474,7 @@ pub fn get(interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, key: 
     })
 }
 
-pub fn set(interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, key: &R<Expr>, value: &R<Expr>) -> Result<R<Expr>> {
+pub fn set(_interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, key: &R<Expr>, value: &R<Expr>) -> Result<R<Expr>> {
     Ok(match container.as_ref() {
         Expr::Array(a) => {
             match key.as_ref() {
@@ -491,7 +491,7 @@ pub fn set(interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, key: 
         Expr::Closure(c,_,_) => {
             match key.as_ref() {
                 Expr::String(s) => 
-                    c.set_binding(interpreter.ident(s), value.to_owned())
+                    c.set_binding(s.to_owned(), value.to_owned())
                         .ok_or(anyhow!("binding not found: {s}"))?,
                 _ => Err(anyhow!("set on closure with non-string key {key:?}"))?,
             }
@@ -500,12 +500,12 @@ pub fn set(interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, key: 
     })
 }
 
-pub fn insert(interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, key: &R<Expr>, value: &R<Expr>) -> Result<R<Expr>> {
+pub fn insert(_interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, key: &R<Expr>, value: &R<Expr>) -> Result<R<Expr>> {
     Ok(match container.as_ref() {
         Expr::Closure(c,_,_) => {
             match key.as_ref() {
                 Expr::String(s) => {
-                    c.add_binding(interpreter.ident(s), value.to_owned());
+                    c.add_binding(s.to_owned(), value.to_owned());
                     value.to_owned()
                 }
                 _ => Err(anyhow!("insert on closure with non-string key {key:?}"))?,
@@ -515,12 +515,12 @@ pub fn insert(interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, ke
     })
 }
 
-pub fn remove(interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, key: &R<Expr>) -> Result<R<Expr>> {
+pub fn remove(_interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, key: &R<Expr>) -> Result<R<Expr>> {
     Ok(match container.as_ref() {
         Expr::Closure(c,_,_) => {
             match key.as_ref() {
                 Expr::String(s) => {
-                    c.remove_binding(&interpreter.ident(s))
+                    c.remove_binding(s)
                         .ok_or(anyhow!("binding not found: {s}"))?
                 }
                 _ => Err(anyhow!("remove on closure with non-string key {key:?}"))?,
@@ -764,9 +764,9 @@ pub fn string(interpreter: &Interpreter, _: &Context, val: &R<Expr>) -> Result<R
                 expression::string(format!("{val}"))   
             }
         }
-        Expr::Closure(cctx, _, _) if cctx.get_binding(&interpreter.ident(__STR__)).is_some() => {
+        Expr::Closure(cctx, _, _) if cctx.get_binding(__STR__).is_some() => {
             // if the closure/object has a binding for __STR__, we call it
-            let str = cctx.get_binding(&interpreter.ident(__STR__)).unwrap();
+            let str = cctx.get_binding(__STR__).unwrap();
             interpreter.eval(cctx, 
                 &Expr::FunctionCall(str, vec![]).into()
             )?

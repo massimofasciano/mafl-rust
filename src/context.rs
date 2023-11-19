@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use log::debug;
-use crate::{R, RefC, Ident, expression::Expr, CellRefMut};
+use crate::{R, RefC, expression::Expr, CellRefMut};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 #[cfg(feature = "gc")]
@@ -85,7 +85,7 @@ pub struct Context {
     inner: R<Scope>,
 }
 
-pub type Bindings = HashMap<Ident,R<MemCell>>;
+pub type Bindings = HashMap<String,R<MemCell>>;
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "gc", derive(Trace))]
@@ -137,19 +137,19 @@ impl Context {
             None
         }
     }
-    pub fn remove_binding(&self, var: &Ident) -> Option<R<Expr>> {
+    pub fn remove_binding(&self, var: &str) -> Option<R<Expr>> {
         let scope = &self.inner;
         scope.bindings.borrow_mut().remove(var).map(|old| old.get())
     }
-    pub fn add_binding(&self, var: Ident, value: R<Expr>) -> Option<R<Expr>> {
+    pub fn add_binding(&self, var: String, value: R<Expr>) -> Option<R<Expr>> {
         let scope = &self.inner;
         scope.bindings.borrow_mut().insert(var, MemCell::new_ref(value)).map(|old| old.get())
     }
-    pub fn add_binding_ref(&self, var: Ident, value: R<MemCell>) -> Option<R<MemCell>> {
+    pub fn add_binding_ref(&self, var: String, value: R<MemCell>) -> Option<R<MemCell>> {
         let scope = &self.inner;
         scope.bindings.borrow_mut().insert(var, value)
     }
-    pub fn get_binding(&self, var: &Ident) -> Option<R<Expr>> {
+    pub fn get_binding(&self, var: &str) -> Option<R<Expr>> {
         let scope = &self.inner;
         if let Some(rc) = scope.bindings.borrow().get(var) {
             Some(rc.get())
@@ -159,7 +159,7 @@ impl Context {
             None
         }
     }
-    pub fn get_binding_ref(&self, var: &Ident) -> Option<R<MemCell>> {
+    pub fn get_binding_ref(&self, var: &str) -> Option<R<MemCell>> {
         let scope = &self.inner;
         if let Some(rc) = scope.bindings.borrow().get(var) {
             Some(rc.to_owned())
@@ -169,7 +169,7 @@ impl Context {
             None
         }
     }
-    pub fn set_binding(&self, var: Ident, value: R<Expr>) -> Option<R<Expr>> {
+    pub fn set_binding(&self, var: String, value: R<Expr>) -> Option<R<Expr>> {
         let scope = &self.inner;
         if let Some(rc) = scope.bindings.borrow().get(&var) {
             Some(rc.set(value))
@@ -179,7 +179,7 @@ impl Context {
             None
         }
     }
-    pub fn set_binding_ref(&self, var: Ident, value: R<MemCell>) -> Option<R<MemCell>> {
+    pub fn set_binding_ref(&self, var: String, value: R<MemCell>) -> Option<R<MemCell>> {
         let scope = &self.inner;
         if scope.bindings.borrow().contains_key(&var) {
             scope.bindings.borrow_mut().insert(var, value)
@@ -278,22 +278,19 @@ impl Finalize for Scope {
 
 #[cfg(test)]
 mod tests {
-    use crate::{expression::integer, Interpreter};
+    use crate::expression::integer;
     use super::Context;
     use anyhow::{Result, Ok};
 
     #[test]
     fn ref_test() -> Result<()> {
-        // don't need to call new because we don't use the full interpreter with stdlib
-        // we just need the ident feature.
-        let interpreter = Interpreter::default();
-        let v1 = interpreter.ident("v1");
-        let v2 = interpreter.ident("v2");
-        let v3 = interpreter.ident("v3");
-        let v4 = interpreter.ident("v4");
-        let v10 = interpreter.ident("v10");
-        let v11 = interpreter.ident("v11");
-        let v12 = interpreter.ident("v12");
+        let v1 = "v1".to_owned();
+        let v2 = "v2".to_owned();
+        let v3 = "v3".to_owned();
+        let v4 = "v4".to_owned();
+        let v10 = "v10".to_owned();
+        let v11 = "v11".to_owned();
+        let v12 = "v12".to_owned();
         let ctx1 = Context::new();
         ctx1.add_binding(v1.to_owned(), integer(1));
         let ctx2 = ctx1.with_new_context();

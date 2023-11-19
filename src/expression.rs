@@ -1,7 +1,7 @@
 use std::{ops::Deref, collections::{HashSet, HashMap}};
 use anyhow::{anyhow, Result};
 use pest_derive::Parser;
-use crate::{context::{Context, MemCell, ScopeID}, RefC, R, Ident};
+use crate::{context::{Context, MemCell, ScopeID}, RefC, R};
 
 #[cfg(feature = "gc")]
 use gc::{Finalize, Trace};
@@ -17,7 +17,7 @@ pub enum Operator {
     Not, And, Or, Pipe,
     Gt, Ge, Lt, Le, Ne, Eq,
     Neg, Ref, DeRef, Question, Exclam,
-    Identifier(Ident)
+    Identifier(String)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -39,31 +39,31 @@ pub enum Expr {
     String(String),
     Nil,
     Error(String),
-    Variable(Ident),
+    Variable(String),
     BuiltinVariable(String),
     BuiltinFunction(String),
     FunctionCall(R<Expr>,Vec<R<Expr>>),
-    Field(R<Expr>,Ident),
+    Field(R<Expr>,String),
     BinOpCall(Operator,R<Expr>,R<Expr>),
     UnaryOpCall(Operator,R<Expr>),
     If(R<Expr>,R<Expr>,R<Expr>),
-    Iterate(Ident,R<Expr>,R<Expr>),
-    TryCatch(R<Expr>,Ident,R<Expr>),
-    Let(Ident,R<Expr>),
-    LetArray(Vec<Ident>,R<Expr>),
-    LetRef(Ident,R<Expr>),
-    Forget(Ident),
+    Iterate(String,R<Expr>,R<Expr>),
+    TryCatch(R<Expr>,String,R<Expr>),
+    Let(String,R<Expr>),
+    LetArray(Vec<String>,R<Expr>),
+    LetRef(String,R<Expr>),
+    Forget(String),
     AssignToExpression(R<Expr>,R<Expr>),
     AssignToDeRefExpression(R<Expr>,R<Expr>),
     OpAssignToExpression(Operator,R<Expr>,R<Expr>),
     ArrayAccess(R<Expr>,R<Expr>),
     Block{r#type: BlockType, body: Vec<R<Expr>>},
     Loop(R<Expr>),
-    Fun(Vec<Ident>,R<Expr>),
-    Dyn(Vec<Ident>,R<Expr>),
-    Closed(Vec<Ident>,R<Expr>),
-    Use(Option<R<Expr>>,Vec<Ident>),
-    Closure(Context,Vec<Ident>,R<Expr>),
+    Fun(Vec<String>,R<Expr>),
+    Dyn(Vec<String>,R<Expr>),
+    Closed(Vec<String>,R<Expr>),
+    Use(Option<R<Expr>>,Vec<String>),
+    Closure(Context,Vec<String>,R<Expr>),
     Array(RefC<Vec<R<Expr>>>),
     Return(R<Expr>),
     Break(R<Expr>),
@@ -72,13 +72,13 @@ pub enum Expr {
     Test(String,R<Expr>,R<Expr>),
     Continue, 
     Ref(R<MemCell>),
-    Scope(ScopeID,HashMap<Ident,R<Expr>>),
+    Scope(ScopeID,HashMap<String,R<Expr>>),
     ScopeCycle(ScopeID),
-    ClosurePrintable(R<Expr>,Vec<Ident>,R<Expr>),
+    ClosurePrintable(R<Expr>,Vec<String>,R<Expr>),
     ArrayPrintable(Vec<R<Expr>>),
     ExceptionPrintable(R<Expr>),
     ParsedOperator(Operator),
-    ParsedIdentifier(Ident),
+    ParsedIdentifier(String),
 }
 
 impl PartialEq for Expr {
@@ -212,7 +212,7 @@ pub fn nil() -> R<Expr> {
     Expr::Nil.into()
 }
 
-pub fn closure(ctx: Context, args: Vec<Ident>, body: R<Expr>) -> R<Expr> {
+pub fn closure(ctx: Context, args: Vec<String>, body: R<Expr>) -> R<Expr> {
     Expr::Closure(ctx,args,body).into()
 }
 
@@ -250,6 +250,35 @@ impl std::fmt::Display for Value {
             Value::Dict(d) => 
                 write!(f,"{{{}}}",d.iter().map(|(k,v)| { format!("{k}: {v}") }).collect::<Vec<_>>().join(", ")),
         }
+    }
+}
+
+impl TryFrom<R<Expr>> for Value {
+    type Error = anyhow::Error;
+    fn try_from(expr: R<Expr>) -> Result<Self> {
+        Ok(match expr.as_ref() {
+            Expr::Nil => Value::Nil,
+            Expr::Integer(i) => Value::Integer(*i),
+            Expr::Float(f) => Value::Float(*f),
+            Expr::Character(c) => Value::Character(*c),
+            Expr::Boolean(b) => Value::Boolean(*b),
+            Expr::String(s) => Value::String(s.to_owned()),
+            Expr::Array(rc) => {
+                let v = rc.borrow().iter()
+                    .map(|e| { Self::try_from(e.to_owned()) })
+                    .collect::<Result<Vec<_>>>()?;
+                Value::Array(v)
+            }
+            Expr::Closure(ctx,_,_) => {
+                let d = ctx.bindings_cloned().iter()
+                    .map(|(id, mc)| -> Result<(String,Value)> { 
+                        Ok((id.to_owned(), Self::try_from(mc.get())?)) 
+                    })
+                    .collect::<Result<HashMap<String,Value>>>()?;
+                Value::Dict(d)
+            }
+            _ => Err(anyhow!("can't convert this expression to a value"))?
+        })
     }
 }
 

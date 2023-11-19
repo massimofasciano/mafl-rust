@@ -1,5 +1,5 @@
 use std::{io::{stdin, BufRead, stdout, Write}, env::args};
-use mfel::Interpreter;
+use mfel::{Interpreter, expression::Value};
 use anyhow::{Result, anyhow};
 
 fn main() -> Result<()> {
@@ -14,19 +14,18 @@ fn main() -> Result<()> {
         let source = std::fs::read_to_string(file)?;
         interpreter.set_env(env.map(|x|x.to_string()).collect());
         let result = interpreter.run(&source)?;
+        // println!();
+        // println!("*** Program result via @println:");
+        // interpreter.println(result.to_owned())?;
         println!();
-        println!("*** DEBUG INFO: full program evaluates to:");
-        interpreter.println(result.to_owned())?;
+        println!("*** Program result as a value:");
+        println!("{}", Value::try_from(result)?);        
         let (pass_count, fail_count) = interpreter.test_report();
         if pass_count > 0 || fail_count > 0 {
             println!();
             println!("*** UNIT TEST SUMMARY: ");
             println!("{pass_count} passed. {fail_count} failed.");
         }
-        let value = interpreter.expr_to_value(result)?;
-        println!();
-        println!("*** Program result as a value:");
-        println!("{value}");        
     } else {
         // REPL
         let stdin = stdin();
@@ -37,7 +36,6 @@ fn main() -> Result<()> {
                 match interpreter.run(&line_result?) {
                     Ok(result) => {
                         interpreter.println(result)?;
-                        // println!("{}",interpreter.expr_to_value(result)?);
                     }
                     Err(error) => println!("Error: {error}"),
                 }

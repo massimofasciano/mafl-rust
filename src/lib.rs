@@ -1,6 +1,6 @@
-use std::{cell::RefCell, collections::HashMap};
+use std::cell::RefCell;
 use context::Context;
-use expression::{Value, Expr};
+use expression::Expr;
 use pest::Parser;
 use crate::expression::{MfelParser, Rule};
 use anyhow::{anyhow, Result};
@@ -29,15 +29,11 @@ pub type R<Expr> = Gc<Expr>;
 #[cfg(feature = "gc")]
 pub type RefC<Expr> = GcCell<Expr>;
 
-pub type Ident = String;
-
 #[derive(Debug,Clone)]
 pub struct Interpreter {
     env: R<Expr>,
     std: R<Expr>,
     ctx: Context,
-    vars: RefCell<HashMap<String,usize>>,
-    last_var: RefCell<usize>,
     test_pass_count: RefCell<usize>,
     test_fail_count: RefCell<usize>,
     pragma_shadow_local: RefCell<PragmaLevel>,
@@ -86,60 +82,10 @@ impl Interpreter {
         // println!("{:#?}",parsed);
         self.parse_rule(parsed)
     }
-    pub fn var_num(&self, id: &str) -> usize {
-        let num = self.vars.borrow().get(id).map(|x|x.to_owned());
-        if let Some(num) = num {
-            num
-        } else {
-            let num = {
-                let mut last_var = self.last_var.borrow_mut();
-                let tmp = *last_var;
-                *last_var += 1;
-                tmp
-            };
-            self.vars.borrow_mut().insert(id.to_owned(), num);
-            num
-        }
-    }
-    pub fn ident(&self, id: &str) -> Ident {
-        // format!("_{}",self.var_num(id))
-        // format!("_{}_{id}",self.var_num(id))
-        id.to_owned()
-        // self.var_num(id)
-    } 
-    pub fn ident_to_string(&self, id: &Ident) -> String {
-        // format!("_{}",id)
-        id.to_owned()
-    }
     pub fn test_report(&self) -> (usize, usize) {
         let pass_count = *self.test_pass_count.borrow();
         let fail_count = *self.test_fail_count.borrow();
         (pass_count, fail_count)
-    }
-    pub fn expr_to_value(&self, expr: R<Expr>) -> Result<Value> {
-        Ok(match expr.as_ref() {
-            Expr::Nil => Value::Nil,
-            Expr::Integer(i) => Value::Integer(*i),
-            Expr::Float(f) => Value::Float(*f),
-            Expr::Character(c) => Value::Character(*c),
-            Expr::Boolean(b) => Value::Boolean(*b),
-            Expr::String(s) => Value::String(s.to_owned()),
-            Expr::Array(rc) => {
-                let v = rc.borrow().iter()
-                    .map(|e| { self.expr_to_value(e.to_owned()) })
-                    .collect::<Result<Vec<_>>>()?;
-                Value::Array(v)
-            }
-            Expr::Closure(ctx,_,_) => {
-                let d = ctx.bindings_cloned().iter()
-                    .map(|(id, mc)| -> Result<(String,Value)> { 
-                        Ok((self.ident_to_string(id), self.expr_to_value(mc.get())?)) 
-                    })
-                    .collect::<Result<HashMap<String,Value>>>()?;
-                Value::Dict(d)
-            }
-            _ => Err(anyhow!("can't convert this expression to a value"))?
-        })
     }
 }
 
@@ -149,8 +95,6 @@ impl Default for Interpreter {
             env: expression::array(vec![]),
             std: expression::nil(),
             ctx: Context::new(),
-            vars: RefCell::new(HashMap::new()),
-            last_var: RefCell::new(0),
             test_pass_count: RefCell::new(0),
             test_fail_count: RefCell::new(0),
             pragma_shadow_local: RefCell::new(PragmaLevel::Allow),

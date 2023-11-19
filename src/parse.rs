@@ -93,7 +93,7 @@ impl Interpreter {
                             Rule::field_access => {
                                 let inner : Vec<Pair<Rule>> = pair.clone().into_inner().collect();
                                 assert!(inner.len() == 1);
-                                let field = self.ident(inner[0].as_str());
+                                let field = inner[0].as_str().to_owned();
                                 Ok(Expr::Field(ast, field).into())
                             }
                             _ => Err(anyhow!("parse error expr_apply_or_access"))
@@ -104,7 +104,7 @@ impl Interpreter {
                     let fun_type = Self::find_tag("fun_type", &inner).next()
                         .map(|x|x.as_str().to_owned()).expect("missing fun type");
                     let args = Self::find_tag("arg", &inner)
-                        .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                        .map(|x|x.as_str().to_owned()).collect::<Vec<_>>();
                     let mut body = Self::find_tag("body", &inner).next()
                         .map(|x| self.parse_rule(x.to_owned()))
                         .expect("missing body")?;
@@ -136,7 +136,7 @@ impl Interpreter {
                 }
                 Rule::closed => {
                     let vars = Self::find_tag("var", &inner)
-                        .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                        .map(|x|x.as_str().to_owned()).collect::<Vec<_>>();
                     let body = Self::find_tag("body", &inner).next()
                         .map(|x| self.parse_rule(x.to_owned()))
                         .expect("missing body")?;
@@ -153,7 +153,7 @@ impl Interpreter {
                         .map(|x| self.parse_rule(x.to_owned()))
                         .map_or(Ok(None), |v| v.map(Some))?;
                     let vars = Self::find_tag("var", &inner)
-                        .map(|x|self.ident(x.as_str())).collect::<Vec<_>>();
+                        .map(|x|x.as_str().to_owned()).collect::<Vec<_>>();
                     Expr::Use(opt_source, vars).into()
                 } 
                 Rule::r#if | Rule::unless => {
@@ -175,7 +175,7 @@ impl Interpreter {
                 } 
                 Rule::forget => {
                     assert!(inner.len() == 1);
-                    let id = self.ident(inner[0].as_str());
+                    let id = inner[0].as_str().to_owned();
                     Expr::Forget(id).into()
                 } 
                 Rule::r#let => {
@@ -189,7 +189,7 @@ impl Interpreter {
                         .map_or(Ok(None), |v| v.map(Some))?;
                     match var_rule.as_rule() {
                         Rule::identifier => {
-                            let var = self.ident(var_rule.as_str());
+                            let var = var_rule.as_str().to_owned();
                             let val = opt_val.unwrap_or(expression::nil());
                             match opt_type {
                                 Some("rec") => {
@@ -216,7 +216,7 @@ impl Interpreter {
                         }
                         Rule::identifier_array => {
                             let vars = var_rule.clone().into_inner().map(|pair| {
-                                self.ident(pair.as_str())
+                                pair.as_str().to_owned()
                             }).collect();
                             let val = opt_val.expect("need a value for array let");
                             Expr::LetArray(vars, val).into()
@@ -227,7 +227,7 @@ impl Interpreter {
                 Rule::assign => {
                     assert!(inner.len() >= 3);
                     let var_str = inner[0].as_str().to_owned();
-                    let var = Expr::Variable(self.ident(&var_str)).into();
+                    let var = Expr::Variable(var_str).into();
                     if inner.len() == 3 {
                         let val = self.parse_rule(inner[2].clone())?;
                         match inner[1].as_rule() {
@@ -250,7 +250,7 @@ impl Interpreter {
                                 Rule::field_access => {
                                     let inner : Vec<Pair<Rule>> = pair.clone().into_inner().collect();
                                     assert!(inner.len() == 1);
-                                    let field = self.ident(inner[0].as_str());
+                                    let field = inner[0].as_str().to_owned();
                                     Ok(Expr::Field(acc, field).into())
                                 }
                                 _ => Err(anyhow!("bad assign chain")),
@@ -311,7 +311,7 @@ impl Interpreter {
                 Rule::r#for => {
                     assert!(inner.len() == 3);
                     assert!(inner[0].as_rule() == Rule::identifier);
-                    let var = self.ident(inner[0].as_str());
+                    let var = inner[0].as_str().to_owned();
                     let expr = self.parse_rule(inner[1].clone())?;
                     assert!(inner[2].as_rule() == Rule::block_syntax);
                     let body = self.parse_rule(inner[2].clone())?;
@@ -321,7 +321,7 @@ impl Interpreter {
                     assert!(inner.len() == 3);
                     let expr = self.parse_rule(inner[0].clone())?;
                     assert!(inner[1].as_rule() == Rule::identifier);
-                    let var = self.ident(inner[1].as_str());
+                    let var = inner[1].as_str().to_owned();
                     assert!(inner[2].as_rule() == Rule::block_syntax);
                     let body = self.parse_rule(inner[2].clone())?;
                     Expr::TryCatch(expr, var, body).into()
@@ -368,7 +368,7 @@ impl Interpreter {
                 },
                 Rule::infix_identifier => { 
                     assert!(inner.len() == 1);
-                    let id = self.ident(inner[0].as_str());
+                    let id = inner[0].as_str().to_owned();
                     Expr::ParsedOperator(Operator::Identifier(id)).into() 
                 },
                 _ => {
@@ -383,7 +383,7 @@ impl Interpreter {
             Rule::float => { Expr::Float(parsed.as_str().parse()?).into() },
             Rule::string => { Expr::String(unescape_string(parsed.as_str())?).into() },
             Rule::identifier => { 
-                Expr::ParsedIdentifier(self.ident(parsed.as_str())).into() 
+                Expr::ParsedIdentifier(parsed.as_str().to_owned()).into() 
             },
             Rule::character => { 
                 assert!(!parsed.as_str().is_empty());
@@ -393,7 +393,7 @@ impl Interpreter {
                 if parsed.as_str().starts_with('@') {
                     Expr::BuiltinVariable(parsed.as_str().strip_prefix('@').unwrap().to_owned()).into() 
                 } else {
-                    Expr::Variable(self.ident(parsed.as_str())).into() 
+                    Expr::Variable(parsed.as_str().to_owned()).into() 
                 }
             },
             Rule::nil_literal => { Expr::Nil.into() },
