@@ -249,7 +249,7 @@ let v = {
 test v expect nil;
 
 ###
-### special functions: cons, module and dyn
+### special functions: cons, module and dyn/dynmut
 ### 
 
 @println("*** SPECIAL FUNCTIONS: CONS ***");
@@ -340,7 +340,7 @@ test m2.x expect 5;
 # the inv function is inherited
 test m2.inv(m2.y) expect 1/6;
 
-@println("*** SPECIAL FUNCTIONS: DYN ***");
+@println("*** SPECIAL FUNCTIONS: DYN and DYNMUT ***");
 
 # we have seen that functions are basically objects (they have data and code)
 
@@ -361,6 +361,31 @@ let g = 20;
 test ffun(5) expect 15;
 # dyn evaluates variables at call time
 test fdyn(5) expect 25;
+
+# a dyn function runs in a new empty context that inherits the parent context at the call site.
+# this means it can read and modify existing variables from the parent.
+# any new binding created with let will be local.
+
+let g = 100;
+let fdyn = dyn x { g += x; let y = 200; };
+fdyn(1);
+test g expect 101;
+test @is_error(y!);
+
+# a dynmut function runs in the parent context at the call site.
+# this means it can read and modify existing variables from the parent.
+# it can also create and destroy bindings in the parent context.
+
+let g = 100;
+let h = 500;
+let fdynmut = dynmut x { g += x; let y = 200; forget h; };
+fdynmut(1);
+test g expect 101;
+test y expect 200;
+test @is_error(h!);
+
+# we will see later that dyn and dynmut, like @eval don't work well
+# when called inside lexical binding constructs like "fun/cons/module".
 
 ###
 ### base types
@@ -967,6 +992,44 @@ closed x {
     @eval(input);
 }
 test [x,y] expect [111,21];
+
+###
+### calling dynamic constructs inside lexical constructs
+###
+
+@println("*** DYNAMIC INSIDE LEXICAL ***");
+
+# fun/cons/module work via lexical binding: they capture the environment they need at the 
+# point of definition in a closure. after that, they are self-contained objects.
+
+# dyn/dynmut don't capture anything and rely on the environment at the call site.
+# @eval also relies on the environment at the call site.
+
+# if you call @eval or one of the dyns inside a closure (fun, etc...),
+# they will fail if they rely on bindings that are not already captured.
+# the bindings they require cannot be determined statically when parsing
+# the functions.
+
+let fdyn = dyn {
+    g1
+};
+let fdynmut = dynmut {
+    g2
+};
+let [g1,g2,g3,g4] = [1,2,3,4];
+let m = module {
+    use g1 g2 g3;
+    # if we omit the use statement, we get binding not found errors for the 3 calls.
+    let v1 = fdyn();
+    let v2 = fdynmut();
+    let v3 = @eval("g3");
+    # not necessary to use g4 as it is captured by the closure automatically.
+    let v4 = g4;
+};
+test [m.v1,m.v2,m.v3,m.v4] expect [1,2,3,4];
+
+# normally, you don't need to manually declare captured variables in a function or module block.
+# when dealing with the 3 types of dynamic calls, they must be declared.
 
 ###
 ### END (this program returns true if no tests failed)

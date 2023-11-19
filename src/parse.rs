@@ -126,9 +126,12 @@ impl Interpreter {
                         }
                         // if it's a module, we call the function to instantiate
                         Expr::FunctionCall(Expr::Fun(vec![],body).into(),vec![]).into()
+                    } else if fun_type == "dynmut" {
+                        // a context-mutating dynamic function
+                        Expr::Dyn(true, args,body).into()
                     } else if fun_type == "dyn" {
-                        // a dynamic function
-                        Expr::Dyn(args,body).into()
+                        // a normal dynamic function
+                        Expr::Dyn(false, args,body).into()
                     } else {
                         // a normal function (lambda)
                         Expr::Fun(args,body).into()

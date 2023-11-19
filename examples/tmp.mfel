@@ -1,3 +1,4 @@
+
 let printf = fun fmt vals {
     let delim = "@";
     let parts = @split(fmt,delim);
@@ -54,4 +55,39 @@ from @std.utils use flip;
 #map(@exp,range(1,10))
 #map(log,range(1,10))
 #map(pow(2),range(1,10))
-map(flip(pow,2),range(1,10))
+#map(flip(pow,2),range(1,10))
+
+let z = 100;
+let df = dyn x y {
+    x * y + z
+};
+let f = fun x y {
+    use z;
+    df(x,y)
+};
+f(1,2);
+
+
+let z = 100;
+@println(z);
+
+let d1 = dyn {
+    let z = z + 200;
+    z
+};
+@println(d1);
+
+
+let d2 = dynmut {
+    let z = z + 300;
+    z
+};
+@println(d2);
+
+@println(d1());
+@println(z);
+
+@println(d2());
+@println(z);
+
+

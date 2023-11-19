@@ -87,7 +87,7 @@ pub enum Expr {
     Block{r#type: BlockType, body: Vec<Ptr<Expr>>},
     Loop(Ptr<Expr>),
     Fun(Vec<String>,Ptr<Expr>),
-    Dyn(Vec<String>,Ptr<Expr>),
+    Dyn(bool,Vec<String>,Ptr<Expr>),
     Closed(Vec<String>,Ptr<Expr>),
     Use(Option<Ptr<Expr>>,Vec<String>),
     Closure(Context,Vec<String>,Ptr<Expr>),

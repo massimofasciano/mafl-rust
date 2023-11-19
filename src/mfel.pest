@@ -20,6 +20,7 @@ reserved = _{
     "let" | "rec" | "ref" | 
     "in" | "use" | "from" | 
     "fun" | "module" | "cons" | "closed" |
+    "dyn" ~ !"mut" | "dynmut" |
     "try" | "catch" | "test" | "expect" |
     "true" | "false" | "nil" |
     "and" | "or" | "not" |
@@ -68,7 +69,7 @@ array = { "[" ~ (expr ~ ("," ~ expr)*)? ~ "]"}
 
 function_args = { (identifier ~ ("," ~ identifier)*)? }
 
-fun_type = { "fun" | "\\" | "cons" | "module" | "dyn" }
+fun_type = { "fun" | "\\" | "cons" | "module" | "dynmut" | "dyn" }
 fun = {
     (#fun_type = fun_type) ~ "("? ~ (#arg = identifier ~ ","?)* ~ ")"? ~ (#body = function_block) 
 }

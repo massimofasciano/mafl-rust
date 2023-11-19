@@ -8,7 +8,7 @@ impl Interpreter {
 
     pub fn eval(&self, ctx: &Context, ast: &Ptr<Expr>) -> Result<Ptr<Expr>> {
         Ok(match ast.as_ref() {
-            Expr::Dyn(_,_) |
+            Expr::Dyn(_,_,_) |
             Expr::Nil |
             Expr::Integer(_) |
             Expr::Float(_) |
@@ -419,9 +419,13 @@ impl Interpreter {
                             self.eval(&function_ctx,body)?
                         }
                     },
-                    Expr::Dyn(arg_names, body) => {
+                    Expr::Dyn(mutates_ctx, arg_names, body) => {
                         // dynamic binding (using global context)
-                        let function_ctx = ctx.with_new_context();
+                        let function_ctx = if *mutates_ctx {
+                            ctx.to_owned()
+                        } else {
+                            ctx.with_new_context()
+                        };
                         for (name,value) in arg_names.iter().zip(arg_values) {
                             let value = self.eval(ctx,value)?;
                             // propagate exception
@@ -643,7 +647,7 @@ impl Interpreter {
                     .find(|(s,_)| { *s == name })
                     .map(|(_,f)| Ok({
                         let args = (0..(f.arity())).map(|i| format!{"{i}"}).collect();
-                        Expr::Dyn(args, Expr::BuiltinFn(f.to_owned()).into()).into()
+                        Expr::Dyn(false, args, Expr::BuiltinFn(f.to_owned()).into()).into()
                     }))
             }
         }

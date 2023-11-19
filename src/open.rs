@@ -16,7 +16,7 @@ impl Interpreter {
                 open
             }
 
-            Expr::Dyn(_,_) |
+            Expr::Dyn(_,_,_) |
             Expr::BuiltinVariable(_) |
             Expr::Continue |
             Expr::Nil |
