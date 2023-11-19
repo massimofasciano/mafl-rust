@@ -609,7 +609,7 @@ impl Interpreter {
 
     pub fn builtin_var(&self, ctx: &Context, name: &str) -> Option<Result<Ptr<Expr>>> {
         match name {
-            "env" => Some(Ok(self.env.to_owned())),
+            "args" => Some(Ok(self.args.to_owned())),
             "std" => { Some(Ok(self.std.to_owned())) }
             "self" => Some(Ok(expression::context(ctx.to_owned()))),
             "version" => option_env!("CARGO_PKG_VERSION").map(|s| { Ok(expression::string(s.to_owned())) }),

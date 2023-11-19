@@ -31,7 +31,7 @@ pub type PtrCell<T> = GcCell<T>;
 
 #[derive(Debug,Clone)]
 pub struct Interpreter {
-    env: Ptr<Expr>,
+    args: Ptr<Expr>,
     std: Ptr<Expr>,
     ctx: Context,
     test_pass_count: RefCell<usize>,
@@ -57,7 +57,7 @@ impl Interpreter {
         Ok(interpreter)
     }
     pub fn set_env(&mut self, env: Vec<String>) {
-        self.env = expression::array(env.into_iter().map(expression::string).collect());
+        self.args = expression::array(env.into_iter().map(expression::string).collect());
     }
     pub fn init_std(&mut self) -> Result<()> {
         let ctx = Context::new();
@@ -92,7 +92,7 @@ impl Interpreter {
 impl Default for Interpreter {
     fn default() -> Self {
         Self {  
-            env: expression::array(vec![]),
+            args: expression::array(vec![]),
             std: expression::nil(),
             ctx: Context::new(),
             test_pass_count: RefCell::new(0),
