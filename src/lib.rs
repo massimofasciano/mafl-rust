@@ -4,7 +4,10 @@ use expression::{Value, Expr};
 use pest::Parser;
 use crate::expression::{MfelParser, Rule};
 use anyhow::{anyhow, Result};
+#[cfg(feature = "gc")]
 use gc::{Gc, GcCell};
+#[cfg(not(feature = "gc"))]
+use std::rc::Rc;
 
 pub mod eval;
 pub mod expression;
@@ -13,11 +16,17 @@ pub mod builtin;
 pub mod parse;
 pub mod open;
 
-// pub type CellRefMut<'a,T> = std::cell::RefMut<'a,T>;
-// pub type R<Expr> = Rc<Expr>;
-// pub type RefC<Expr> = RefCell<Expr>;
+#[cfg(not(feature = "gc"))]
+pub type CellRefMut<'a,T> = std::cell::RefMut<'a,T>;
+#[cfg(not(feature = "gc"))]
+pub type R<Expr> = Rc<Expr>;
+#[cfg(not(feature = "gc"))]
+pub type RefC<Expr> = RefCell<Expr>;
+#[cfg(feature = "gc")]
 pub type CellRefMut<'a,T> = gc::GcCellRefMut<'a,T>;
+#[cfg(feature = "gc")]
 pub type R<Expr> = Gc<Expr>;
+#[cfg(feature = "gc")]
 pub type RefC<Expr> = GcCell<Expr>;
 
 pub type Ident = String;

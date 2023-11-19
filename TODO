@@ -1,3 +1,5 @@
+- gc as a cargo feature
+
 - printf ? as a pure @std.io function? or as a builtin ?
 
 - fix builtin arity and make call table

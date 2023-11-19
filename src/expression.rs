@@ -2,6 +2,8 @@ use std::{ops::Deref, collections::{HashSet, HashMap}};
 use anyhow::{anyhow, Result};
 use pest_derive::Parser;
 use crate::{context::{Context, MemCell, ScopeID}, RefC, R, Ident};
+
+#[cfg(feature = "gc")]
 use gc::{Finalize, Trace};
 
 #[derive(Parser)]
@@ -9,7 +11,7 @@ use gc::{Finalize, Trace};
 pub struct MfelParser;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[derive(Trace, Finalize)]
+#[cfg_attr(feature = "gc", derive(Trace, Finalize))]
 pub enum Operator {
     Add, Mul, Sub, Div, IntDiv, Exp, Mod,
     Not, And, Or, Pipe,
@@ -19,7 +21,7 @@ pub enum Operator {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[derive(Trace, Finalize)]
+#[cfg_attr(feature = "gc", derive(Trace, Finalize))]
 pub enum BlockType {
     Sequence,
     Block,
@@ -28,7 +30,7 @@ pub enum BlockType {
 }
 
 #[derive(Debug,Clone)]
-#[derive(Trace, Finalize)]
+#[cfg_attr(feature = "gc", derive(Trace, Finalize))]
 pub enum Expr {
     Integer(i64),
     Float(f64),

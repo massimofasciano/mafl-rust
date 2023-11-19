@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use log::debug;
 use crate::{R, RefC, Ident, expression::Expr, CellRefMut};
 use std::sync::atomic::{AtomicUsize, Ordering};
+
+#[cfg(feature = "gc")]
 use gc::{Finalize, Trace};
 
 pub type ScopeID = usize;
@@ -18,7 +20,8 @@ fn next_mem_id() -> MemID {
     MEM_ID_SEQ.load(Ordering::SeqCst)
 }
 
-#[derive(Debug, Trace)]
+#[derive(Debug)]
+#[cfg_attr(feature = "gc", derive(Trace))]
 pub struct MemCell {
     inner: RefC<R<Expr>>,
     id : MemID,
@@ -62,11 +65,13 @@ impl Clone for MemCell {
     }
 }
 
-// impl Drop for MemCell {
-//     fn drop(&mut self) {
-//         debug!("dropping cell id={}", self.id);
-//     }
-// }
+#[cfg(not(feature = "gc"))]
+impl Drop for MemCell {
+    fn drop(&mut self) {
+        debug!("dropping cell id={}", self.id);
+    }
+}
+#[cfg(feature = "gc")]
 impl Finalize for MemCell {
     fn finalize(&self) {
         debug!("dropping cell id={}", self.id);
@@ -74,14 +79,16 @@ impl Finalize for MemCell {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Clone, Trace, Finalize)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "gc", derive(Trace, Finalize))]
 pub struct Context {
     inner: R<Scope>,
 }
 
 pub type Bindings = HashMap<Ident,R<MemCell>>;
 
-#[derive(Debug, Clone, Trace)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "gc", derive(Trace))]
 struct Scope {
     bindings: RefC<Bindings>,
     parent: RefC<Option<Context>>,
@@ -256,11 +263,13 @@ impl Default for Scope {
     }
 }
 
-// impl Drop for Scope {
-//     fn drop(&mut self) {
-//         debug!("dropping scope id={}", self.id);
-//     }
-// }
+#[cfg(not(feature = "gc"))]
+impl Drop for Scope {
+    fn drop(&mut self) {
+        debug!("dropping scope id={}", self.id);
+    }
+}
+#[cfg(feature = "gc")]
 impl Finalize for Scope {
     fn finalize(&self) {
         debug!("dropping scope id={}", self.id);
