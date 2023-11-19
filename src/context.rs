@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use log::debug;
-use crate::{R, RefC, expression::Expr, CellRefMut};
+use crate::{Ptr, PtrCell, expression::Expr, CellRefMut};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 #[cfg(feature = "gc")]
@@ -23,29 +23,29 @@ fn next_mem_id() -> MemID {
 #[derive(Debug)]
 #[cfg_attr(feature = "gc", derive(Trace))]
 pub struct MemCell {
-    inner: RefC<R<Expr>>,
+    inner: PtrCell<Ptr<Expr>>,
     id : MemID,
 }
 
 impl MemCell {
-    pub fn new(e : R<Expr>) -> Self {
+    pub fn new(e : Ptr<Expr>) -> Self {
         let new = Self {
-            inner: RefC::new(e),
+            inner: PtrCell::new(e),
             id : next_mem_id(),
         };
         debug!("new cell id={}",new.id); 
         new
     }
-    pub fn new_ref(e : R<Expr>) -> R<Self> {
-        R::new(Self::new(e))
+    pub fn new_ref(e : Ptr<Expr>) -> Ptr<Self> {
+        Ptr::new(Self::new(e))
     }
-    pub fn get(&self) -> R<Expr> {
+    pub fn get(&self) -> Ptr<Expr> {
         self.inner.borrow().to_owned()
     }
-    pub fn get_refmut(&self) -> CellRefMut<R<Expr>> {
+    pub fn get_refmut(&self) -> CellRefMut<Ptr<Expr>> {
             self.inner.borrow_mut()
     }
-    pub fn set(&self, e: R<Expr>) -> R<Expr> {
+    pub fn set(&self, e: Ptr<Expr>) -> Ptr<Expr> {
         let old = self.get();
         *self.inner.borrow_mut() = e;
         old
@@ -54,8 +54,8 @@ impl MemCell {
         debug!("duplicating cell id={}", self.id);
         Self::new(self.get())
     }
-    fn duplicate_ref(&self) -> R<Self> {
-        R::new(self.duplicate())
+    fn duplicate_ref(&self) -> Ptr<Self> {
+        Ptr::new(self.duplicate())
     }
 }
 
@@ -82,22 +82,22 @@ impl Finalize for MemCell {
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "gc", derive(Trace, Finalize))]
 pub struct Context {
-    inner: R<Scope>,
+    inner: Ptr<Scope>,
 }
 
-pub type Bindings = HashMap<String,R<MemCell>>;
+pub type Bindings = HashMap<String,Ptr<MemCell>>;
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "gc", derive(Trace))]
 struct Scope {
-    bindings: RefC<Bindings>,
-    parent: RefC<Option<Context>>,
+    bindings: PtrCell<Bindings>,
+    parent: PtrCell<Option<Context>>,
     id: ScopeID,
 }
 
 impl Context {
     pub fn new() -> Self {
-        Self{inner:R::new(Scope::new())}
+        Self{inner:Ptr::new(Scope::new())}
     }
     pub fn with_new_context(&self) -> Self {
         let scope = Scope::new();
@@ -137,19 +137,19 @@ impl Context {
             None
         }
     }
-    pub fn remove_binding(&self, var: &str) -> Option<R<Expr>> {
+    pub fn remove_binding(&self, var: &str) -> Option<Ptr<Expr>> {
         let scope = &self.inner;
         scope.bindings.borrow_mut().remove(var).map(|old| old.get())
     }
-    pub fn add_binding(&self, var: String, value: R<Expr>) -> Option<R<Expr>> {
+    pub fn add_binding(&self, var: String, value: Ptr<Expr>) -> Option<Ptr<Expr>> {
         let scope = &self.inner;
         scope.bindings.borrow_mut().insert(var, MemCell::new_ref(value)).map(|old| old.get())
     }
-    pub fn add_binding_ref(&self, var: String, value: R<MemCell>) -> Option<R<MemCell>> {
+    pub fn add_binding_ref(&self, var: String, value: Ptr<MemCell>) -> Option<Ptr<MemCell>> {
         let scope = &self.inner;
         scope.bindings.borrow_mut().insert(var, value)
     }
-    pub fn get_binding(&self, var: &str) -> Option<R<Expr>> {
+    pub fn get_binding(&self, var: &str) -> Option<Ptr<Expr>> {
         let scope = &self.inner;
         if let Some(rc) = scope.bindings.borrow().get(var) {
             Some(rc.get())
@@ -159,7 +159,7 @@ impl Context {
             None
         }
     }
-    pub fn get_binding_ref(&self, var: &str) -> Option<R<MemCell>> {
+    pub fn get_binding_ref(&self, var: &str) -> Option<Ptr<MemCell>> {
         let scope = &self.inner;
         if let Some(rc) = scope.bindings.borrow().get(var) {
             Some(rc.to_owned())
@@ -169,7 +169,7 @@ impl Context {
             None
         }
     }
-    pub fn set_binding(&self, var: String, value: R<Expr>) -> Option<R<Expr>> {
+    pub fn set_binding(&self, var: String, value: Ptr<Expr>) -> Option<Ptr<Expr>> {
         let scope = &self.inner;
         if let Some(rc) = scope.bindings.borrow().get(&var) {
             Some(rc.set(value))
@@ -179,7 +179,7 @@ impl Context {
             None
         }
     }
-    pub fn set_binding_ref(&self, var: String, value: R<MemCell>) -> Option<R<MemCell>> {
+    pub fn set_binding_ref(&self, var: String, value: Ptr<MemCell>) -> Option<Ptr<MemCell>> {
         let scope = &self.inner;
         if scope.bindings.borrow().contains_key(&var) {
             scope.bindings.borrow_mut().insert(var, value)
@@ -234,12 +234,12 @@ impl Default for Context {
 
 impl From<Scope> for Context {
     fn from(scope: Scope) -> Self {
-        Self{ inner: R::new(scope) }
+        Self{ inner: Ptr::new(scope) }
     }
 }
 
-impl From<R<Scope>> for Context {
-    fn from(rc_scope: R<Scope>) -> Self {
+impl From<Ptr<Scope>> for Context {
+    fn from(rc_scope: Ptr<Scope>) -> Self {
         Self{ inner: rc_scope }
     }
 }
@@ -256,8 +256,8 @@ impl Default for Scope {
     fn default() -> Self {
         let id = next_scope_id();
         Self {
-            bindings: RefC::new(HashMap::new()),
-            parent: RefC::new(None),
+            bindings: PtrCell::new(HashMap::new()),
+            parent: PtrCell::new(None),
             id,
         }
     }

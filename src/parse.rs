@@ -1,6 +1,6 @@
 use pest::iterators::Pair;
 use anyhow::{anyhow, Result};
-use crate::{R, RefC, expression::{Rule, Expr, self, Operator, BlockType}, unescape_string, Interpreter};
+use crate::{Ptr, PtrCell, expression::{Rule, Expr, self, Operator, BlockType}, unescape_string, Interpreter};
 
 impl Interpreter {
 
@@ -11,14 +11,14 @@ impl Interpreter {
         })
     }
 
-    fn parse_block(&self, parsed: Pair<Rule>) -> Result<R<Expr>> {
+    fn parse_block(&self, parsed: Pair<Rule>) -> Result<Ptr<Expr>> {
         let rule = parsed.as_rule().to_owned();
         let sequence = parsed.into_inner()
             .filter_map(|e| {
                 if e.as_rule() == Rule::EOI { None } 
                 else { Some(self.parse_rule(e)) }
             })
-            .collect::<Result<Vec<R<Expr>>>>()?;
+            .collect::<Result<Vec<Ptr<Expr>>>>()?;
         Ok(match sequence.len() {
             0 => Expr::Nil.into(),
             _ => match rule { 
@@ -32,7 +32,7 @@ impl Interpreter {
         })
     }
 
-    fn parse_vec(&self, rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<R<Expr>> {
+    fn parse_vec(&self, rule: Rule, string: String, inner: Vec<Pair<Rule>>) -> Result<Ptr<Expr>> {
         Ok(match rule {
                 Rule::expr_infix_id | Rule::expr_infix_pipe | Rule::expr_or | Rule::expr_and | Rule::expr_eq | 
                 Rule::expr_rel | Rule::expr_add | Rule::expr_mul | Rule::expr_exp => {
@@ -40,7 +40,7 @@ impl Interpreter {
                     assert!(inner.len() > 2);
                     assert!(inner.len() % 2 == 1);
                     let left = self.parse_rule(inner[0].clone())?;
-                    inner[1..].chunks_exact(2).try_fold(left, |ast, pair| -> Result<R<Expr>> {
+                    inner[1..].chunks_exact(2).try_fold(left, |ast, pair| -> Result<Ptr<Expr>> {
                         let op = self.parse_rule(pair[0].clone())?;
                         let right = self.parse_rule(pair[1].clone())?;
                         if let Expr::ParsedOperator(op) = op.as_ref() {
@@ -54,7 +54,7 @@ impl Interpreter {
                     if inner.len() == 1 { return self.parse_rule(inner[0].clone()) }
                     assert!(!inner.is_empty());
                     let expr = self.parse_rule(inner[0].clone())?;
-                    inner[1..].iter().try_fold(expr, |ast, pair| -> Result<R<Expr>> {
+                    inner[1..].iter().try_fold(expr, |ast, pair| -> Result<Ptr<Expr>> {
                         let op = self.parse_rule(pair.clone())?;
                         if let Expr::ParsedOperator(op) = op.as_ref() {
                             Ok(Expr::UnaryOpCall(op.to_owned(), ast).into())
@@ -69,7 +69,7 @@ impl Interpreter {
                     let mut rinner = inner;
                     rinner.reverse();
                     let expr = self.parse_rule(rinner[0].clone())?;
-                    rinner[1..].iter().try_fold(expr, |ast, pair| -> Result<R<Expr>> {
+                    rinner[1..].iter().try_fold(expr, |ast, pair| -> Result<Ptr<Expr>> {
                         let op = self.parse_rule(pair.clone())?;
                         if let Expr::ParsedOperator(op) = op.as_ref() {
                             Ok(Expr::UnaryOpCall(op.to_owned(), ast).into())
@@ -82,7 +82,7 @@ impl Interpreter {
                     if inner.len() == 1 { return self.parse_rule(inner[0].clone()) }
                     assert!(inner.len() > 1);
                     let target = self.parse_rule(inner[0].clone())?;
-                    inner[1..].iter().try_fold(target, |ast, pair| -> Result<R<Expr>> {
+                    inner[1..].iter().try_fold(target, |ast, pair| -> Result<Ptr<Expr>> {
                         match pair.as_rule() {
                             Rule::apply_args => {
                                 let args = pair.clone().into_inner()
@@ -143,7 +143,7 @@ impl Interpreter {
                     Expr::Closed(vars,body).into()
                 }
                 Rule::array => {
-                    Expr::Array(RefC::new(
+                    Expr::Array(PtrCell::new(
                         inner.iter().map(|e| self.parse_rule(e.to_owned())).collect::<Result<Vec<_>>>()?
                     )).into()
                 } 
@@ -377,7 +377,7 @@ impl Interpreter {
             })
     }
 
-    pub fn parse_rule(&self, parsed: Pair<Rule>) -> Result<R<Expr>> {
+    pub fn parse_rule(&self, parsed: Pair<Rule>) -> Result<Ptr<Expr>> {
         Ok(match parsed.as_rule() {
             Rule::integer => { Expr::Integer(parsed.as_str().parse()?).into() },
             Rule::float => { Expr::Float(parsed.as_str().parse()?).into() },

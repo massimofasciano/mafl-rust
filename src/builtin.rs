@@ -7,11 +7,11 @@ use log::debug;
 use regex::Regex;
 use rand::Rng;
 
-use crate::{RefC, R, __STR__, PragmaLevel, expression};
+use crate::{PtrCell, Ptr, __STR__, PragmaLevel, expression};
 use crate::context::{MemCell, Bindings};
 use crate::{expression::{nil, closure, Expr}, context::Context, Interpreter};
 
-pub fn pow(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
+pub fn pow(_: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
         (Expr::Float(a), Expr::Float(b)) => Expr::Float(a.powf(*b)),
         (Expr::Float(a), Expr::Integer(b)) => Expr::Float(a.powf(*b as f64)),
@@ -21,7 +21,7 @@ pub fn pow(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
     }.into())
 }
 
-pub fn exp(_: &Context, val: &R<Expr>) -> Result<R<Expr>> {
+pub fn exp(_: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match val.as_ref() {
         Expr::Float(a) => Expr::Float(a.exp()),
         Expr::Integer(a) => Expr::Float((*a as f64).exp()),
@@ -29,7 +29,7 @@ pub fn exp(_: &Context, val: &R<Expr>) -> Result<R<Expr>> {
     }.into())
 }
 
-pub fn log(_: &Context, val: &R<Expr>) -> Result<R<Expr>> {
+pub fn log(_: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match val.as_ref() {
         Expr::Float(a) => Expr::Float(a.ln()),
         Expr::Integer(a) => Expr::Float((*a as f64).ln()),
@@ -37,7 +37,7 @@ pub fn log(_: &Context, val: &R<Expr>) -> Result<R<Expr>> {
     }.into())
 }
 
-pub fn add(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
+pub fn add(_: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
         (Expr::Float(a), Expr::Float(b)) => Expr::Float(a+b),
         (Expr::Float(a), Expr::Integer(b)) => Expr::Float(a + (*b as f64)),
@@ -49,14 +49,14 @@ pub fn add(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
         (Expr::String(a), Expr::Float(b)) => Expr::String(format!("{a}{b}")),
         (Expr::Float(a), Expr::String(b)) => Expr::String(format!("{a}{b}")),
         (Expr::Array(a), Expr::Array(b)) => 
-                Expr::Array(RefC::new(
+                Expr::Array(PtrCell::new(
                     [a.borrow().to_owned(), b.borrow().to_owned()].concat()
                 )),
         _ => Err(anyhow!("add {lhs:?} {rhs:?}"))?,
         }.into())
 }
 
-pub fn sub(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
+pub fn sub(_: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
         (Expr::Float(a), Expr::Float(b)) => Expr::Float(a-b),
         (Expr::Float(a), Expr::Integer(b)) => Expr::Float(a - (*b as f64)),
@@ -66,7 +66,7 @@ pub fn sub(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
     }.into())
 }
 
-pub fn mul(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
+pub fn mul(_: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
         (Expr::Float(a), Expr::Float(b)) => Expr::Float(a*b),
         (Expr::Float(a), Expr::Integer(b)) => Expr::Float(a * (*b as f64)),
@@ -78,7 +78,7 @@ pub fn mul(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
     }.into())
 }
 
-pub fn div(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
+pub fn div(_: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     let error_div0 = Err(anyhow!("division by zero"));
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
         (_, Expr::Float(b)) if b == &0.0 => error_div0?,
@@ -91,7 +91,7 @@ pub fn div(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
     })
 }
 
-pub fn intdiv(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
+pub fn intdiv(_: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     let error_div0 = Err(anyhow!("division by zero"));
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
         (_, Expr::Integer(0)) => error_div0?,
@@ -100,28 +100,28 @@ pub fn intdiv(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
     })
 }
 
-pub fn modulo(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
+pub fn modulo(_: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
         (Expr::Integer(a), Expr::Integer(b)) => Expr::Integer(a % b),
         _ => Err(anyhow!("mod {lhs:?} {rhs:?}"))?,
     }.into())
 }
 
-pub fn and(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
+pub fn and(_: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
         (Expr::Boolean(a), Expr::Boolean(b)) => Expr::Boolean(*a && *b),
         _ => Err(anyhow!("and {lhs:?} {rhs:?}"))?,
     }.into())
 }
 
-pub fn or(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
+pub fn or(_: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
         (Expr::Boolean(a), Expr::Boolean(b)) => Expr::Boolean(*a || *b),
         _ => Err(anyhow!("or {lhs:?} {rhs:?}"))?,
     }.into())
 }
 
-pub fn and_lazy(interpreter: &Interpreter, ctx: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
+pub fn and_lazy(interpreter: &Interpreter, ctx: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     let lhs = interpreter.eval(ctx,lhs)?;
     match lhs.as_ref() {
         // propagate exception
@@ -143,7 +143,7 @@ pub fn and_lazy(interpreter: &Interpreter, ctx: &Context, lhs: &R<Expr>, rhs: &R
     Ok(Expr::Boolean(true).into())
 }
 
-pub fn or_lazy(interpreter: &Interpreter, ctx: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
+pub fn or_lazy(interpreter: &Interpreter, ctx: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     let lhs = interpreter.eval(ctx,lhs)?;
     match lhs.as_ref() {
         // propagate exception
@@ -165,7 +165,7 @@ pub fn or_lazy(interpreter: &Interpreter, ctx: &Context, lhs: &R<Expr>, rhs: &R<
     Ok(Expr::Boolean(false).into())
 }
 
-pub fn gt(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
+pub fn gt(_: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
         (Expr::Float(a), Expr::Float(b)) => Expr::Boolean(a>b),
         (Expr::Integer(a), Expr::Integer(b)) => Expr::Boolean(a>b),
@@ -178,7 +178,7 @@ pub fn gt(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
     }.into())
 }
 
-pub fn lt(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
+pub fn lt(_: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
         (Expr::Float(a), Expr::Float(b)) => Expr::Boolean(a<b),
         (Expr::Integer(a), Expr::Integer(b)) => Expr::Boolean(a<b),
@@ -191,27 +191,27 @@ pub fn lt(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
     }.into())
 }
 
-pub fn eq(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
+pub fn eq(_: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(Expr::Boolean(lhs == rhs).into())
 }
 
-pub fn ne(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
+pub fn ne(_: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(Expr::Boolean(lhs != rhs).into())
 }
 
-pub fn ge(ctx: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
+pub fn ge(ctx: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     let eq = eq(ctx,lhs,rhs)?;
     let gt = gt(ctx,lhs,rhs)?;
     or(ctx,&eq,&gt)
 }
 
-pub fn le(ctx: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
+pub fn le(ctx: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     let eq = eq(ctx,lhs,rhs)?;
     let lt = lt(ctx,lhs,rhs)?;
     or(ctx,&eq,&lt)
 }
 
-pub fn neg(_: &Context, val: &R<Expr>) -> Result<R<Expr>> {
+pub fn neg(_: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match val.as_ref() {
         Expr::Float(a) => Expr::Float(-a),
         Expr::Integer(a) => Expr::Integer(-a),
@@ -220,7 +220,7 @@ pub fn neg(_: &Context, val: &R<Expr>) -> Result<R<Expr>> {
     }.into())
 }
 
-pub fn not(_: &Context, val: &R<Expr>) -> Result<R<Expr>> {
+pub fn not(_: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match val.as_ref() {
         Expr::Boolean(b) => Expr::Boolean(! *b),
         _ => Err(anyhow!("not {val:?}"))?,
@@ -228,7 +228,7 @@ pub fn not(_: &Context, val: &R<Expr>) -> Result<R<Expr>> {
 }
 
 #[allow(clippy::only_used_in_recursion)]
-pub fn print(interpreter: &Interpreter, ctx: &Context, args: &[R<Expr>]) -> Result<R<Expr>> {
+pub fn print(interpreter: &Interpreter, ctx: &Context, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
     for arg in args { 
         match arg.as_ref() {
             Expr::Closure(cctx, _, _) if cctx.get_binding(__STR__).is_some() => {
@@ -246,7 +246,7 @@ pub fn print(interpreter: &Interpreter, ctx: &Context, args: &[R<Expr>]) -> Resu
     Ok(nil())
 }
 
-pub fn command(_: &Interpreter, _: &Context, cmd: &R<Expr>, args: &[R<Expr>]) -> Result<R<Expr>> {
+pub fn command(_: &Interpreter, _: &Context, cmd: &Ptr<Expr>, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
     if let Expr::String(cmd) = cmd.as_ref() {
         let mut cmd = Command::new(cmd);
         for arg in args { 
@@ -258,27 +258,27 @@ pub fn command(_: &Interpreter, _: &Context, cmd: &R<Expr>, args: &[R<Expr>]) ->
     }
 }
 
-pub fn println(interpreter: &Interpreter, ctx: &Context, args: &[R<Expr>]) -> Result<R<Expr>> {
+pub fn println(interpreter: &Interpreter, ctx: &Context, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
     print(interpreter, ctx, args)?;
     println!();
     stdout().flush()?;
     Ok(nil())
 }
 
-pub fn debug(_: &Context, args: &[R<Expr>]) -> Result<R<Expr>> {
+pub fn debug(_: &Context, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
     for arg in args { print!("{arg:?}"); }
     stdout().flush()?;
     Ok(nil())
 }
 
-pub fn debugln(_: &Context, args: &[R<Expr>]) -> Result<R<Expr>> {
+pub fn debugln(_: &Context, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
     for arg in args { print!("{arg:#?}"); }
     println!();
     stdout().flush()?;
     Ok(nil())
 }
 
-pub fn eval_string_as_source(interpreter: &Interpreter, ctx: &Context, arg: &R<Expr>) -> Result<R<Expr>> {
+pub fn eval_string_as_source(interpreter: &Interpreter, ctx: &Context, arg: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     match arg.as_ref() {
         Expr::String(s) => {
             debug!("evaluating string: {s}");
@@ -288,8 +288,8 @@ pub fn eval_string_as_source(interpreter: &Interpreter, ctx: &Context, arg: &R<E
     }
 }
 
-pub fn make_array(interpreter: &Interpreter, ctx: &Context, size: &R<Expr>, init: &R<Expr>) -> Result<R<Expr>> {
-    let mut arr : Vec<R<Expr>> = vec![];
+pub fn make_array(interpreter: &Interpreter, ctx: &Context, size: &Ptr<Expr>, init: &Ptr<Expr>) -> Result<Ptr<Expr>> {
+    let mut arr : Vec<Ptr<Expr>> = vec![];
     if let Expr::Integer(size) = size.as_ref() {
         let size = *size;
         let init = &interpreter.eval(ctx,init)?;
@@ -308,7 +308,7 @@ pub fn make_array(interpreter: &Interpreter, ctx: &Context, size: &R<Expr>, init
     }
 }
 
-pub fn to_array(_interpreter: &Interpreter, ctx: &Context, init: &R<Expr>) -> Result<R<Expr>> {
+pub fn to_array(_interpreter: &Interpreter, ctx: &Context, init: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     let mut arr = vec![];
     match init.as_ref() {
         Expr::String(s) => {
@@ -331,7 +331,7 @@ pub fn to_array(_interpreter: &Interpreter, ctx: &Context, init: &R<Expr>) -> Re
     }
 }
 
-pub fn slice(_ctx: &Context, container: &R<Expr>, start: &R<Expr>, end: &R<Expr>) -> Result<R<Expr>> {
+pub fn slice(_ctx: &Context, container: &Ptr<Expr>, start: &Ptr<Expr>, end: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match (container.as_ref(),start.as_ref(),end.as_ref()) {
         (Expr::Array(a0),
             Expr::Integer(start), 
@@ -350,8 +350,8 @@ pub fn slice(_ctx: &Context, container: &R<Expr>, start: &R<Expr>, end: &R<Expr>
     })
 }
 
-pub fn to_array_lines(_ctx: &Context, init: &R<Expr>) -> Result<R<Expr>> {
-    let mut arr : Vec<R<Expr>> = vec![];
+pub fn to_array_lines(_ctx: &Context, init: &Ptr<Expr>) -> Result<Ptr<Expr>> {
+    let mut arr : Vec<Ptr<Expr>> = vec![];
     if let Expr::String(s) = init.as_ref() {
         for line in s.lines() {
             arr.push(Expr::String(line.to_owned()).into());
@@ -362,7 +362,7 @@ pub fn to_array_lines(_ctx: &Context, init: &R<Expr>) -> Result<R<Expr>> {
     }
 }
 
-pub fn len(_: &Context, val: &R<Expr>) -> Result<R<Expr>> {
+pub fn len(_: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match val.as_ref() {
         Expr::Array(a) => Expr::Integer(a.borrow().len() as i64),
         Expr::String(a) => Expr::Integer(a.len() as i64),
@@ -370,7 +370,7 @@ pub fn len(_: &Context, val: &R<Expr>) -> Result<R<Expr>> {
     }.into())
 }
 
-pub fn append(interpreter: &Interpreter, ctx: &Context, target: &R<Expr>, new: &R<Expr>) -> Result<R<Expr>> {
+pub fn append(interpreter: &Interpreter, ctx: &Context, target: &Ptr<Expr>, new: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match target.as_ref() {
         Expr::Array(a) => {
             let new = interpreter.eval(ctx,new)?;
@@ -381,7 +381,7 @@ pub fn append(interpreter: &Interpreter, ctx: &Context, target: &R<Expr>, new: &
     })
 }
 
-pub fn include(interpreter: &Interpreter, ctx: &Context, file_expr: &R<Expr>) -> Result<R<Expr>> {
+pub fn include(interpreter: &Interpreter, ctx: &Context, file_expr: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     debug!("include {file_expr:?}");
     Ok(match file_expr.as_ref() {
         Expr::String(file) => {
@@ -392,13 +392,13 @@ pub fn include(interpreter: &Interpreter, ctx: &Context, file_expr: &R<Expr>) ->
     })
 }
 
-pub fn include_str(interpreter: &Interpreter, ctx: &Context, s: &str) -> Result<R<Expr>> {
+pub fn include_str(interpreter: &Interpreter, ctx: &Context, s: &str) -> Result<Ptr<Expr>> {
     debug!("include_str");
     let ast = interpreter.parse_source(s)?;
     interpreter.eval(ctx, &ast)
 }
 
-pub fn read_file(_ctx: &Context, file_expr: &R<Expr>) -> Result<R<Expr>> {
+pub fn read_file(_ctx: &Context, file_expr: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     debug!("read_file {file_expr:?}");
     Ok(match file_expr.as_ref() {
         Expr::String(file) => {
@@ -409,21 +409,21 @@ pub fn read_file(_ctx: &Context, file_expr: &R<Expr>) -> Result<R<Expr>> {
     })
 }
 
-pub fn is_error(_: &Interpreter, _: &Context, expr: &R<Expr>) -> Result<R<Expr>> {
+pub fn is_error(_: &Interpreter, _: &Context, expr: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     if let Expr::Error(_) = expr.as_ref() {
         return Ok(expression::boolean(true));
     }
     Ok(expression::boolean(false))
 }
 
-pub fn is_ref(_: &Interpreter, _: &Context, expr: &R<Expr>) -> Result<R<Expr>> {
+pub fn is_ref(_: &Interpreter, _: &Context, expr: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     if let Expr::Ref(_) = expr.as_ref() {
         return Ok(expression::boolean(true));
     }
     Ok(expression::boolean(false))
 }
 
-pub fn type_of(_: &Context, expr: &R<Expr>) -> Result<R<Expr>> {
+pub fn type_of(_: &Context, expr: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     debug!("type of");
     Ok(Expr::String(match expr.as_ref() {
         Expr::Nil => "()",
@@ -444,7 +444,7 @@ pub fn type_of(_: &Context, expr: &R<Expr>) -> Result<R<Expr>> {
     }.to_owned()).into())
 }
 
-pub fn read_line(_ctx: &Context) -> Result<R<Expr>> {
+pub fn read_line(_ctx: &Context) -> Result<Ptr<Expr>> {
     let stdin = io::stdin();
     let next_line = stdin.lock().lines().next();
     if let Some(line_result) = next_line {
@@ -454,7 +454,7 @@ pub fn read_line(_ctx: &Context) -> Result<R<Expr>> {
     }
 }
 
-pub fn get(_interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, key: &R<Expr>) -> Result<R<Expr>> {
+pub fn get(_interpreter: &Interpreter, _ctx: &Context, container: &Ptr<Expr>, key: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match container.as_ref() {
         Expr::Array(a) => {
             match key.as_ref() {
@@ -474,7 +474,7 @@ pub fn get(_interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, key:
     })
 }
 
-pub fn set(_interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, key: &R<Expr>, value: &R<Expr>) -> Result<R<Expr>> {
+pub fn set(_interpreter: &Interpreter, _ctx: &Context, container: &Ptr<Expr>, key: &Ptr<Expr>, value: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match container.as_ref() {
         Expr::Array(a) => {
             match key.as_ref() {
@@ -500,7 +500,7 @@ pub fn set(_interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, key:
     })
 }
 
-pub fn insert(_interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, key: &R<Expr>, value: &R<Expr>) -> Result<R<Expr>> {
+pub fn insert(_interpreter: &Interpreter, _ctx: &Context, container: &Ptr<Expr>, key: &Ptr<Expr>, value: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match container.as_ref() {
         Expr::Closure(c,_,_) => {
             match key.as_ref() {
@@ -515,7 +515,7 @@ pub fn insert(_interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, k
     })
 }
 
-pub fn remove(_interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, key: &R<Expr>) -> Result<R<Expr>> {
+pub fn remove(_interpreter: &Interpreter, _ctx: &Context, container: &Ptr<Expr>, key: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match container.as_ref() {
         Expr::Closure(c,_,_) => {
             match key.as_ref() {
@@ -530,12 +530,12 @@ pub fn remove(_interpreter: &Interpreter, _ctx: &Context, container: &R<Expr>, k
     })
 }
 
-pub fn make_dict(_ctx: &Context) -> Result<R<Expr>> {
+pub fn make_dict(_ctx: &Context) -> Result<Ptr<Expr>> {
     debug!("make dict");
     Ok(expression::context(Context::new()))
 }
 
-pub fn extend_dict(_ctx: &Context, parent: &R<Expr>) -> Result<R<Expr>> {
+pub fn extend_dict(_ctx: &Context, parent: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     debug!("extend dict");
     Ok(match parent.as_ref() {
         Expr::Closure(c,a,b) => {
@@ -545,7 +545,7 @@ pub fn extend_dict(_ctx: &Context, parent: &R<Expr>) -> Result<R<Expr>> {
     })
 }
 
-pub fn flatten_dict(_ctx: &Context, dict: &R<Expr>) -> Result<R<Expr>> {
+pub fn flatten_dict(_ctx: &Context, dict: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     debug!("flatten dict");
     Ok(match dict.as_ref() {
         Expr::Closure(c,a,b) => {
@@ -555,13 +555,13 @@ pub fn flatten_dict(_ctx: &Context, dict: &R<Expr>) -> Result<R<Expr>> {
     })
 }
 
-pub fn error_from_strings(_: &Context, args: &[R<Expr>]) -> Result<R<Expr>> {
+pub fn error_from_strings(_: &Context, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
     let mut output = String::new();
     for arg in args { write!(output,"{arg}")?; }
     Err(anyhow!(output))
 }
 
-pub fn make_error(msg: &R<Expr>) -> Result<R<Expr>> {
+pub fn make_error(msg: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match msg.as_ref() {
         Expr::String(s) => Expr::Error(s.to_owned()).into(),
         _ => Err(anyhow!("make-error with non-string message"))?,
@@ -569,10 +569,10 @@ pub fn make_error(msg: &R<Expr>) -> Result<R<Expr>> {
 }
 
 #[allow(clippy::only_used_in_recursion)]
-pub fn shallow_copy(_: &Context, val: &R<Expr>) -> Result<R<Expr>> {
+pub fn shallow_copy(_: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match val.as_ref() {
         Expr::Array(a) => {
-            let ac = a.borrow().iter().cloned().collect::<Vec<R<Expr>>>();
+            let ac = a.borrow().iter().cloned().collect::<Vec<Ptr<Expr>>>();
             expression::array(ac)
         }
         Expr::Closure(cctx,args,body) => {
@@ -585,12 +585,12 @@ pub fn shallow_copy(_: &Context, val: &R<Expr>) -> Result<R<Expr>> {
 }
 
 #[allow(clippy::only_used_in_recursion)]
-pub fn deep_copy(ctx: &Context, val: &R<Expr>) -> Result<R<Expr>> {
+pub fn deep_copy(ctx: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match val.as_ref() {
         Expr::Array(a) => {
             let ac = a.borrow().iter()
                     .map(|e| { deep_copy(ctx,e) })
-                    .collect::<Result<Vec<R<Expr>>>>()?;
+                    .collect::<Result<Vec<Ptr<Expr>>>>()?;
             expression::array(ac)
         }
         Expr::Closure(cctx,args,body) => {
@@ -604,7 +604,7 @@ pub fn deep_copy(ctx: &Context, val: &R<Expr>) -> Result<R<Expr>> {
     })
 }
 
-pub fn get_ref(interpreter: &Interpreter, ctx: &Context, ref_target: &R<Expr>) -> Result<R<Expr>> {
+pub fn get_ref(interpreter: &Interpreter, ctx: &Context, ref_target: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match ref_target.as_ref() {
         Expr::Variable(s) => {
             if let Some(rc) = ctx.get_binding_ref(s) {
@@ -630,13 +630,13 @@ pub fn get_ref(interpreter: &Interpreter, ctx: &Context, ref_target: &R<Expr>) -
     })
 }
 
-pub fn now(_: &Context) -> Result<R<Expr>> {
+pub fn now(_: &Context) -> Result<Ptr<Expr>> {
     debug!("now");
     let now = SystemTime::now().duration_since(UNIX_EPOCH)?;
     Ok(expression::float(now.as_secs_f64()))
 }
 
-pub fn sleep(_: &Context, seconds: &R<Expr>) -> Result<R<Expr>> {
+pub fn sleep(_: &Context, seconds: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     debug!("sleep {seconds}");
     match seconds.as_ref() {
         Expr::Float(secs) if secs > &0.0 => std::thread::sleep(Duration::from_secs_f64(*secs)),
@@ -646,7 +646,7 @@ pub fn sleep(_: &Context, seconds: &R<Expr>) -> Result<R<Expr>> {
     Ok(seconds.to_owned())
 }
 
-pub fn call(interpreter: &Interpreter, ctx: &Context, callable: &R<Expr>, args: &R<Expr>) -> Result<R<Expr>> {
+pub fn call(interpreter: &Interpreter, ctx: &Context, callable: &Ptr<Expr>, args: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     match args.as_ref() {
         Expr::Array(args_vec) => {
             let args_copy = args_vec.clone().into_inner();
@@ -656,7 +656,7 @@ pub fn call(interpreter: &Interpreter, ctx: &Context, callable: &R<Expr>, args: 
     }
 }
 
-pub fn split(_: &Interpreter, _: &Context, string: &R<Expr>, pattern: &R<Expr>) -> Result<R<Expr>> {
+pub fn split(_: &Interpreter, _: &Context, string: &Ptr<Expr>, pattern: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match (string.as_ref(),pattern.as_ref()) {
         (Expr::String(s),Expr::String(reg)) => {
             let re = Regex::new(reg)?;
@@ -669,7 +669,7 @@ pub fn split(_: &Interpreter, _: &Context, string: &R<Expr>, pattern: &R<Expr>) 
     })
 }
 
-pub fn trim(_: &Interpreter, _: &Context, string: &R<Expr>) -> Result<R<Expr>> {
+pub fn trim(_: &Interpreter, _: &Context, string: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match string.as_ref() {
         Expr::String(s) => {
             expression::string(s.trim().to_owned())
@@ -678,7 +678,7 @@ pub fn trim(_: &Interpreter, _: &Context, string: &R<Expr>) -> Result<R<Expr>> {
     })
 }
 
-pub fn matches(_: &Interpreter, _: &Context, string: &R<Expr>, regex: &R<Expr>) -> Result<R<Expr>> {
+pub fn matches(_: &Interpreter, _: &Context, string: &Ptr<Expr>, regex: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match (string.as_ref(),regex.as_ref()) {
         (Expr::String(s),Expr::String(reg)) => {
             let re = Regex::new(reg)?;
@@ -690,7 +690,7 @@ pub fn matches(_: &Interpreter, _: &Context, string: &R<Expr>, regex: &R<Expr>) 
     })
 }
 
-pub fn sort(interpreter: &Interpreter, ctx: &Context, target: &R<Expr>, compare: Option<&R<Expr>>) -> Result<R<Expr>> {
+pub fn sort(interpreter: &Interpreter, ctx: &Context, target: &Ptr<Expr>, compare: Option<&Ptr<Expr>>) -> Result<Ptr<Expr>> {
     Ok(match target.as_ref() {
         Expr::Array(a) => {
             a.borrow_mut().sort_by(|lhs,rhs| {
@@ -712,7 +712,7 @@ pub fn sort(interpreter: &Interpreter, ctx: &Context, target: &R<Expr>, compare:
     })
 }
 
-pub fn integer(interpreter: &Interpreter, ctx: &Context, val: &R<Expr>) -> Result<R<Expr>> {
+pub fn integer(interpreter: &Interpreter, ctx: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match val.as_ref() {
         Expr::Float(a) => Expr::Integer(*a as i64).into(),
         Expr::Integer(a) => Expr::Integer(*a).into(),
@@ -730,7 +730,7 @@ pub fn integer(interpreter: &Interpreter, ctx: &Context, val: &R<Expr>) -> Resul
     })
 }
 
-pub fn float(interpreter: &Interpreter, ctx: &Context, val: &R<Expr>) -> Result<R<Expr>> {
+pub fn float(interpreter: &Interpreter, ctx: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match val.as_ref() {
         Expr::Float(a) => Expr::Float(*a).into(),
         Expr::Integer(a) => Expr::Float(*a as f64).into(),
@@ -748,7 +748,7 @@ pub fn float(interpreter: &Interpreter, ctx: &Context, val: &R<Expr>) -> Result<
     })
 }
 
-pub fn string(interpreter: &Interpreter, _: &Context, val: &R<Expr>) -> Result<R<Expr>> {
+pub fn string(interpreter: &Interpreter, _: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match val.as_ref() {
         Expr::Error(e) => expression::string(e.to_owned()),
         Expr::Array(arr) => {
@@ -775,7 +775,7 @@ pub fn string(interpreter: &Interpreter, _: &Context, val: &R<Expr>) -> Result<R
     })
 }
 
-pub fn randint(_: &Interpreter, _: &Context, min: &R<Expr>, max: &R<Expr>) -> Result<R<Expr>> {
+pub fn randint(_: &Interpreter, _: &Context, min: &Ptr<Expr>, max: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     let mut rng = rand::thread_rng();
     Ok(match (min.as_ref(),max.as_ref()) {
         (Expr::Integer(min), Expr::Integer(max)) => 
@@ -784,12 +784,12 @@ pub fn randint(_: &Interpreter, _: &Context, min: &R<Expr>, max: &R<Expr>) -> Re
     })
 }
 
-pub fn randfloat(_: &Interpreter, _: &Context) -> Result<R<Expr>> {
+pub fn randfloat(_: &Interpreter, _: &Context) -> Result<Ptr<Expr>> {
     let mut rng = rand::thread_rng();
     Ok(expression::float(rng.gen()))
 }
 
-pub fn pragma(interpreter: &Interpreter, _ctx: &Context, id: &R<Expr>, val: &R<Expr>) -> Result<R<Expr>> {
+pub fn pragma(interpreter: &Interpreter, _ctx: &Context, id: &Ptr<Expr>, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match id.as_ref() {
         Expr::String(id) => {
             match id.as_str() {

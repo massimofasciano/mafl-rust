@@ -1,12 +1,12 @@
 use std::io::{stdout, Write};
 
-use crate::{R, expression::{self, Expr, Operator, BlockType}, builtin::{self}, context::Context, Interpreter, PragmaLevel};
+use crate::{Ptr, expression::{self, Expr, Operator, BlockType}, builtin::{self}, context::Context, Interpreter, PragmaLevel};
 use anyhow::{Result,anyhow};
 use log::debug;
 
 impl Interpreter {
 
-    pub fn eval(&self, ctx: &Context, ast: &R<Expr>) -> Result<R<Expr>> {
+    pub fn eval(&self, ctx: &Context, ast: &Ptr<Expr>) -> Result<Ptr<Expr>> {
         Ok(match ast.as_ref() {
             Expr::Dyn(_,_) |
             Expr::Nil |
@@ -378,7 +378,7 @@ impl Interpreter {
                         Err(anyhow!("binding not found: {open_var}"))?;
                     };
                 }
-                let closure : R<Expr> = Expr::Closure(captured.to_owned(), arg_names.to_owned(), body.to_owned()).into();
+                let closure : Ptr<Expr> = Expr::Closure(captured.to_owned(), arg_names.to_owned(), body.to_owned()).into();
                 closure
             }
 
@@ -607,7 +607,7 @@ impl Interpreter {
         })
     }
 
-    pub fn builtin_var(&self, ctx: &Context, name: &str) -> Option<Result<R<Expr>>> {
+    pub fn builtin_var(&self, ctx: &Context, name: &str) -> Option<Result<Ptr<Expr>>> {
         match name {
             "env" => Some(Ok(self.env.to_owned())),
             "std" => { Some(Ok(self.std.to_owned())) }
@@ -620,7 +620,7 @@ impl Interpreter {
         }
     }
 
-    pub fn builtin_fn(&self, ctx: &Context, name: &str, args: &[R<Expr>]) -> Result<R<Expr>> {
+    pub fn builtin_fn(&self, ctx: &Context, name: &str, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
         match (name, args) {
             ("pragma", [id, val]) => { builtin::pragma(self, ctx, id, val) },
             ("call", [callable, args]) => { builtin::call(self, ctx, callable, args) },

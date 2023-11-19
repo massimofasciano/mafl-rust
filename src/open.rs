@@ -1,12 +1,12 @@
 use std::collections::HashSet;
 
-use crate::{R, expression::{Expr, self, BlockType}, context::Context, Interpreter};
+use crate::{Ptr, expression::{Expr, self, BlockType}, context::Context, Interpreter};
 use anyhow::{Result,anyhow};
 
 impl Interpreter {
 
     #[allow(clippy::only_used_in_recursion)]
-    pub fn open(&self, ctx: &Context, ast: &R<Expr>) -> Result<HashSet<String>> {
+    pub fn open(&self, ctx: &Context, ast: &Ptr<Expr>) -> Result<HashSet<String>> {
         Ok(match ast.as_ref() {
             Expr::Variable(s) => {
                 let mut open = HashSet::new();

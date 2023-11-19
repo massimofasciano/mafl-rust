@@ -1,7 +1,7 @@
 use std::{ops::Deref, collections::{HashSet, HashMap}};
 use anyhow::{anyhow, Result};
 use pest_derive::Parser;
-use crate::{context::{Context, MemCell, ScopeID}, RefC, R};
+use crate::{context::{Context, MemCell, ScopeID}, PtrCell, Ptr};
 
 #[cfg(feature = "gc")]
 use gc::{Finalize, Trace};
@@ -42,41 +42,41 @@ pub enum Expr {
     Variable(String),
     BuiltinVariable(String),
     BuiltinFunction(String),
-    FunctionCall(R<Expr>,Vec<R<Expr>>),
-    Field(R<Expr>,String),
-    BinOpCall(Operator,R<Expr>,R<Expr>),
-    UnaryOpCall(Operator,R<Expr>),
-    If(R<Expr>,R<Expr>,R<Expr>),
-    Iterate(String,R<Expr>,R<Expr>),
-    TryCatch(R<Expr>,String,R<Expr>),
-    Let(String,R<Expr>),
-    LetArray(Vec<String>,R<Expr>),
-    LetRef(String,R<Expr>),
+    FunctionCall(Ptr<Expr>,Vec<Ptr<Expr>>),
+    Field(Ptr<Expr>,String),
+    BinOpCall(Operator,Ptr<Expr>,Ptr<Expr>),
+    UnaryOpCall(Operator,Ptr<Expr>),
+    If(Ptr<Expr>,Ptr<Expr>,Ptr<Expr>),
+    Iterate(String,Ptr<Expr>,Ptr<Expr>),
+    TryCatch(Ptr<Expr>,String,Ptr<Expr>),
+    Let(String,Ptr<Expr>),
+    LetArray(Vec<String>,Ptr<Expr>),
+    LetRef(String,Ptr<Expr>),
     Forget(String),
-    AssignToExpression(R<Expr>,R<Expr>),
-    AssignToDeRefExpression(R<Expr>,R<Expr>),
-    OpAssignToExpression(Operator,R<Expr>,R<Expr>),
-    ArrayAccess(R<Expr>,R<Expr>),
-    Block{r#type: BlockType, body: Vec<R<Expr>>},
-    Loop(R<Expr>),
-    Fun(Vec<String>,R<Expr>),
-    Dyn(Vec<String>,R<Expr>),
-    Closed(Vec<String>,R<Expr>),
-    Use(Option<R<Expr>>,Vec<String>),
-    Closure(Context,Vec<String>,R<Expr>),
-    Array(RefC<Vec<R<Expr>>>),
-    Return(R<Expr>),
-    Break(R<Expr>),
-    Exit(R<Expr>),
-    Throw(R<Expr>),
-    Test(String,R<Expr>,R<Expr>),
+    AssignToExpression(Ptr<Expr>,Ptr<Expr>),
+    AssignToDeRefExpression(Ptr<Expr>,Ptr<Expr>),
+    OpAssignToExpression(Operator,Ptr<Expr>,Ptr<Expr>),
+    ArrayAccess(Ptr<Expr>,Ptr<Expr>),
+    Block{r#type: BlockType, body: Vec<Ptr<Expr>>},
+    Loop(Ptr<Expr>),
+    Fun(Vec<String>,Ptr<Expr>),
+    Dyn(Vec<String>,Ptr<Expr>),
+    Closed(Vec<String>,Ptr<Expr>),
+    Use(Option<Ptr<Expr>>,Vec<String>),
+    Closure(Context,Vec<String>,Ptr<Expr>),
+    Array(PtrCell<Vec<Ptr<Expr>>>),
+    Return(Ptr<Expr>),
+    Break(Ptr<Expr>),
+    Exit(Ptr<Expr>),
+    Throw(Ptr<Expr>),
+    Test(String,Ptr<Expr>,Ptr<Expr>),
     Continue, 
-    Ref(R<MemCell>),
-    Scope(ScopeID,HashMap<String,R<Expr>>),
+    Ref(Ptr<MemCell>),
+    Scope(ScopeID,HashMap<String,Ptr<Expr>>),
     ScopeCycle(ScopeID),
-    ClosurePrintable(R<Expr>,Vec<String>,R<Expr>),
-    ArrayPrintable(Vec<R<Expr>>),
-    ExceptionPrintable(R<Expr>),
+    ClosurePrintable(Ptr<Expr>,Vec<String>,Ptr<Expr>),
+    ArrayPrintable(Vec<Ptr<Expr>>),
+    ExceptionPrintable(Ptr<Expr>),
     ParsedOperator(Operator),
     ParsedIdentifier(String),
 }
@@ -101,12 +101,12 @@ impl PartialEq for Expr {
 }
 
 impl Expr {
-    pub fn to_error(&self) -> Result<R<Expr>> {
+    pub fn to_error(&self) -> Result<Ptr<Expr>> {
         Err(anyhow!("{:#?}",self))
     }
 }
 
-fn decycle(e: R<Expr>, env: &mut HashSet<ScopeID>) -> R<Expr> {
+fn decycle(e: Ptr<Expr>, env: &mut HashSet<ScopeID>) -> Ptr<Expr> {
     match e.as_ref() {
         Expr::Break(rc) =>
             Expr::ExceptionPrintable(decycle(rc.to_owned(),env)).into(),
@@ -188,40 +188,40 @@ impl std::fmt::Display for Expr {
     }
 }
 
-pub fn integer(i: i64) -> R<Expr> {
+pub fn integer(i: i64) -> Ptr<Expr> {
     Expr::Integer(i).into()
 }
 
-pub fn float(f: f64) -> R<Expr> {
+pub fn float(f: f64) -> Ptr<Expr> {
     Expr::Float(f).into()
 }
 
-pub fn boolean(b: bool) -> R<Expr> {
+pub fn boolean(b: bool) -> Ptr<Expr> {
     Expr::Boolean(b).into()
 }
 
-pub fn character(c: char) -> R<Expr> {
+pub fn character(c: char) -> Ptr<Expr> {
     Expr::Character(c).into()
 }
 
-pub fn string(s: String) -> R<Expr> {
+pub fn string(s: String) -> Ptr<Expr> {
     Expr::String(s).into()
 }
 
-pub fn nil() -> R<Expr> {
+pub fn nil() -> Ptr<Expr> {
     Expr::Nil.into()
 }
 
-pub fn closure(ctx: Context, args: Vec<String>, body: R<Expr>) -> R<Expr> {
+pub fn closure(ctx: Context, args: Vec<String>, body: Ptr<Expr>) -> Ptr<Expr> {
     Expr::Closure(ctx,args,body).into()
 }
 
-pub fn context(ctx: Context) -> R<Expr> {
+pub fn context(ctx: Context) -> Ptr<Expr> {
     closure(ctx,vec![],nil())
 }
 
-pub fn array(vals: Vec<R<Expr>>) -> R<Expr> {
-    Expr::Array(RefC::new(vals)).into()
+pub fn array(vals: Vec<Ptr<Expr>>) -> Ptr<Expr> {
+    Expr::Array(PtrCell::new(vals)).into()
 }
 
 #[derive(Debug,Clone)]
@@ -253,9 +253,9 @@ impl std::fmt::Display for Value {
     }
 }
 
-impl TryFrom<R<Expr>> for Value {
+impl TryFrom<Ptr<Expr>> for Value {
     type Error = anyhow::Error;
-    fn try_from(expr: R<Expr>) -> Result<Self> {
+    fn try_from(expr: Ptr<Expr>) -> Result<Self> {
         Ok(match expr.as_ref() {
             Expr::Nil => Value::Nil,
             Expr::Integer(i) => Value::Integer(*i),

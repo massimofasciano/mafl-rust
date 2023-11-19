@@ -19,20 +19,20 @@ pub mod open;
 #[cfg(not(feature = "gc"))]
 pub type CellRefMut<'a,T> = std::cell::RefMut<'a,T>;
 #[cfg(not(feature = "gc"))]
-pub type R<Expr> = Rc<Expr>;
+pub type Ptr<T> = Rc<T>;
 #[cfg(not(feature = "gc"))]
-pub type RefC<Expr> = RefCell<Expr>;
+pub type PtrCell<T> = RefCell<T>;
 #[cfg(feature = "gc")]
 pub type CellRefMut<'a,T> = gc::GcCellRefMut<'a,T>;
 #[cfg(feature = "gc")]
-pub type R<Expr> = Gc<Expr>;
+pub type Ptr<T> = Gc<T>;
 #[cfg(feature = "gc")]
-pub type RefC<Expr> = GcCell<Expr>;
+pub type PtrCell<T> = GcCell<T>;
 
 #[derive(Debug,Clone)]
 pub struct Interpreter {
-    env: R<Expr>,
-    std: R<Expr>,
+    env: Ptr<Expr>,
+    std: Ptr<Expr>,
     ctx: Context,
     test_pass_count: RefCell<usize>,
     test_fail_count: RefCell<usize>,
@@ -65,18 +65,18 @@ impl Interpreter {
         self.std = expression::closure(ctx, vec![], expression::nil());
         Ok(())
     }
-    pub fn run(&self, source: &str) -> Result<R<Expr>> {
+    pub fn run(&self, source: &str) -> Result<Ptr<Expr>> {
         let expr = self.parse_source(source)?;
         // println!("{expr:#?}");
         self.eval(&self.ctx,&expr)
     }
-    pub fn print(&self, e: R<Expr>) -> Result<R<Expr>> {
+    pub fn print(&self, e: Ptr<Expr>) -> Result<Ptr<Expr>> {
         self.builtin_fn(&self.ctx, "print", &[e])
     }
-    pub fn println(&self, e: R<Expr>) -> Result<R<Expr>> {
+    pub fn println(&self, e: Ptr<Expr>) -> Result<Ptr<Expr>> {
         self.builtin_fn(&self.ctx, "println", &[e])
     }
-    pub fn parse_source(&self, source: &str) -> Result<R<Expr>> {
+    pub fn parse_source(&self, source: &str) -> Result<Ptr<Expr>> {
         let parsed = MfelParser::parse(Rule::file, source)?
             .next().ok_or(anyhow!("parse error"))?; 
         // println!("{:#?}",parsed);
