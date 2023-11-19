@@ -596,6 +596,28 @@ test collect(range(3,7)) expect [3,4,5,6];
 # map was already imported above from @std.array but that is simply an alias to @std.iter.map
 test map(\x{x*10},range(0,10)) expect [0,10,20,30,40,50,60,70,80,90];
 
+# because objects and functions are the same in our language, we can't
+# directly iterate on the key/value binding pairs of an object
+# (treating it like a dictionary). 
+
+# the trick is to convert the object to an array of [key, &value] pairs
+# refer to the section on references for more details on the ref/deref/deref-assign syntax.
+
+let x = 10;
+let y = 20;
+let m = module {
+    use x y;
+};
+
+for kv in @array(m) {
+    let [k,v] = kv; 
+    # k is a string, v is a ref to a value
+    v <- $v + 1;
+    # we can access the value with the $ (deref) operator on the reference
+    # we can mutate the target with the <- (deref-assign) operator on the ref
+}
+test [x,y] expect [11,21];
+
 ###
 ### destructuring
 ###
@@ -854,7 +876,9 @@ let p = module {
     forget v;
 };
 # the p object contains a single member called z that is aliased to v (from outside)
-test @array(p) expect [["z",11]];
+test p.z expect 11;
+test @is_error(p.v!);
+test map(fun kv {let [k,v]=kv; [k,$v] }, @array(p)) expect [["z",11]];
 
 p.z += 1;
 # p.z is aliased to outside v

@@ -94,5 +94,20 @@ let d2 = dynmut {
 
 @std.prelude();
 
-map(\x{x+1},[1,2,3])
+#map(\x{x+1},[1,2,3])
 
+let x = 10;
+let y = 20;
+let m = module {
+    use x y;
+};
+
+
+for kv in @array(m) {
+    @println(kv);
+    let [k,v] = kv;
+    @println(k," : ",$v);
+    v <- $v + 1;
+}
+@println(x);
+@println(y);

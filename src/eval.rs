@@ -8,6 +8,7 @@ impl Interpreter {
 
     pub fn eval(&self, ctx: &Context, ast: &Ptr<Expr>) -> Result<Ptr<Expr>> {
         Ok(match ast.as_ref() {
+            Expr::Ref(_) |
             Expr::Dyn(_,_,_) |
             Expr::Nil |
             Expr::Integer(_) |

@@ -319,7 +319,7 @@ pub fn to_array(_interpreter: &Interpreter, ctx: &Context, init: &Ptr<Expr>) -> 
         } 
         Expr::Closure(cctx, _args, _body) => {
             for (s, cell) in cctx.bindings_ref() {
-                let pair = vec![expression::string(s),cell.get()];
+                let pair = vec![expression::string(s),Expr::Ref(cell).into()];
                 arr.push(expression::array(pair));
             }
             Ok(expression::array(arr))
