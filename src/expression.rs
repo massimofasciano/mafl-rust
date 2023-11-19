@@ -1,16 +1,15 @@
-use std::{cell::RefCell, rc::Rc, ops::Deref, collections::{HashSet, HashMap}};
+use std::{ops::Deref, collections::{HashSet, HashMap}};
 use anyhow::{anyhow, Result};
 use pest_derive::Parser;
-use crate::context::{Context, MemCell, ScopeID};
+use crate::{context::{Context, MemCell, ScopeID}, RefC, R, Ident};
+use gc::{Finalize, Trace};
 
 #[derive(Parser)]
 #[grammar = "mfel.pest"]
 pub struct MfelParser;
 
-pub type R<Expr> = Rc<Expr>;
-pub type Ident = String;
-
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Trace, Finalize)]
 pub enum Operator {
     Add, Mul, Sub, Div, IntDiv, Exp, Mod,
     Not, And, Or, Pipe,
@@ -20,6 +19,7 @@ pub enum Operator {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Trace, Finalize)]
 pub enum BlockType {
     Sequence,
     Block,
@@ -28,6 +28,7 @@ pub enum BlockType {
 }
 
 #[derive(Debug,Clone)]
+#[derive(Trace, Finalize)]
 pub enum Expr {
     Integer(i64),
     Float(f64),
@@ -61,14 +62,14 @@ pub enum Expr {
     Closed(Vec<Ident>,R<Expr>),
     Use(Option<R<Expr>>,Vec<Ident>),
     Closure(Context,Vec<Ident>,R<Expr>),
-    Array(RefCell<Vec<R<Expr>>>),
+    Array(RefC<Vec<R<Expr>>>),
     Return(R<Expr>),
     Break(R<Expr>),
     Exit(R<Expr>),
     Throw(R<Expr>),
     Test(String,R<Expr>,R<Expr>),
     Continue, 
-    Ref(Rc<MemCell>),
+    Ref(R<MemCell>),
     Scope(ScopeID,HashMap<Ident,R<Expr>>),
     ScopeCycle(ScopeID),
     ClosurePrintable(R<Expr>,Vec<Ident>,R<Expr>),
@@ -218,7 +219,7 @@ pub fn context(ctx: Context) -> R<Expr> {
 }
 
 pub fn array(vals: Vec<R<Expr>>) -> R<Expr> {
-    Expr::Array(RefCell::new(vals)).into()
+    Expr::Array(RefC::new(vals)).into()
 }
 
 #[derive(Debug,Clone)]

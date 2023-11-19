@@ -1,6 +1,6 @@
 [package]
 name = "mfel"
-version = "0.7.4"
+version = "0.8.0"
 edition = "2021"
 
 [dependencies]
@@ -12,3 +12,4 @@ pest_derive = { version = "2.7.5", features = ["grammar-extras"] }
 rand = "0.8.5"
 regex = "1.10.2"
 unescape = "0.1.0"
+gc = { version = "0.5", features = ["derive"] }

@@ -1,9 +1,10 @@
 use std::{cell::RefCell, collections::HashMap};
 use context::Context;
-use expression::{R, Ident, Value, Expr};
+use expression::{Value, Expr};
 use pest::Parser;
 use crate::expression::{MfelParser, Rule};
 use anyhow::{anyhow, Result};
+use gc::{Gc, GcCell};
 
 pub mod eval;
 pub mod expression;
@@ -11,6 +12,15 @@ pub mod context;
 pub mod builtin;
 pub mod parse;
 pub mod open;
+
+// pub type CellRefMut<'a,T> = std::cell::RefMut<'a,T>;
+// pub type R<Expr> = Rc<Expr>;
+// pub type RefC<Expr> = RefCell<Expr>;
+pub type CellRefMut<'a,T> = gc::GcCellRefMut<'a,T>;
+pub type R<Expr> = Gc<Expr>;
+pub type RefC<Expr> = GcCell<Expr>;
+
+pub type Ident = String;
 
 #[derive(Debug,Clone)]
 pub struct Interpreter {

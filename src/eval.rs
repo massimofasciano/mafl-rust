@@ -1,6 +1,6 @@
 use std::io::{stdout, Write};
 
-use crate::{expression::{Expr, R, self, Operator, BlockType}, builtin::{self}, context::Context, Interpreter, PragmaLevel};
+use crate::{R, expression::{self, Expr, Operator, BlockType}, builtin::{self}, context::Context, Interpreter, PragmaLevel};
 use anyhow::{Result,anyhow};
 use log::debug;
 
@@ -675,10 +675,6 @@ impl Interpreter {
             ("extend_dict", [parent]) => builtin::extend_dict(ctx, parent),
             ("flatten_dict", [parent]) => builtin::flatten_dict(ctx, parent),
             ("make_dict", []) => builtin::make_dict(ctx),
-            // ("var", [key]) => builtin::get_var(self, ctx, key),
-            // ("assign", [key, value]) => builtin::assign_var(self, ctx, key, value),
-            // ("let", [key, value]) => builtin::let_var(self, ctx, key, value),
-            // ("test", [source, expected]) => builtin::test(self, ctx, source, expected),
             ("now", []) => builtin::now(ctx),
             ("sleep", [seconds]) => builtin::sleep(ctx, seconds),
             ("flatten_self", []) => Ok(expression::context(ctx.flatten_ref())), // returns a flattened version of @self

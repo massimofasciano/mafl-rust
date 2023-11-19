@@ -1,7 +1,6 @@
-use std::cell::RefCell;
 use pest::iterators::Pair;
 use anyhow::{anyhow, Result};
-use crate::{expression::{Rule, Expr, R, self, Operator, BlockType}, unescape_string, Interpreter};
+use crate::{R, RefC, expression::{Rule, Expr, self, Operator, BlockType}, unescape_string, Interpreter};
 
 impl Interpreter {
 
@@ -144,7 +143,7 @@ impl Interpreter {
                     Expr::Closed(vars,body).into()
                 }
                 Rule::array => {
-                    Expr::Array(RefCell::new(
+                    Expr::Array(RefC::new(
                         inner.iter().map(|e| self.parse_rule(e.to_owned())).collect::<Result<Vec<_>>>()?
                     )).into()
                 } 

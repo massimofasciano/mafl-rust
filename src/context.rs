@@ -1,7 +1,8 @@
-use std::{collections::HashMap, cell::RefCell, rc::Rc};
+use std::collections::HashMap;
 use log::debug;
-use crate::expression::{R, Expr, Ident};
+use crate::{R, RefC, Ident, expression::Expr, CellRefMut};
 use std::sync::atomic::{AtomicUsize, Ordering};
+use gc::{Finalize, Trace};
 
 pub type ScopeID = usize;
 static SCOPE_ID_SEQ: AtomicUsize = AtomicUsize::new(0);
@@ -17,29 +18,29 @@ fn next_mem_id() -> MemID {
     MEM_ID_SEQ.load(Ordering::SeqCst)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Trace)]
 pub struct MemCell {
-    inner: RefCell<R<Expr>>,
+    inner: RefC<R<Expr>>,
     id : MemID,
 }
 
 impl MemCell {
     pub fn new(e : R<Expr>) -> Self {
         let new = Self {
-            inner: RefCell::new(e),
+            inner: RefC::new(e),
             id : next_mem_id(),
         };
         debug!("new cell id={}",new.id); 
         new
     }
-    pub fn new_ref(e : R<Expr>) -> Rc<Self> {
-        Rc::new(Self::new(e))
+    pub fn new_ref(e : R<Expr>) -> R<Self> {
+        R::new(Self::new(e))
     }
     pub fn get(&self) -> R<Expr> {
         self.inner.borrow().to_owned()
     }
-    pub fn get_refmut(&self) -> std::cell::RefMut<R<Expr>> {
-        self.inner.borrow_mut()
+    pub fn get_refmut(&self) -> CellRefMut<R<Expr>> {
+            self.inner.borrow_mut()
     }
     pub fn set(&self, e: R<Expr>) -> R<Expr> {
         let old = self.get();
@@ -50,8 +51,8 @@ impl MemCell {
         debug!("duplicating cell id={}", self.id);
         Self::new(self.get())
     }
-    fn duplicate_ref(&self) -> Rc<Self> {
-        Rc::new(self.duplicate())
+    fn duplicate_ref(&self) -> R<Self> {
+        R::new(self.duplicate())
     }
 }
 
@@ -61,30 +62,35 @@ impl Clone for MemCell {
     }
 }
 
-impl Drop for MemCell {
-    fn drop(&mut self) {
+// impl Drop for MemCell {
+//     fn drop(&mut self) {
+//         debug!("dropping cell id={}", self.id);
+//     }
+// }
+impl Finalize for MemCell {
+    fn finalize(&self) {
         debug!("dropping cell id={}", self.id);
     }
 }
 
 #[repr(transparent)]
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone, Trace, Finalize)]
 pub struct Context {
-    inner: Rc<Scope>,
+    inner: R<Scope>,
 }
 
-pub type Bindings = HashMap<Ident,Rc<MemCell>>;
+pub type Bindings = HashMap<Ident,R<MemCell>>;
 
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone, Trace)]
 struct Scope {
-    bindings: RefCell<Bindings>,
-    parent: RefCell<Option<Context>>,
+    bindings: RefC<Bindings>,
+    parent: RefC<Option<Context>>,
     id: ScopeID,
 }
 
 impl Context {
     pub fn new() -> Self {
-        Self{inner:Rc::new(Scope::new())}
+        Self{inner:R::new(Scope::new())}
     }
     pub fn with_new_context(&self) -> Self {
         let scope = Scope::new();
@@ -132,7 +138,7 @@ impl Context {
         let scope = &self.inner;
         scope.bindings.borrow_mut().insert(var, MemCell::new_ref(value)).map(|old| old.get())
     }
-    pub fn add_binding_ref(&self, var: Ident, value: Rc<MemCell>) -> Option<Rc<MemCell>> {
+    pub fn add_binding_ref(&self, var: Ident, value: R<MemCell>) -> Option<R<MemCell>> {
         let scope = &self.inner;
         scope.bindings.borrow_mut().insert(var, value)
     }
@@ -146,7 +152,7 @@ impl Context {
             None
         }
     }
-    pub fn get_binding_ref(&self, var: &Ident) -> Option<Rc<MemCell>> {
+    pub fn get_binding_ref(&self, var: &Ident) -> Option<R<MemCell>> {
         let scope = &self.inner;
         if let Some(rc) = scope.bindings.borrow().get(var) {
             Some(rc.to_owned())
@@ -166,7 +172,7 @@ impl Context {
             None
         }
     }
-    pub fn set_binding_ref(&self, var: Ident, value: Rc<MemCell>) -> Option<Rc<MemCell>> {
+    pub fn set_binding_ref(&self, var: Ident, value: R<MemCell>) -> Option<R<MemCell>> {
         let scope = &self.inner;
         if scope.bindings.borrow().contains_key(&var) {
             scope.bindings.borrow_mut().insert(var, value)
@@ -221,12 +227,12 @@ impl Default for Context {
 
 impl From<Scope> for Context {
     fn from(scope: Scope) -> Self {
-        Self{ inner:Rc::new(scope) }
+        Self{ inner: R::new(scope) }
     }
 }
 
-impl From<Rc<Scope>> for Context {
-    fn from(rc_scope: Rc<Scope>) -> Self {
+impl From<R<Scope>> for Context {
+    fn from(rc_scope: R<Scope>) -> Self {
         Self{ inner: rc_scope }
     }
 }
@@ -243,15 +249,20 @@ impl Default for Scope {
     fn default() -> Self {
         let id = next_scope_id();
         Self {
-            bindings: RefCell::new(HashMap::new()),
-            parent: RefCell::new(None),
+            bindings: RefC::new(HashMap::new()),
+            parent: RefC::new(None),
             id,
         }
     }
 }
 
-impl Drop for Scope {
-    fn drop(&mut self) {
+// impl Drop for Scope {
+//     fn drop(&mut self) {
+//         debug!("dropping scope id={}", self.id);
+//     }
+// }
+impl Finalize for Scope {
+    fn finalize(&self) {
         debug!("dropping scope id={}", self.id);
     }
 }

@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::io::{self, BufRead, stdout, Write};
 use std::fmt::Write as _;
 use std::process::Command;
@@ -8,9 +7,9 @@ use log::debug;
 use regex::Regex;
 use rand::Rng;
 
-use crate::{__STR__, PragmaLevel};
+use crate::{RefC, R, __STR__, PragmaLevel, expression};
 use crate::context::{MemCell, Bindings};
-use crate::{expression::{R, self, nil, closure, Expr}, context::Context, Interpreter};
+use crate::{expression::{nil, closure, Expr}, context::Context, Interpreter};
 
 pub fn pow(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
@@ -50,7 +49,7 @@ pub fn add(_: &Context, lhs: &R<Expr>, rhs: &R<Expr>) -> Result<R<Expr>> {
         (Expr::String(a), Expr::Float(b)) => Expr::String(format!("{a}{b}")),
         (Expr::Float(a), Expr::String(b)) => Expr::String(format!("{a}{b}")),
         (Expr::Array(a), Expr::Array(b)) => 
-                Expr::Array(RefCell::new(
+                Expr::Array(RefC::new(
                     [a.borrow().to_owned(), b.borrow().to_owned()].concat()
                 )),
         _ => Err(anyhow!("add {lhs:?} {rhs:?}"))?,
@@ -569,36 +568,6 @@ pub fn make_error(msg: &R<Expr>) -> Result<R<Expr>> {
     })
 }
 
-// pub fn get_var(interpreter: &Interpreter, ctx: &Context, key: &Expression) -> Result<Expression> {
-//     debug!("get_var {key:?}");
-//     Ok(match key.as_ref() {
-//         ExpressionType::String(s) => 
-//             ctx.get_binding(&interpreter.ident(s)).ok_or(anyhow!("binding not found: {s}"))?,
-//         _ => Err(anyhow!("get on closure with non-string key {key:?}"))?,
-//     })
-// }
-
-// pub fn assign_var(interpreter: &Interpreter, ctx: &Context, key: &Expression, value: &Expression) -> Result<Expression> {
-//     debug!("set_var {key:?} {value:?}");
-//     Ok(match key.as_ref() {
-//         ExpressionType::String(s) => 
-//             ctx.set_binding(interpreter.ident(s), value.to_owned())
-//                 .ok_or(anyhow!("binding not found: {s}"))?,
-//         _ => Err(anyhow!("set on closure with non-string key {key:?}"))?,
-//     })
-// }
-
-// pub fn let_var(interpreter: &Interpreter, ctx: &Context, key: &Expression, value: &Expression) -> Result<Expression> {
-//     debug!("insert_var {key:?} {value:?}");
-//     Ok(match key.as_ref() {
-//         ExpressionType::String(s) => {
-//             ctx.add_binding(interpreter.ident(s), value.to_owned());
-//             value.to_owned()
-//         }
-//         _ => Err(anyhow!("insert on closure with non-string key {key:?}"))?,
-//     })
-// }
-
 #[allow(clippy::only_used_in_recursion)]
 pub fn shallow_copy(_: &Context, val: &R<Expr>) -> Result<R<Expr>> {
     Ok(match val.as_ref() {
@@ -660,18 +629,6 @@ pub fn get_ref(interpreter: &Interpreter, ctx: &Context, ref_target: &R<Expr>) -
         _ => Err(anyhow!("taking ref of incompatible value"))?,
     })
 }
-
-// pub fn test(interpreter: &Interpreter, ctx: &Context, source: &Expression, expected: &Expression) -> Result<Expression> {
-//     println!("**** DEPRECATION WARNING: @test");
-//     let result = eval_string_as_source(interpreter, ctx, source)?;
-//     if &result == expected {
-//         println!("# test success: {source} == {expected}");
-//     } else {
-//         println!("# test failure: {source} == {result} != {expected}");
-//     }
-//     stdout().flush()?;
-//     Ok(nil())
-// }
 
 pub fn now(_: &Context) -> Result<R<Expr>> {
     debug!("now");

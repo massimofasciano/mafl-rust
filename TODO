@@ -7,8 +7,6 @@
 - put all builtins inside the interpreter struct
 - field (object) based builtins like .copy() .string() .map() ?
 
-- garbage collector 
-
 - array assign and let rec parallel
 [a,b,c] = [1,2,3]
 
