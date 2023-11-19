@@ -21,7 +21,7 @@ pub fn pow(_: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     }.into())
 }
 
-pub fn exp(_: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
+pub fn exp(_interpreter: &Interpreter, _: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match val.as_ref() {
         Expr::Float(a) => Expr::Float(a.exp()),
         Expr::Integer(a) => Expr::Float((*a as f64).exp()),

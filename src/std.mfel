@@ -4,6 +4,17 @@
 ### it is visible through the @std module (ex: @std.array.map)
 ###
 
+## utility functions
+let utils = module {
+    let flip = fun f { fun x y { f(y,x) } };
+};
+
+## math functions
+let math = module {
+    let log = dyn x { @log(x) };
+    let pow = dyn x y { @pow(x,y) };
+};
+
 ## time calculations
 let time = module {
     let start = @now();

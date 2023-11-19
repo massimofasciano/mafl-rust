@@ -47,4 +47,11 @@ test 2 + 3 expect 5;
 test 2 * 3 expect 5;
 test 2 + 3 < 2 * 3;
 
-c
+from @std.iter use map range;
+from @std.math use pow log;
+from @std.utils use flip;
+
+#map(@exp,range(1,10))
+#map(log,range(1,10))
+#map(pow(2),range(1,10))
+map(flip(pow,2),range(1,10))
