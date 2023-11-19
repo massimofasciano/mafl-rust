@@ -1,4 +1,4 @@
-
+(#
 let printf = fun fmt vals {
     let delim = "@";
     let parts = @split(fmt,delim);
@@ -90,4 +90,9 @@ let d2 = dynmut {
 @println(d2());
 @println(z);
 
+#)
+
+@std.prelude();
+
+map(\x{x+1},[1,2,3])
 

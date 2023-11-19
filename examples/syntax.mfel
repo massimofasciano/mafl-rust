@@ -1032,6 +1032,26 @@ test [m.v1,m.v2,m.v3,m.v4] expect [1,2,3,4];
 # when dealing with the 3 types of dynamic calls, they must be declared.
 
 ###
+### the standard library prelude
+###
+
+@println("*** @std.prelude() ***");
+
+# @std.prelude() is a dynmut function that modifies the caller's environment.
+# it adds a selection of useful functions.
+# it's not safe to use inside a lexcical closure unless you
+# insert "use" statements for each binding you use.
+
+# here we create a closed environment and load the prelude...
+let list = closed {
+    @std.prelude(); # this puts a bunch of functions from @std into scope
+    # flip, sub, map and range are imported by the prelude
+    map(flip(sub, 5), range(3,10))
+    # this applies \x{x-5} to each number of the range from 3 to 10 (excluded)
+};
+test list expect [-2, -1, 0, 1, 2, 3, 4];
+
+###
 ### END (this program returns true if no tests failed)
 ###
 

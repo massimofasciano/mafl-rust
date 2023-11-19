@@ -4,6 +4,17 @@
 ### it is visible through the @std module (ex: @std.array.map)
 ###
 
+### prelude that loads essentials when called.
+### use at top level or in dynamic context, 
+### not inside a closure (fun/cons/module).
+### usage: @std.prelude();
+let prelude = dynmut {
+    from @std.utils use flip;
+    from @std.math use add sub mul div exp log pow;
+    from @std.time use elapsed;
+    from @std.iter use range map fold;
+};
+
 ## utility functions
 let utils = module {
     let flip = fun f { fun x y { f(y,x) } };
@@ -11,8 +22,13 @@ let utils = module {
 
 ## math functions
 let math = module {
-    let log = dyn x { @log(x) };
-    let pow = dyn x y { @pow(x,y) };
+    let add = fun x y { x + y };
+    let sub = fun x y { x - y };
+    let mul = fun x y { x * y };
+    let div = fun x y { x / y };
+    let exp = fun x { @exp(x) };
+    let log = fun x { @log(x) };
+    let pow = fun x y { @pow(x,y) };
 };
 
 ## time calculations
