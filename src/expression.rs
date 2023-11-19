@@ -168,9 +168,9 @@ impl std::fmt::Display for Expr {
             Expr::Boolean(a) => write!(f,"{a}"),
             Expr::Float(a) => write!(f,"{a}"),
             Expr::Integer(a) => write!(f,"{a}"),
-            Expr::Character(a) => write!(f,"{a:?}"),
-            Expr::String(a) => write!(f,"{a:?}"),
-            Expr::Error(a) => write!(f,"Error<{a:?}>"),
+            Expr::Character(a) => write!(f,"{a}"),
+            Expr::String(a) => write!(f,"{a}"),
+            Expr::Error(a) => write!(f,"Error<{a}>"),
             Expr::ArrayPrintable(v) =>
                 write!(f,"[{}]",v.iter().map(|x|x.to_string()).collect::<Vec<_>>().join(", ")),
             Expr::Ref(mc) => write!(f,"->{}",mc.get()),

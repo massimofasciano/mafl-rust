@@ -449,7 +449,7 @@ test arr expect [7,6,4,3,2];
 
 # this next one only works on unix systems with the expr utility
 if @os == "linux" {
-    test @command("expr",1,"+",3) expect "4";
+    test @trim(@command("expr",1,"+",3)) expect "4";
     test (@float(@command("expr",1,"+",3)) / 2)! expect 2;
 } else {
     @println("skipping test on ",@os);
