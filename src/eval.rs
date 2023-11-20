@@ -459,28 +459,6 @@ impl Interpreter {
                 }
             }
 
-            // Expr::BuiltinFn(builtin_fn) => {
-            //     match builtin_fn {
-            //         BuiltinFn::Fn0(f) =>
-            //             f(self, ctx)?,
-            //         BuiltinFn::Fn1(f) => {
-            //             let arg0 = ctx.get_binding("0").ok_or(anyhow!("builtin fn arg0 not found"))?;
-            //             f(self, ctx, &arg0)?
-            //         }
-            //         BuiltinFn::Fn2(f) => {
-            //             let arg0 = ctx.get_binding("0").ok_or(anyhow!("builtin fn arg0 not found"))?;
-            //             let arg1 = ctx.get_binding("1").ok_or(anyhow!("builtin fn arg1 not found"))?;
-            //             f(self, ctx, &arg0, &arg1)?
-            //         }
-            //         BuiltinFn::Fn3(f) => {
-            //             let arg0 = ctx.get_binding("0").ok_or(anyhow!("builtin fn arg0 not found"))?;
-            //             let arg1 = ctx.get_binding("1").ok_or(anyhow!("builtin fn arg1 not found"))?;
-            //             let arg2 = ctx.get_binding("2").ok_or(anyhow!("builtin fn arg2 not found"))?;
-            //             f(self, ctx, &arg0, &arg1, &arg2)?
-            //         }
-            //     }
-            // }
-
             Expr::Use(opt_source, members) => {
                 if let Some(source) = opt_source {
                     let source = self.eval(ctx, source)?;
@@ -720,14 +698,4 @@ impl Interpreter {
     }
 
 }
-
-// pub const LUT : &[(&str,BuiltinFn)] = &[
-//     ("exp",BuiltinFn::Fn1(builtin::exp)),
-//     ("insert",BuiltinFn::Fn3(builtin::insert)),
-//     ("call",BuiltinFn::Fn2(builtin::call)),
-//     ("pragma",BuiltinFn::Fn2(builtin::pragma)),
-//     ("random",BuiltinFn::Fn0(builtin::randfloat)),
-//     ("randint",BuiltinFn::Fn2(builtin::randint)),
-//     ("trim",BuiltinFn::Fn1(builtin::trim)),
-// ];
 

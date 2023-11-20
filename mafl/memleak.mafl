@@ -1,0 +1,8 @@
+# this creates self-referencing modules in a loop.
+# this causes a massive memory leak when not using
+# the garbage collector feature.
+loop {
+    let rec cycle = module {
+        cycle
+    };
+}

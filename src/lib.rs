@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::HashMap};
 use context::Context;
 use expression::{Expr, Builtin};
 use pest::Parser;
-use crate::expression::{MfelParser, Rule};
+use crate::expression::{MaflParser, Rule};
 use anyhow::{anyhow, Result};
 #[cfg(feature = "gc")]
 use gc::{Gc, GcCell};
@@ -48,7 +48,7 @@ pub enum PragmaLevel {
     Error,
 }
 
-static _STD_STR : &str = include_str!("std.mfel");
+static _STD_STR : &str = include_str!("std.mafl");
 
 impl Interpreter {
     pub fn new() -> Result<Self> {
@@ -77,7 +77,7 @@ impl Interpreter {
         self.builtin_fn(&self.ctx, "println", &[e])
     }
     pub fn parse_source(&self, source: &str) -> Result<Ptr<Expr>> {
-        let parsed = MfelParser::parse(Rule::file, source)?
+        let parsed = MaflParser::parse(Rule::file, source)?
             .next().ok_or(anyhow!("parse error"))?; 
         // println!("{:#?}",parsed);
         self.parse_rule(parsed)
@@ -125,7 +125,7 @@ mod tests {
         // RUST_MIN_STACK=8388608 cargo test
         let interpreter = Interpreter::new()?;
         // this program returns true if no tests failed
-        let file = "examples/syntax.mfel";
+        let file = "mafl/language.mafl";
         // run the program
         let source = std::fs::read_to_string(file)?;
         let result = interpreter.run(&source)?;

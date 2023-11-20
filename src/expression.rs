@@ -7,8 +7,8 @@ use crate::{context::{Context, MemCell, ScopeID}, PtrCell, Ptr, Interpreter};
 use gc::{Finalize, Trace};
 
 #[derive(Parser)]
-#[grammar = "mfel.pest"]
-pub struct MfelParser;
+#[grammar = "mafl.pest"]
+pub struct MaflParser;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "gc", derive(Trace, Finalize))]
@@ -30,33 +30,6 @@ pub enum BlockType {
 }
 
 pub type Builtin = fn (&Interpreter, &Context, &[Ptr<Expr>]) -> Result<Ptr<Expr>>;
-
-// type BuiltinFn0 = fn (&Interpreter, &Context) -> Result<Ptr<Expr>>;
-// type BuiltinFn1 = fn (&Interpreter, &Context, &Ptr<Expr>) -> Result<Ptr<Expr>>;
-// type BuiltinFn2 = fn (&Interpreter, &Context, &Ptr<Expr>, &Ptr<Expr>) -> Result<Ptr<Expr>>;
-// type BuiltinFn3 = fn (&Interpreter, &Context, &Ptr<Expr>, &Ptr<Expr>, &Ptr<Expr>) -> Result<Ptr<Expr>>;
-// #[derive(Debug, Clone, PartialEq, Eq)]
-// #[cfg_attr(feature = "gc", derive(Finalize))]
-// pub enum BuiltinFn {
-//     Fn0(BuiltinFn0),
-//     Fn1(BuiltinFn1),
-//     Fn2(BuiltinFn2),
-//     Fn3(BuiltinFn3),
-// }
-// #[cfg(feature = "gc")]
-// unsafe impl Trace for BuiltinFn {
-//     unsafe_empty_trace!();
-// }
-// impl BuiltinFn {
-//     pub fn arity(&self) -> u8 {
-//         match self {
-//             BuiltinFn::Fn0(_) => 0,
-//             BuiltinFn::Fn1(_) => 1,
-//             BuiltinFn::Fn2(_) => 2,
-//             BuiltinFn::Fn3(_) => 3,
-//         }
-//     }
-// }
 
 #[derive(Debug,Clone)]
 #[cfg_attr(feature = "gc", derive(Trace, Finalize))]

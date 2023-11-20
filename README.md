@@ -1,4 +1,4 @@
-# Rust parser and interpreter for the MFEL language
+# Rust parser and interpreter for the MAFL language
 
 - refer to syntax.mfel in the examples folder for a quick description of the language syntax with examples.
 

@@ -1,6 +1,6 @@
 [package]
-name = "mfel"
-version = "0.8.9"
+name = "mafl"
+version = "0.9.0"
 edition = "2021"
 
 [dependencies]
@@ -17,4 +17,3 @@ gc = { version = "0.5", features = ["derive"], optional = true }
 [features]
 # default = []
 default = ["gc"]
-test_custom = []
