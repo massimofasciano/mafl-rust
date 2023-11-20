@@ -82,8 +82,7 @@ let builder = cons i1 i2 {
     let to_string = fun {
         "State(" + x + "," + y + "," + z + ")"
     };
-    forget i1;
-    forget i2;
+    forget i1 i2;
 };
 
 let state1 = builder(1,2);
