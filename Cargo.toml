@@ -15,5 +15,4 @@ unescape = "0.1.0"
 gc = { version = "0.5", features = ["derive"], optional = true }
 
 [features]
-# default = []
 default = ["gc"]
