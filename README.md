@@ -16,7 +16,7 @@ By default, lexical binding is used. Closures are the main element in the langua
 special dynamic functions that expand at the call site. It has an @eval builtin that allows the execution
 of a string as a program in the current context.
 
-Refer to [mfal/language.mfal](mfal/language.mfal) for a walkthrough of the MFAL language as a long MFAL program.
+Refer to [mfal/language.mafl](mfal/language.mafl) for a walkthrough of the MFAL language as a long MFAL program.
 
 The interpreter takes a single argument: the name of the program to run. It runs it and shows the result as a value.
 When unit tests are performed, it produces a summary of pass/fail counts.
