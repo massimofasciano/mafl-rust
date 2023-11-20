@@ -15,6 +15,8 @@ let prelude = dynmut {
     from @std.iter use range map fold sum prod filter;
     from @std.array use reduce reverse;
     from @std.builtin use len to_string sort sort_by to_integer to_float to_array;
+    from @std.builtin use type_of;
+    from @std.types use is_error is_ref is_array is_number is_boolean is_object;
 };
 
 ## utility functions
@@ -38,6 +40,27 @@ let builtin = module {
     let exp = fun x { @exp(x) };
     let log = fun x { @log(x) };
     let pow = fun x y { @pow(x,y) };
+    let type_of = fun x { @type_of(x) };
+};
+
+## type-based functions
+let types = module {
+    let is_error = fun x { @type_of(x) == "Error" };
+    let is_ref = fun x { @type_of(x) == "Ref" };
+    let is_array = fun x { @type_of(x) == "Array" };
+    let is_float = fun x { @type_of(x) == "Float" };
+    let is_integer = fun x { @type_of(x) == "Integer" };
+    let is_character = fun x { @type_of(x) == "Character" };
+    let is_string = fun x { @type_of(x) == "String" };
+    let is_nil = fun x { @type_of(x) == "Nil" };
+    let is_boolean = fun x { @type_of(x) == "Boolean" };
+    let is_exception = fun x { @type_of(x) == "Exception" };
+    let is_closure = fun x { @type_of(x) == "Closure" };
+    let is_function = is_closure;
+    let is_module = is_closure;
+    let is_object = is_closure;
+    let is_dict = is_closure;
+    let is_number = fun x { is_integer(x) or is_float(x) };
 };
 
 ## math functions
@@ -47,6 +70,23 @@ let math = module {
     let sub = fun x y { x - y };
     let mul = fun x y { x * y };
     let div = fun x y { x / y };
+    let intdiv = fun x y { x // y };
+    let mod_ = fun x y { x mod y }; # mod is reserved
+    let modulo = mod_;
+    let neg = fun x { -x };
+};
+
+## logic functions
+let logic = module {
+    let gt = fun x y { x > y };
+    let lt = fun x y { x < y };
+    let ge = fun x y { x >= y };
+    let le = fun x y { x <= y };
+    let eq = fun x y { x == y };
+    let ne = fun x y { x != y };
+    let not_ = fun x { not x }; # not is reserved
+    let and_ = fun x y { x and y }; # and is reserved
+    let or_ = fun x y { x or y }; # or is reserved
 };
 
 ## time calculations
@@ -153,7 +193,7 @@ let methods = module {
 
     let Float = module {
         from builtin use to_string to_integer to_float;
-        from math use add sub mul div exp log pow;
+        from math use add sub mul div intdiv modulo exp log pow;
     };
     let Integer = Float;
 

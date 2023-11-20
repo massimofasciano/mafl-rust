@@ -370,7 +370,7 @@ let g = 100;
 let fdyn = dyn x { g += x; let y = 200; };
 fdyn(1);
 test g expect 101;
-test @is_error(y!);
+test @type_of(y!) expect "Error";
 
 # a dynmut function runs in the parent context at the call site.
 # this means it can read and modify existing variables from the parent.
@@ -382,7 +382,7 @@ let fdynmut = dynmut x { g += x; let y = 200; forget h; };
 fdynmut(1);
 test g expect 101;
 test y expect 200;
-test @is_error(h!);
+test @type_of(h!) expect "Error";
 
 # we will see later that dyn and dynmut, like @eval don't work well
 # when called inside lexical binding constructs like "fun/cons/module".
@@ -475,6 +475,56 @@ test @slice([1,2,3,4,5,6],2,4) expect [3,4];
 let arr = [4,6,7,3,2];
 @sort_by(\a,b{a>b},arr);
 test arr expect [7,6,4,3,2];
+
+(#
+            ("pragma", [id, val]) => { builtin::pragma(self, ctx, id, val) },
+            ("call", [callable, args]) => { builtin::call(self, ctx, callable, args) },
+            ("println", args) => { builtin::println(self, ctx, args) },
+            ("print", args) => { builtin::print(self, ctx, args) },
+            ("debugln", args) => { builtin::debugln(ctx, args) },
+            ("debug", args) => { builtin::debug(ctx, args) },
+            ("error", args) => { builtin::error_from_strings(ctx, args) },
+            ("make_error", [msg]) => { builtin::make_error(msg) },
+            ("eval", [arg]) => { builtin::eval_string_as_source(self, ctx, arg) },
+            ("include", [file_expr]) => builtin::include(self, ctx, file_expr),
+            ("readfile", [file_expr]) => builtin::read_file(ctx, file_expr),
+            ("readline", []) => builtin::read_line(ctx),
+            ("pow", [lhs, rhs]) => builtin::pow(ctx, lhs, rhs),
+            ("exp", [val]) => builtin::exp(self, ctx, val),
+            ("log", [val]) => builtin::log(ctx, val),
+            ("len", [val]) => builtin::len(ctx, val),
+            ("to_integer", [val]) => builtin::to_integer(self, ctx, val),
+            ("to_float", [val]) => builtin::to_float(self, ctx, val),
+            ("to_string", [val]) => builtin::to_string(self, ctx, val),
+            ("type_of", [val]) => builtin::type_of(self, ctx, val),
+            ("make_array", [size, init]) => builtin::make_array(self, ctx, size, init),
+            ("to_array", [init]) => builtin::to_array(self, ctx, init),
+            ("slice", [container, start, end]) => builtin::slice(ctx, container, start, end),
+            ("copy", [container]) => builtin::shallow_copy(ctx, container),
+            ("clone", [container]) => builtin::deep_copy(ctx, container),
+            ("append", [target, new]) => builtin::append(self, ctx, target, new),
+            ("extend_dict", [parent]) => builtin::extend_dict(ctx, parent),
+            ("flatten_dict", [parent]) => builtin::flatten_dict(ctx, parent),
+            ("get", [container, key]) => builtin::get(self, ctx, container, key),
+            ("set", [container, key, value]) => builtin::set(self, ctx, container, key, value),
+            ("insert", [container, key, value]) => builtin::insert(self, ctx, container, key, value),
+            ("remove", [container, key]) => builtin::remove(self, ctx, container, key),
+            ("make_dict", []) => builtin::make_dict(ctx),
+            ("now", []) => builtin::now(ctx),
+            ("sleep", [seconds]) => builtin::sleep(ctx, seconds),
+            ("flatten_self", []) => Ok(expression::context(ctx.flatten_ref())), // returns a flattened version of @self
+            ("lines", [init]) => builtin::to_array_lines(ctx, init),
+            ("split", [source, pattern]) => builtin::split(self, ctx, source, pattern),
+            ("trim", [source]) => builtin::trim(self, ctx, source),
+            ("matches", [source, regex]) => builtin::matches(self, ctx, source, regex),
+            ("command", cmd_args) if cmd_args.len() > 1 => { 
+                builtin::command(self, ctx, &cmd_args[0], &cmd_args[1..]) 
+            },
+            ("sort", [target]) => builtin::sort(self, ctx, target, None),
+            ("sort_by", [compare, target]) => builtin::sort(self, ctx, target, Some(compare)),
+            ("randint", [min, max]) => builtin::randint(self, ctx, min, max),
+            ("random", []) => builtin::randfloat(self, ctx),
+#)
 
 # this next one only works on unix systems with the expr utility
 if @os == "linux" {
@@ -824,7 +874,8 @@ test [v,c,$r] expect [310,202,310];
 # a function that tests if it has a reference and increments through it
 # if it's not a ref, the increment is only local
 let reftest = fun r {
-    if @is_ref(r) {
+    from @std.types use is_ref;
+    if is_ref(r) {
         r <- $r + 1;
     } else {
         r = r + 1;
@@ -886,13 +937,16 @@ test [v,w,$r,c] expect [11,11,11,10];
 # the combination of let ref and forget can be used when creating objects that capture
 # by reference from outside but want to change the name of the bindings
 
+from @std.types use is_error;
+
 let p = module {
     let ref z = v;
     forget v;
 };
+
 # the p object contains a single member called z that is aliased to v (from outside)
 test p.z expect 11;
-test @is_error(p.v!);
+test is_error(p.v!);
 test map(fun kv {let [k,v]=kv; [k,$v] }, @to_array(p)) expect [["z",11]];
 
 p.z += 1;
@@ -963,7 +1017,7 @@ let o = @make_dict();
 
 test @get(o,"x") expect 1;
 test @get(o,"y") expect 2;
-test @is_error(@get(o,"z")!);
+test is_error(@get(o,"z")!);
 
 let p = @extend_dict(o);  # p extends o (like inheritance)
 @insert(p,"y",12);
@@ -975,9 +1029,9 @@ test @get(p,"z") expect 13;
 
 test @get(o,"x") expect 1;
 test @get(o,"y") expect 2;
-test @is_error(@get(o,"z")!);
+test is_error(@get(o,"z")!);
 
-test @is_error(@remove(p,"x")!); # we can't remove x because it belongs to our "parent"
+test is_error(@remove(p,"x")!); # we can't remove x because it belongs to our "parent"
 test @get(p,"x") expect 1;
 
 @set(p,"x",p.x + 1);
@@ -993,8 +1047,8 @@ test @get(pf,"z") expect 13;
 test @get(p,"x") expect 3;
 test @get(o,"x") expect 3;
 
-test not(@is_error(@remove(pf,"x")!)); # we can remove x because of the flattening
-test @is_error(@get(pf,"x")!);
+test not(is_error(@remove(pf,"x")!)); # we can remove x because of the flattening
+test is_error(@get(pf,"x")!);
 
 
 ###

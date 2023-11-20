@@ -231,7 +231,8 @@ pub fn not(_: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
 
 #[allow(clippy::only_used_in_recursion)]
 pub fn print(interpreter: &Interpreter, ctx: &Context, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
-    for arg in args { 
+    let mut args = args.iter().peekable();
+    while let Some(arg) = args.next() {
         match arg.as_ref() {
             Expr::Closure(cctx, _, _) if cctx.get_binding(__STR__).is_some() => {
                 // if the closure/object has a binding for __STR__, we call it
@@ -243,6 +244,9 @@ pub fn print(interpreter: &Interpreter, ctx: &Context, args: &[Ptr<Expr>]) -> Re
             }
             _ => print!("{arg}"),
         } 
+        if args.peek().is_some() {
+            print!(" ");
+        }
     }
     stdout().flush()?;
     Ok(nil())
@@ -411,24 +415,24 @@ pub fn read_file(_ctx: &Context, file_expr: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     })
 }
 
-pub fn is_error(_: &Interpreter, _: &Context, expr: &Ptr<Expr>) -> Result<Ptr<Expr>> {
-    if let Expr::Error(_) = expr.as_ref() {
-        return Ok(expression::boolean(true));
-    }
-    Ok(expression::boolean(false))
-}
+// pub fn is_error(_: &Interpreter, _: &Context, expr: &Ptr<Expr>) -> Result<Ptr<Expr>> {
+//     if let Expr::Error(_) = expr.as_ref() {
+//         return Ok(expression::boolean(true));
+//     }
+//     Ok(expression::boolean(false))
+// }
 
-pub fn is_ref(_: &Interpreter, _: &Context, expr: &Ptr<Expr>) -> Result<Ptr<Expr>> {
-    if let Expr::Ref(_) = expr.as_ref() {
-        return Ok(expression::boolean(true));
-    }
-    Ok(expression::boolean(false))
-}
+// pub fn is_ref(_: &Interpreter, _: &Context, expr: &Ptr<Expr>) -> Result<Ptr<Expr>> {
+//     if let Expr::Ref(_) = expr.as_ref() {
+//         return Ok(expression::boolean(true));
+//     }
+//     Ok(expression::boolean(false))
+// }
 
 pub fn type_of(_: &Interpreter, _: &Context, expr: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     debug!("type of");
     Ok(Expr::String(match expr.as_ref() {
-        Expr::Nil => "()",
+        Expr::Nil => "Nil",
         Expr::Float(_) => "Float",
         Expr::Integer(_) => "Integer",
         Expr::String(_) => "String",
@@ -439,6 +443,7 @@ pub fn type_of(_: &Interpreter, _: &Context, expr: &Ptr<Expr>) -> Result<Ptr<Exp
         Expr::Closure(_,_,_) => "Closure",
         Expr::Ref(_) => "Ref",
         Expr::Break(_) |
+        Expr::Exit(_) |
         Expr::Continue |
         Expr::Return(_) |
         Expr::Throw(_) => "Exception",
