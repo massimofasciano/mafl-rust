@@ -289,7 +289,7 @@ map(add(1),range(0,4))
 Here are a few things that I should work on:
 
 - use Serde to serialize/deserialize from Rust structures to MFAL types (for easier embedding)
-- right now, we have 2 types: Value and Expr. Value is used to pass values from Rust and to Rust (it only represents data). Expr represents the full range of data that the interpreter works with. It represents atomic values, code, closures, references, etc... It would probably be cleaner to also have a dedicated type for code. A "fun" contruct is code, an "if" construct is code but a closure is not (it contains runtime state + code).
+- right now, we have 2 types: Value and Expr. Value is used to pass values from Rust and to Rust (it only represents simple data). Expr represents the full range of data that the interpreter works with. It represents atomic values, code, closures, references, etc... It would probably be cleaner to also have a dedicated type for code. A "fun" contruct is code, an "if" construct is code but a closure is not (it contains runtime state + code).
 - Expr uses Gc pointers and interior mutability GcCell almost everywhere. This made it easier to represent potentially-cyclic objects from MFAL. This is not required everywhere, especially in static code (no cycles or multiple references). Sometimes, Box would be enough and sometimes a normal reference with a lifetime.
 - improve the display and debug traits for Expr
 
@@ -297,4 +297,5 @@ Eventually, it would be interesting to see what performance gains can be obtaine
 - using bytecode and a stack instead of tree-walking
 - transpiling to another language that is closer to MFAL (functional with gc)
 - maybe even producing machine code
-but the design of the language probably makes this very difficult (fun things, especially dynamic evaluation make optimizing much harder) and I don't think I will be writing a JIT.
+
+The design of the language probably makes these optimizations difficult (especially dynamic evaluation) and I don't think I will be writing a JIT.
