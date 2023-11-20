@@ -13,11 +13,11 @@ Objective 2 was more important to me. This means that the design of the MAFL pro
 Performance is not very good: i'm using a tree-walking interpreter, the language creates cyclic structures and I'm using the Gc crate
 to perform garbage collection (Rc does not like cycles).
 
-I tried keep the language as functional as possible. Functions are the main compound type in MAFL. 
+I tried to keep the language as functional as possible. Functions are the main compound type in MAFL. 
 They are used to run code but also as objects and modules. The only exception to this is arrays. At first,
 I tried using functions for arrays but decided to have a dedicated type instead.
 
-By default, lexical binding is used. Closures are the main element in the language. But the language also supports
+By default, lexical binding is used. Closures are the main element in the language but the language also supports
 special dynamic functions that expand at the call site. It has an @eval builtin that allows the execution
 of a string as a program in the current context.
 
@@ -64,6 +64,7 @@ module is like a zero-arg cons that is called immediately (instance creator).
 let common = module {
     let x = 10;
 };
+
 let builder = cons i1 i2 {
     from common use x;
     let y = i1;
@@ -83,10 +84,11 @@ let builder = cons i1 i2 {
     forget i1;
     forget i2;
 };
+
 let state1 = builder(1,2);
 # at this point state1 is an object containing
 # - x: aliased to the x inside common
-# - y,z: internal to state1
+# - y,z: internal to state1 (values 1 and 2)
 # - 3 methods: advance, reset and to_string (called by @println)
 # - no i1 or i2 because we forgot them
 # but the reset method has captured i1 and i2 in a closure and can use them
@@ -99,12 +101,17 @@ let state2 = builder(4,8);
 @println(state2);
 
 state1.x += 1;
+
 test common.x expect 11;
 test state1.x expect 11;
 test state2.x expect 11;
 
+@println(state2);
 state2.advance(2);
+@println(state2);
 state2.advance(2);
+@println(state2);
+
 test common.x expect 15;
 test state1.x expect 15;
 test state2.x expect 15;
@@ -124,6 +131,9 @@ State(10,4,8)
 # test passed common.x: result 11
 # test passed state1.x: result 11
 # test passed state2.x: result 11
+State(11,4,8)
+State(13,8,23)
+State(15,16,44)
 # test passed common.x: result 15
 # test passed state1.x: result 15
 # test passed state2.x: result 15
@@ -131,6 +141,7 @@ State(15,1,2)
 State(15,16,44)
 State(15,1,2)
 State(15,4,8)
+
 ```
 
 ## The interpreter
