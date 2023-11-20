@@ -252,6 +252,13 @@ pub fn print(interpreter: &Interpreter, ctx: &Context, args: &[Ptr<Expr>]) -> Re
     Ok(nil())
 }
 
+pub fn println(interpreter: &Interpreter, ctx: &Context, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
+    print(interpreter, ctx, args)?;
+    println!();
+    stdout().flush()?;
+    Ok(nil())
+}
+
 pub fn command(_: &Interpreter, _: &Context, cmd: &Ptr<Expr>, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
     if let Expr::String(cmd) = cmd.as_ref() {
         let mut cmd = Command::new(cmd);
@@ -264,21 +271,20 @@ pub fn command(_: &Interpreter, _: &Context, cmd: &Ptr<Expr>, args: &[Ptr<Expr>]
     }
 }
 
-pub fn println(interpreter: &Interpreter, ctx: &Context, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
-    print(interpreter, ctx, args)?;
-    println!();
+pub fn debug(_: &Interpreter, _: &Context, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
+    let mut args = args.iter().peekable();
+    while let Some(arg) = args.next() {
+        print!("{arg:?}"); 
+        if args.peek().is_some() {
+            print!(" ");
+        }
+    }
     stdout().flush()?;
     Ok(nil())
 }
 
-pub fn debug(_: &Context, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
-    for arg in args { print!("{arg:?}"); }
-    stdout().flush()?;
-    Ok(nil())
-}
-
-pub fn debugln(_: &Context, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
-    for arg in args { print!("{arg:#?}"); }
+pub fn debugln(interpreter: &Interpreter, ctx: &Context, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
+    debug(interpreter, ctx, args)?;
     println!();
     stdout().flush()?;
     Ok(nil())

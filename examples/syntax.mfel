@@ -439,24 +439,81 @@ test c1.to_string() expect "1:2";
 
 @println("*** BUILTINS AND STD ***");
 
-# we need special builtin functions to perform operations that cannot be written in the language
+# we need special builtin variables functions to perform operations that cannot be written in the language
 # for example: 
 # - operating system interaction
 # - operations on atomic types
 # - faster versions of functions
 
-# these functions do not support currying: they must be called with the proper number of arguments
+# the functions do not support currying: they must be called with the proper number of arguments
 # they support a variable number of arguments and overloading based on number of arguments
 # they can be passed to other functions as long as no currying occurs
+# they are always prefixed with @ to separate them from user variables
 
-# here are a few examples of builtin functions (there are many more in the source code of the interpreter)
+# here is a description of some of the builtin functions and variables (more details in the source code of the interpreter):
 
-@println(c1," ",c2," ",o.x); # converts all arguments to strings and prints a concatenation of them
+# @args: the command line arguments as an array of strings
+# @std: the standard library as module
+# @self: the current excecution context (as an object)
+# @version: the language version as a string (ex: "0.8.3")
+# @os: the operating system family as a string (ex: "linux", "windows", etc...)
+# @test_pass_count: number of passed tests
+# @test_fail_count: number of failed tests
+
+# @pragma(str,str): set internal interpreter options
+# @call(f,[arg1, ..., argn]): call a function taking arguments from an array
+# @print(...): display arguments separated by spaces (will call .to_string() on objects if defined)
+# @println(...): print followed by a newline
+# @debug(...): like print but in debug format
+# @debugln(...): like println but in debug format
+# @error(str): trigger an error
+# @make_error(str): construct an error object without triggering an error
+# @eval(str): evaluate a string as program code (in current context)
+# @include(str): same as eval but from a file
+# @readfile(str): contents of file as a string
+# @readline(): read a line from the terminal as a string
+# @pow(x,y): x to the power of y
+# @exp(x): e to the power of x
+# @log(x): base e log of x
+# @len(any): length of something (type-specific)
+# @to_integer(any): convert to an integer (if possible)
+# @to_float(any): convert to a float (if possible)
+# @to_string(any): convert to a string (will call .to_string() on objects if defined)
+# @type_of(any): the type of something as a string (ex: @type_of([1,2] returns "Array"))
+# @make_array(size, init): make an array of a certain size with an initial value for each element
+#                         if init is a function, it is called with the index of each element
+# @to_array(any): converts something to an array
+#   - an array is copied (with deep copy)
+#   - a string is converted to an array of characters
+#   - an object is converted to an array of [key,ref] pairs where key is a string and ref is a reference
+# @slice(seq, start, end): returns a slice of the same type from start to end (ex: @slice("123",1,3) returns "23")
+# @copy(any): shallow copy of something
+# @clone(any): deep copy of something
+# @append(array, array2): mutably appends array2 to array
+# @make_dict(): create an empty closure (to be used as a dict)
+# @extend_dict(parent): creates a new closure with a prent context (linked hashmaps)
+# @flatten_dict(dict): creates a new closure with flat references to dict members
+# @get(any, key): get a member from a container (works for objects and arrays)
+# @set(any, key, value): set a member in a container (works for objects and arrays)
+# @insert(dict, key, value): adds a binding to a dict
+# @removes(dict, key, value): removes a binding from a dict
+# @now(): the current time as float seconds since UNIX EPOCH
+# @sleep(seconds): sleep for float seconds
+# @flatten_self(): returns a flattened version of @self
+# @lines(str): splits string into array of strings (one per line)
+# @split(str, pattern): splits string into array of strings (pattern is regex separator)
+# @trim(str): removes whitespace before and after a string
+# @matches(str, regex): returns an array of all substrings matching regex
+# @command(strs): runs a system command from an array of strings (first is command name, rest are args)
+# @sort(array): mutably sorts an array
+# @sort_by(compare, array): mutably sorts an array using a compare function
+# @randint(min, max): returns random integer between min and max
+# @random(): returns random float between 0 and 1
+
+@println(c1,c2,o.x); # converts all arguments to strings and prints them, separated by spaces
 # this prints: 1:2 2:3 1
 # note that when an object has a to_string method, it is called by @println and @to_string
 test @to_string(c1) + " " + @to_string(c2) + " " + @to_string(o.x) expect "1:2 2:3 1";
-
-# @readline() reads a line from the terminal and returns it as a string
 
 let s = "hi there!";
 let a = [1,2,3,4];
@@ -475,56 +532,6 @@ test @slice([1,2,3,4,5,6],2,4) expect [3,4];
 let arr = [4,6,7,3,2];
 @sort_by(\a,b{a>b},arr);
 test arr expect [7,6,4,3,2];
-
-(#
-            ("pragma", [id, val]) => { builtin::pragma(self, ctx, id, val) },
-            ("call", [callable, args]) => { builtin::call(self, ctx, callable, args) },
-            ("println", args) => { builtin::println(self, ctx, args) },
-            ("print", args) => { builtin::print(self, ctx, args) },
-            ("debugln", args) => { builtin::debugln(ctx, args) },
-            ("debug", args) => { builtin::debug(ctx, args) },
-            ("error", args) => { builtin::error_from_strings(ctx, args) },
-            ("make_error", [msg]) => { builtin::make_error(msg) },
-            ("eval", [arg]) => { builtin::eval_string_as_source(self, ctx, arg) },
-            ("include", [file_expr]) => builtin::include(self, ctx, file_expr),
-            ("readfile", [file_expr]) => builtin::read_file(ctx, file_expr),
-            ("readline", []) => builtin::read_line(ctx),
-            ("pow", [lhs, rhs]) => builtin::pow(ctx, lhs, rhs),
-            ("exp", [val]) => builtin::exp(self, ctx, val),
-            ("log", [val]) => builtin::log(ctx, val),
-            ("len", [val]) => builtin::len(ctx, val),
-            ("to_integer", [val]) => builtin::to_integer(self, ctx, val),
-            ("to_float", [val]) => builtin::to_float(self, ctx, val),
-            ("to_string", [val]) => builtin::to_string(self, ctx, val),
-            ("type_of", [val]) => builtin::type_of(self, ctx, val),
-            ("make_array", [size, init]) => builtin::make_array(self, ctx, size, init),
-            ("to_array", [init]) => builtin::to_array(self, ctx, init),
-            ("slice", [container, start, end]) => builtin::slice(ctx, container, start, end),
-            ("copy", [container]) => builtin::shallow_copy(ctx, container),
-            ("clone", [container]) => builtin::deep_copy(ctx, container),
-            ("append", [target, new]) => builtin::append(self, ctx, target, new),
-            ("extend_dict", [parent]) => builtin::extend_dict(ctx, parent),
-            ("flatten_dict", [parent]) => builtin::flatten_dict(ctx, parent),
-            ("get", [container, key]) => builtin::get(self, ctx, container, key),
-            ("set", [container, key, value]) => builtin::set(self, ctx, container, key, value),
-            ("insert", [container, key, value]) => builtin::insert(self, ctx, container, key, value),
-            ("remove", [container, key]) => builtin::remove(self, ctx, container, key),
-            ("make_dict", []) => builtin::make_dict(ctx),
-            ("now", []) => builtin::now(ctx),
-            ("sleep", [seconds]) => builtin::sleep(ctx, seconds),
-            ("flatten_self", []) => Ok(expression::context(ctx.flatten_ref())), // returns a flattened version of @self
-            ("lines", [init]) => builtin::to_array_lines(ctx, init),
-            ("split", [source, pattern]) => builtin::split(self, ctx, source, pattern),
-            ("trim", [source]) => builtin::trim(self, ctx, source),
-            ("matches", [source, regex]) => builtin::matches(self, ctx, source, regex),
-            ("command", cmd_args) if cmd_args.len() > 1 => { 
-                builtin::command(self, ctx, &cmd_args[0], &cmd_args[1..]) 
-            },
-            ("sort", [target]) => builtin::sort(self, ctx, target, None),
-            ("sort_by", [compare, target]) => builtin::sort(self, ctx, target, Some(compare)),
-            ("randint", [min, max]) => builtin::randint(self, ctx, min, max),
-            ("random", []) => builtin::randfloat(self, ctx),
-#)
 
 # this next one only works on unix systems with the expr utility
 if @os == "linux" {
