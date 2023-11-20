@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use log::debug;
-use crate::{Ptr, PtrCell, expression::Expr, CellRefMut};
+use crate::{Ptr, PtrCell, expression::{Expr, Value}, CellRefMut};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 #[cfg(feature = "gc")]
@@ -241,6 +241,16 @@ impl From<Scope> for Context {
 impl From<Ptr<Scope>> for Context {
     fn from(rc_scope: Ptr<Scope>) -> Self {
         Self{ inner: rc_scope }
+    }
+}
+
+impl From<HashMap<String,Value>> for Context {
+    fn from(values: HashMap<String,Value>) -> Self {
+        let ctx = Self::default();
+        for (key, value) in values {
+            ctx.add_binding(key, Expr::from(value).into());
+        }
+        ctx
     }
 }
 

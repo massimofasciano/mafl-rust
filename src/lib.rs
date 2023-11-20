@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::HashMap};
 use context::Context;
-use expression::{Expr, Builtin};
+use expression::{Expr, Builtin, Value};
 use pest::Parser;
 use crate::expression::{MaflParser, Rule};
 use anyhow::{anyhow, Result};
@@ -58,6 +58,9 @@ impl Interpreter {
     }
     pub fn set_env(&mut self, env: Vec<String>) {
         self.args = expression::array(env.into_iter().map(expression::string).collect());
+    }
+    pub fn set_bindings(&mut self, values: HashMap<String,Value>) {
+        self.ctx = Context::from(values);
     }
     pub fn init_std(&mut self) -> Result<()> {
         let ctx = Context::new();

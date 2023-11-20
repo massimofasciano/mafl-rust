@@ -101,8 +101,10 @@ impl Interpreter {
                 open
             }
 
-            Expr::Forget(id) => {
-                ctx.remove_binding(id);
+            Expr::Forget(ids) => {
+                for id in ids { 
+                    ctx.remove_binding(id); 
+                }
                 HashSet::new()
             }
 

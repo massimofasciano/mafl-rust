@@ -54,7 +54,7 @@ pub enum Expr {
     Let(String,Ptr<Expr>),
     LetArray(Vec<String>,Ptr<Expr>),
     LetRef(String,Ptr<Expr>),
-    Forget(String),
+    Forget(Vec<String>),
     AssignToExpression(Ptr<Expr>,Ptr<Expr>),
     AssignToDeRefExpression(Ptr<Expr>,Ptr<Expr>),
     OpAssignToExpression(Operator,Ptr<Expr>,Ptr<Expr>),
@@ -284,4 +284,94 @@ impl TryFrom<Ptr<Expr>> for Value {
         })
     }
 }
+
+impl From<Value> for Expr {
+    fn from(value: Value) -> Self {
+        match value {
+            Value::Nil => Expr::Nil,
+            Value::Integer(i) => Expr::Integer(i),
+            Value::Float(f) => Expr::Float(f),
+            Value::Character(c) => Expr::Character(c),
+            Value::Boolean(b) => Expr::Boolean(b),
+            Value::String(s) => Expr::String(s),
+            Value::Array(v) => 
+                Expr::Array(PtrCell::new(v.into_iter().map(|x|Expr::from(x).into()).collect())),
+            Value::Dict(dict) => {
+                Expr::Closure(Context::from(dict),vec![],Expr::Nil.into())
+            }
+        }
+    }
+}
+
+impl TryFrom<Value> for i64 {
+    type Error = anyhow::Error;
+    fn try_from(value: Value) -> Result<Self> {
+        match value {
+            Value::Integer(i) => Ok(i),
+            _ => Err(anyhow!("can't convert this value to an i64"))
+        }
+    }
+}
+
+impl TryFrom<Value> for f64 {
+    type Error = anyhow::Error;
+    fn try_from(value: Value) -> Result<Self> {
+        match value {
+            Value::Integer(i) => Ok(i as f64),
+            Value::Float(f) => Ok(f),
+            _ => Err(anyhow!("can't convert this value to an f64"))
+        }
+    }
+}
+
+impl TryFrom<Value> for String {
+    type Error = anyhow::Error;
+    fn try_from(value: Value) -> Result<Self> {
+        match value {
+            Value::String(s) => Ok(s),
+            _ => Err(anyhow!("can't convert this value to a String"))
+        }
+    }
+}
+
+impl TryFrom<Value> for bool {
+    type Error = anyhow::Error;
+    fn try_from(value: Value) -> Result<Self> {
+        match value {
+            Value::Boolean(b) => Ok(b),
+            _ => Err(anyhow!("can't convert this value to a bool"))
+        }
+    }
+}
+
+impl TryFrom<Value> for char {
+    type Error = anyhow::Error;
+    fn try_from(value: Value) -> Result<Self> {
+        match value {
+            Value::Character(c) => Ok(c),
+            _ => Err(anyhow!("can't convert this value to a char"))
+        }
+    }
+}
+
+impl TryFrom<Value> for Vec<Value> {
+    type Error = anyhow::Error;
+    fn try_from(value: Value) -> Result<Self> {
+        match value {
+            Value::Array(v) => Ok(v),
+            _ => Err(anyhow!("can't convert this value to a Vec<Value>"))
+        }
+    }
+}
+
+impl TryFrom<Value> for HashMap<String,Value> {
+    type Error = anyhow::Error;
+    fn try_from(value: Value) -> Result<Self> {
+        match value {
+            Value::Dict(d) => Ok(d),
+            _ => Err(anyhow!("can't convert this value to a HashMap<String,Value>"))
+        }
+    }
+}
+
 

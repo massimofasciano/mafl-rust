@@ -177,9 +177,9 @@ impl Interpreter {
                     Expr::If(cond, then, r#else).into()
                 } 
                 Rule::forget => {
-                    assert!(inner.len() == 1);
-                    let id = inner[0].as_str().to_owned();
-                    Expr::Forget(id).into()
+                    assert!(!inner.is_empty());
+                    let ids = inner.iter().map(|x|x.as_str().to_owned()).collect();
+                    Expr::Forget(ids).into()
                 } 
                 Rule::r#let => {
                     assert!(inner.len() == 1 || inner.len() == 2 || inner.len() == 3);

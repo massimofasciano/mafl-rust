@@ -88,8 +88,11 @@ impl Interpreter {
                 last_value
             }
 
-            Expr::Forget(id) => {
-                ctx.remove_binding(id).ok_or(anyhow!("binding not found: {id}"))?
+            Expr::Forget(ids) => {
+                for id in ids {
+                    ctx.remove_binding(id).ok_or(anyhow!("binding not found: {id}"))?;
+                }
+                expression::nil()
             }
 
             Expr::LetRef(id, expr) => {
