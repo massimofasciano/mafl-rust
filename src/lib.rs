@@ -1,6 +1,6 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, collections::HashMap};
 use context::Context;
-use expression::Expr;
+use expression::{Expr, Builtin};
 use pest::Parser;
 use crate::expression::{MfelParser, Rule};
 use anyhow::{anyhow, Result};
@@ -37,6 +37,8 @@ pub struct Interpreter {
     test_pass_count: RefCell<usize>,
     test_fail_count: RefCell<usize>,
     pragma_shadow_local: RefCell<PragmaLevel>,
+    builtin_vars: HashMap<String,Builtin>,
+    builtin_fns: HashMap<String,Builtin>,
 }
 
 #[derive(Debug,Clone)]
@@ -85,6 +87,12 @@ impl Interpreter {
         let fail_count = *self.test_fail_count.borrow();
         (pass_count, fail_count)
     }
+    pub fn add_builtin_fn(&mut self, name: String, f: Builtin) {
+        self.builtin_fns.insert(name, f);
+    }
+    pub fn add_builtin_var(&mut self, name: String, f: Builtin) {
+        self.builtin_vars.insert(name, f);
+    }
 }
 
 impl Default for Interpreter {
@@ -96,6 +104,8 @@ impl Default for Interpreter {
             test_pass_count: RefCell::new(0),
             test_fail_count: RefCell::new(0),
             pragma_shadow_local: RefCell::new(PragmaLevel::Allow),
+            builtin_vars: HashMap::new(),
+            builtin_fns: HashMap::new(),
         }
     }
 }

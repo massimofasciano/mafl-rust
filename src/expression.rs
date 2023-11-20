@@ -1,7 +1,7 @@
 use std::{ops::Deref, collections::{HashSet, HashMap}};
 use anyhow::{anyhow, Result};
 use pest_derive::Parser;
-use crate::{context::{Context, MemCell, ScopeID}, PtrCell, Ptr};
+use crate::{context::{Context, MemCell, ScopeID}, PtrCell, Ptr, Interpreter};
 
 #[cfg(feature = "gc")]
 use gc::{Finalize, Trace};
@@ -28,6 +28,8 @@ pub enum BlockType {
     If,
     Function
 }
+
+pub type Builtin = fn (&Interpreter, &Context, &[Ptr<Expr>]) -> Result<Ptr<Expr>>;
 
 // type BuiltinFn0 = fn (&Interpreter, &Context) -> Result<Ptr<Expr>>;
 // type BuiltinFn1 = fn (&Interpreter, &Context, &Ptr<Expr>) -> Result<Ptr<Expr>>;

@@ -651,15 +651,12 @@ impl Interpreter {
             "os" => Some(Ok(expression::string(std::env::consts::OS.to_owned()))),
             "test_pass_count" => Some(Ok(expression::integer(*self.test_pass_count.borrow() as i64))),
             "test_fail_count" => Some(Ok(expression::integer(*self.test_fail_count.borrow() as i64))),
-            // _ => {
-            //     LUT.iter()
-            //         .find(|(s,_)| { *s == name })
-            //         .map(|(_,f)| Ok({
-            //             let args = (0..(f.arity())).map(|i| format!{"{i}"}).collect();
-            //             Expr::Dyn(false, args, Expr::BuiltinFn(f.to_owned()).into()).into()
-            //         }))
-            // }
-            _ => None,
+            _ => {
+                self.builtin_vars.get(name)
+                    .map(|f| Ok({
+                        f(self, ctx, &[])?
+                    }))
+            }
         }
     }
     
@@ -712,7 +709,13 @@ impl Interpreter {
             ("sort_by", [compare, target]) => builtin::sort(self, ctx, target, Some(compare)),
             ("randint", [min, max]) => builtin::randint(self, ctx, min, max),
             ("random", []) => builtin::randfloat(self, ctx),
-            _ => Err(anyhow!("builtin {name}")),
+            _ => {
+                self.builtin_fns.get(name)
+                    .map(|f| Ok({
+                        f(self, ctx, args)?
+                    }))
+                    .ok_or(anyhow!("can't process builtin: {name}"))?
+            }
         }
     }
 

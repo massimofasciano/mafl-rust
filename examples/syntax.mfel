@@ -586,6 +586,18 @@ from @std.utils use flip;
 from @std.builtin use split;
 test map(flip(split,":"), ["1:2:3","4:5:6"]) expect [["1","2","3"],["4","5","6"]];
 
+# the interpreter supports adding custom builtin vars and functions from Rust
+# they can be called like any other builtin.
+# based on cargo flag "test_custom", we add @my_custom_var and @my_custom_fn in the interpreter main...
+
+(# commented out because "test_custom" is off by default...
+let x = 10;
+let y = 20;
+let z = 30;
+test @my_custom_var expect [10];
+test @my_custom_fn("x","y","z") expect [10,20,30];
+#)
+
 ###
 ### basic control
 ###
