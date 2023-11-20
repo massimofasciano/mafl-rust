@@ -1,6 +1,6 @@
 [package]
 name = "mafl"
-version = "0.9.2"
+version = "0.9.3"
 edition = "2021"
 
 [dependencies]
@@ -15,4 +15,5 @@ unescape = "0.1.0"
 gc = { version = "0.5", features = ["derive"], optional = true }
 
 [features]
-default = ["gc"]
+default = ["gc","std_internal"]
+std_internal = []

@@ -42,7 +42,7 @@ let Model = cons w_x1_h1 w_x1_h2 w_x2_h1 w_x2_h2 w_b1_h1 w_b1_h2 w_h1_out w_h2_o
         loss
     };
 
-    let string = fun {
+    let to_string = fun {
         "Model(" + w_x1_h1 + "," + w_x1_h2 + "," + w_x2_h1 + "," + w_x2_h2 + "," +
         w_b1_h1 + "," + w_b1_h2 + "," + w_h1_out + "," + w_h2_out + "," + w_b2_out + ")"
     };

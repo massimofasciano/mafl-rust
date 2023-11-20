@@ -1,1 +1,12 @@
-@std.prelude();
+let my_std = module {
+    # we create our own module containing the standard library
+    # loaded at runtime.
+    @include("src/std.mafl");
+};
+
+# use some functions from my_std
+from my_std.iter use map range; 
+# and use another from the internal copy of @std
+from @std.math use add;
+
+map(add(1),range(0,4))

@@ -255,9 +255,33 @@ The @std.methods module contains bindings that are called on internal types by t
 By default, no bindings from @std are imported into the user variable space.
 
 A this time, the MFAL standard library resides in [src/std.mafl](src/std.mafl) and is statically included in uncompressed form
-inside the Rust binary at compile time. As it grows, this is not ideal. Comments could be stripped and the text could be compressed.
+inside the Rust binary at compile time. As it grows, this might not be ideal. Comments could be stripped and the text could be compressed.
+It could also be pre-parsed to an AST and dumped in binary form.
 Having it inside the binary image removes an external dependancy but makes it impossible to change it without recompiling.
-It's a tradeoff I decided to make.
+It's a tradeoff I decided to make to make things easier (single standalone binary)
 
-It's still possible to distribute a copy of this file with the interpreter and load it at runtime with @include.
+If you don't like this, you have 2 options:
+
+1) A cargo compile-time flag named "std_internal" controls this behavior. It's on by default.
+If disabled, src/std.mfal is read at runtime instead and can be modified without recompiling.
+You still refer to @std as usual but it's loaded at runtime instead of compile time.
+
+2) It's still possible to distribute a copy of this file with the interpreter and load it at runtime with @include even if the internal one is present.
+Simply load it into another module and use it when you don't want the internal version. 
+You can even mix and match when testing new versions of standard library functions.
+
+```
+let my_std = module {
+    # we create our own module containing the standard library
+    # loaded at runtime.
+    @include("src/std.mafl");
+};
+
+# use some functions from my_std
+from my_std.iter use map range; 
+# and use another from the internal copy of @std
+from @std.math use add;
+
+map(add(1),range(0,4))
+```
 
