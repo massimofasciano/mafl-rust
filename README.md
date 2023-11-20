@@ -28,7 +28,7 @@ In a lot of places in the language, storage cells can be multiply aliased, eithe
 That's obviously not good practice, especially coming from Rust, but it was fun to play with (again objective 2).
 
 Currying is fully supported. That was very important to me. The language uses a declaration style without parentheses but function calls
-use parentheses (makes it easier to call zero-argument functions). Function calls can be chained and the language re-arranges the arguments they need to be consumed.
+use parentheses (makes it easier to call zero-argument functions). Function calls can be chained and the language re-arranges the arguments as they need to be consumed.
 
 
 ## Examples
