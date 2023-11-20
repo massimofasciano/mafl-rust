@@ -239,7 +239,7 @@ Here is an excerpt from the example:
 ## The standard library vs builtin functions and variables
 
 The language provides a series of builtin functions and variables. Their names start with @ (ex: @println). 
-They are coded in Rust and receive special treatment by the interpreter: overloading and variable arguments are supported but currying is not.
+They are coded in Rust and receive special treatment by the interpreter: overloading and variable number of arguments are supported but currying is not.
 More of these builtins can be added to an interpreter instance from Rust to customize behavior for embedding MAFL.
 
 The language also has a standard library written in MAFL. It is visible as a module named @std.
