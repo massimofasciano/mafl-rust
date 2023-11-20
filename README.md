@@ -30,6 +30,7 @@ That's obviously not good practice, especially coming from Rust, but it was fun 
 Currying is fully supported. That was very important to me. The language uses a declaration style without parentheses but function calls
 use parentheses (makes it easier to call zero-argument functions). Function calls can be chained and the language re-arranges the arguments they need to be consumed.
 
+
 ## Examples
 
 Refer to [mafl/language.mafl](mafl/language.mafl) for a walkthrough of the MFAL language as a long MFAL program.
@@ -234,3 +235,29 @@ Here is an excerpt from the example:
     println!("{}:{port}",subnet.map(|i|i.to_string()).join("."));
     //...
 ```
+
+## The standard library vs builtin functions and variables
+
+The language provides a series of builtin functions and variables. Their names start with @ (ex: @println). 
+They are coded in Rust and receive special treatment by the interpreter: overloading and variable arguments are supported but currying is not.
+More of these builtins can be added to an interpreter instance from Rust to customize behavior for embedding MAFL.
+
+The language also has a standard library written in MAFL. It is visible as a module named @std.
+Individual symbols can be imported into scope (ex: from @std.iter use range map).
+A special prelude function can also be used to import a common set of symbols: @std.prelude()
+
+In general, I chose to write the standard library functions in MAFL when it was possible and fun to do so. 
+Sometimes, it was necessary to use the host language (Rust) for thigs like io, random, time.
+The @std.builtin module contains MAFL bindings of Rust-based functions (ex: let len = fun x { @len(x) }).
+This can be useful when currying is desired.
+The @std.methods module contains bindings that are called on internal types by the interpreter when method calls are used (ex: 2.exp()).
+
+By default, no bindings from @std are imported into the user variable space.
+
+A this time, the MFAL standard library resides in [src/std.mafl](src/std.mafl) and is statically included in uncompressed form
+inside the Rust binary at compile time. As it grows, this is not ideal. Comments could be stripped and the text could be compressed.
+Having it inside the binary image removes an external dependancy but makes it impossible to change it without recompiling.
+It's a tradeoff I decided to make.
+
+It's still possible to distribute a copy of this file with the interpreter and load it at runtime with @include.
+
