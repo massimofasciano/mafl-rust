@@ -426,12 +426,12 @@ let o = module {
 };
 test o.x+o.y expect 3;
 let c = cons x y {
-    let string = \{ x + ":" + y }
+    let to_string = \{ x + ":" + y }
 };
 let c1 = c(1,2);
 let c2 = c(2,3);
 test c1.y expect c2.x;
-test c1.string() expect "1:2";
+test c1.to_string() expect "1:2";
 
 ###
 ### standard library vs builtin functions
@@ -445,12 +445,16 @@ test c1.string() expect "1:2";
 # - operations on atomic types
 # - faster versions of functions
 
+# these functions do not support currying: they must be called with the proper number of arguments
+# they support a variable number of arguments and overloading based on number of arguments
+# they can be passed to other functions as long as no currying occurs
+
 # here are a few examples of builtin functions (there are many more in the source code of the interpreter)
 
 @println(c1," ",c2," ",o.x); # converts all arguments to strings and prints a concatenation of them
 # this prints: 1:2 2:3 1
-# note that when an object has a string method, it is called by @println and @string
-test @string(c1) + " " + @string(c2) + " " + @string(o.x) expect "1:2 2:3 1";
+# note that when an object has a to_string method, it is called by @println and @to_string
+test @to_string(c1) + " " + @to_string(c2) + " " + @to_string(o.x) expect "1:2 2:3 1";
 
 # @readline() reads a line from the terminal and returns it as a string
 
@@ -459,10 +463,10 @@ let a = [1,2,3,4];
 test @len(s) expect 9;
 test @len(a) expect 4;
 
-test @string(3) expect "3";
+test @to_string(3) expect "3";
 test @make_array(3,1) expect [1,1,1];
 test @make_array(3,\x{x+1}) expect [1,2,3];
-test @array("hello") expect ['h','e','l','l','o'];
+test @to_array("hello") expect ['h','e','l','l','o'];
 
 test @lines("line1\nline2") expect ["line1","line2"];
 
@@ -475,7 +479,7 @@ test arr expect [7,6,4,3,2];
 # this next one only works on unix systems with the expr utility
 if @os == "linux" {
     test @trim(@command("expr",1,"+",3)) expect "4";
-    test (@float(@command("expr",1,"+",3)) / 2)! expect 2;
+    test (@to_float(@command("expr",1,"+",3)) / 2)! expect 2;
 } else {
     @println("skipping test on ",@os);
 }
@@ -514,6 +518,16 @@ test abc expect 11;
 from @std.array use map fold;
 test map(\x{1/x},[1,2,3,4,5]) expect [1,1/2,1/3,1/4,1/5];
 test fold(\a,x{a+x},0,[1,2,3,4,5]) expect 15;
+
+# the standard library provides the "builtin" module
+# that exposes normal functions for many of the builtins. 
+
+# this allows the use of builtins as parameters to other functions
+# with full support for currying (but without overloading and varargs)
+
+from @std.utils use flip;
+from @std.builtin use split;
+test map(flip(split,":"), ["1:2:3","4:5:6"]) expect [["1","2","3"],["4","5","6"]];
 
 ###
 ### basic control
@@ -609,7 +623,7 @@ let m = module {
     use x y;
 };
 
-for kv in @array(m) {
+for kv in @to_array(m) {
     let [k,v] = kv; 
     # k is a string, v is a ref to a value
     v <- $v + 1;
@@ -648,10 +662,10 @@ test r expect 3;
 # is equivalent to
 # f4(f3(f2(f1(x))))
 
-let square = \x{x*x};
-let add = \x,y{x+y};
+from @std.utils use flip;
+from @std.math use pow add mul;
 
-test 2 | square | add(1) | fun a { a * 10 } expect 50;
+test 2 | flip(pow,2) | add(1) | mul(10) expect 50;
 
 ###
 ### comments
@@ -740,32 +754,33 @@ let tc = try fe() catch e {
 };
 test tc expect 31;
 
-let err = try 1/0 catch e { @string(e) };
+let err = try 1/0 catch e { @to_string(e) };
 test err expect "division by zero";
 
 # the ! operator can unwrap an exception. expr! is equivalent to try expr catch e { e }
 
 test fe()! * 10 expect 300;
 test 10! * 10 expect 100;
-test @string((1/0)!) expect "division by zero";
+test @to_string((1/0)!) expect "division by zero";
 
 ###
-### dot notation on builtin types (experimental)
+### dot notation on builtin types
 ###
 
 @println("*** DOT NOTATION ON BUILTINS ***");
 
-# this experimental functionaity transforms b.x into fun { @x(b) }
+# for non-objects, the interpreter transforms 
+# o.f() into @std.methods.Type.f(o) where Type is @type_of(o)
 
 test [1,2,3,4].len() expect 4;
-test "123".array() expect ['1', '2', '3'];
+test "123".to_array() expect ['1', '2', '3'];
 test "1\n2".lines() expect ["1", "2"];
+test "1, 2 ,3,4".split(" *, *").map(@to_integer) expect [1,2,3,4];
 test 2.exp() expect @exp(2);
-test 1.string() expect "1";
-test ['a','b','c'].string() expect "abc";
-test [1,2,3].string() expect "[1, 2, 3]";
-
-# we could do better if builtins were handled via a call table
+test 4.mul(5) expect 20;
+test 1.to_string() expect "1";
+test ['a','b','c'].to_string() expect "abc";
+test [1,2,3].to_string() expect "[1, 2, 3]";
 
 ###
 ### the language has a reference type that links mutably to the storage cell of another value
@@ -832,13 +847,13 @@ test [v,c,r] expect [311,202,361];
 let o = module {
     let x = 1;
     let y = 2;
-    let string = \{"(" + x + "," + y + ")"}
+    let to_string = \{"(" + x + "," + y + ")"}
 };
 # we can also take a ref on an object field
 let p = &o.x;
-test @string(o) expect "(1,2)";
+test @to_string(o) expect "(1,2)";
 p <- 3;
-test o.string() expect "(3,2)";
+test o.to_string() expect "(3,2)";
 # but not on array elements (as of MFEL 0.3.2)
 
 ###
@@ -878,7 +893,7 @@ let p = module {
 # the p object contains a single member called z that is aliased to v (from outside)
 test p.z expect 11;
 test @is_error(p.v!);
-test map(fun kv {let [k,v]=kv; [k,$v] }, @array(p)) expect [["z",11]];
+test map(fun kv {let [k,v]=kv; [k,$v] }, @to_array(p)) expect [["z",11]];
 
 p.z += 1;
 # p.z is aliased to outside v

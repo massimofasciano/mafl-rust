@@ -12,23 +12,41 @@ let prelude = dynmut {
     from @std.utils use flip;
     from @std.math use add sub mul div exp log pow;
     from @std.time use elapsed;
-    from @std.iter use range map fold;
+    from @std.iter use range map fold sum prod filter;
+    from @std.array use reduce reverse;
+    from @std.builtin use len to_string sort sort_by to_integer to_float to_array;
 };
 
 ## utility functions
 let utils = module {
     let flip = fun f { fun x y { f(y,x) } };
+    let rotr2 = flip;
+    let rotr3 = fun f { fun m a1 a2 { f(a1,a2,m) } };
+};
+
+## builtin functions (proper fun versions)
+let builtin = module {
+    let to_string = fun x { @to_string(x) };
+    let to_integer = fun x { @to_integer(x) };
+    let to_float = fun x { @to_float(x) };
+    let to_array = fun x { @to_array(x) };
+    let lines = fun x { @lines(x) };
+    let split = fun x y { @split(x,y) };
+    let len = fun x { @len(x) };
+    let sort = fun x { @sort(x) };
+    let sort_by = fun f x { @sort_by(f,x) };
+    let exp = fun x { @exp(x) };
+    let log = fun x { @log(x) };
+    let pow = fun x y { @pow(x,y) };
 };
 
 ## math functions
 let math = module {
+    from builtin use exp log pow;
     let add = fun x y { x + y };
     let sub = fun x y { x - y };
     let mul = fun x y { x * y };
     let div = fun x y { x / y };
-    let exp = fun x { @exp(x) };
-    let log = fun x { @log(x) };
-    let pow = fun x y { @pow(x,y) };
 };
 
 ## time calculations
@@ -111,4 +129,36 @@ let array = module {
         }
         arr
     };
+
+};
+
+let methods = module {
+    # these methods get called by the interpreter when field syntax is used
+    # on a builin type like Array, Integer, etc...
+
+    # the target is always the first argument so flip is often needed when
+    # reusing normal functions.
+    # ex: [1,2,3].map(\x{x+1}) becomes @std.methods.Array.map([1,2,3])(\x{x+1})
+
+    from utils use rotr2 rotr3;
+
+    let Array = module {
+        from array use map fold sum prod filter reduce reverse;
+        from builtin use len sort sort_by to_string;
+        let map = rotr2(map);
+        let fold = rotr3(fold);
+        let filter = rotr2(filter);
+        let reduce = rotr2(reduce);
+    };
+
+    let Float = module {
+        from builtin use to_string to_integer to_float;
+        from math use add sub mul div exp log pow;
+    };
+    let Integer = Float;
+
+    let String = module {
+        from builtin use len to_string to_integer to_float to_array lines split;
+    };
+
 };

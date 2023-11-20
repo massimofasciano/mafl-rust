@@ -7,9 +7,11 @@ use log::debug;
 use regex::Regex;
 use rand::Rng;
 
-use crate::{PtrCell, Ptr, __STR__, PragmaLevel, expression};
+use crate::{PtrCell, Ptr, PragmaLevel, expression};
 use crate::context::{MemCell, Bindings};
 use crate::{expression::{nil, closure, Expr}, context::Context, Interpreter};
+
+const __STR__ : &str = "to_string";
 
 pub fn pow(_: &Context, lhs: &Ptr<Expr>, rhs: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match (lhs.as_ref(), rhs.as_ref()) {
@@ -423,7 +425,7 @@ pub fn is_ref(_: &Interpreter, _: &Context, expr: &Ptr<Expr>) -> Result<Ptr<Expr
     Ok(expression::boolean(false))
 }
 
-pub fn type_of(_: &Context, expr: &Ptr<Expr>) -> Result<Ptr<Expr>> {
+pub fn type_of(_: &Interpreter, _: &Context, expr: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     debug!("type of");
     Ok(Expr::String(match expr.as_ref() {
         Expr::Nil => "()",
@@ -712,7 +714,7 @@ pub fn sort(interpreter: &Interpreter, ctx: &Context, target: &Ptr<Expr>, compar
     })
 }
 
-pub fn integer(interpreter: &Interpreter, ctx: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
+pub fn to_integer(interpreter: &Interpreter, ctx: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match val.as_ref() {
         Expr::Float(a) => Expr::Integer(*a as i64).into(),
         Expr::Integer(a) => Expr::Integer(*a).into(),
@@ -730,7 +732,7 @@ pub fn integer(interpreter: &Interpreter, ctx: &Context, val: &Ptr<Expr>) -> Res
     })
 }
 
-pub fn float(interpreter: &Interpreter, ctx: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
+pub fn to_float(interpreter: &Interpreter, ctx: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match val.as_ref() {
         Expr::Float(a) => Expr::Float(*a).into(),
         Expr::Integer(a) => Expr::Float(*a as f64).into(),
@@ -748,7 +750,7 @@ pub fn float(interpreter: &Interpreter, ctx: &Context, val: &Ptr<Expr>) -> Resul
     })
 }
 
-pub fn string(interpreter: &Interpreter, _: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
+pub fn to_string(interpreter: &Interpreter, _: &Context, val: &Ptr<Expr>) -> Result<Ptr<Expr>> {
     Ok(match val.as_ref() {
         Expr::Error(e) => expression::string(e.to_owned()),
         Expr::Array(arr) => {

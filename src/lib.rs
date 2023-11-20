@@ -48,8 +48,6 @@ pub enum PragmaLevel {
 
 static _STD_STR : &str = include_str!("std.mfel");
 
-const __STR__ : &str = "string";
-
 impl Interpreter {
     pub fn new() -> Result<Self> {
         let mut interpreter = Self::default();

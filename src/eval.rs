@@ -1,6 +1,6 @@
 use std::io::{stdout, Write};
 
-use crate::{Ptr, expression::{self, Expr, Operator, BlockType, BuiltinFn}, builtin::{self}, context::Context, Interpreter, PragmaLevel};
+use crate::{Ptr, expression::{self, Expr, Operator, BlockType}, builtin::{self}, context::Context, Interpreter, PragmaLevel};
 use anyhow::{Result,anyhow};
 use log::debug;
 
@@ -340,7 +340,13 @@ impl Interpreter {
             }
             Expr::Field(target, field) => {
                 let target = self.eval(ctx, target)?;
+                let target_type = if let Expr::String(t) = builtin::type_of(self, ctx, &target)?.as_ref() {
+                    t.to_owned()
+                } else {
+                    Err(anyhow!("type_of always returns a string"))?
+                };
                 match target.as_ref() {
+                    // if a closure object, get the field member from it
                     Expr::Closure(closure_ctx, _arg_names, _body) => {
                         if let Some(value) = closure_ctx.get_binding(field) {
                             value.to_owned()
@@ -348,24 +354,26 @@ impl Interpreter {
                             Err(anyhow!("field binding not found: {field}"))?
                         }
                     }
-                    Expr::Integer(_) |
-                    Expr::Float(_) |
-                    Expr::Boolean(_) |
-                    Expr::Array(_) |
-                    Expr::String(_) => {
-                        match field.as_str() {
-                            "TODO" => expression::nil(),
-                            _ => {
-                                self.eval(ctx, &Expr::Fun(vec![], 
-                                    Expr::FunctionCall(
-                                        Expr::BuiltinVariable(field.to_owned()).into(), 
-                                        vec![target.to_owned()]
-                                    ).into()
-                                ).into())?
-                            },
-                        }
+                    // otherwise, if the target is of type T, call @std.methods.T.field(target)
+                    // ex: [1,2,3].map(\x{x+1}) => @std.methods.Array.map([1,2,3])(\x{x+1})
+                    // the functions in the methods modules must have their arguments in the proper order 
+                    _ => {
+                        Expr::Closure(Context::new(), vec![],
+                            Expr::FunctionCall(
+                                Expr::Field(
+                                    Expr::Field(
+                                        Expr::Field(
+                                            Expr::BuiltinVariable("std".to_owned()).into(), 
+                                            "methods".to_owned(),
+                                        ).into(),
+                                        target_type,
+                                    ).into(),
+                                    field.to_owned(),
+                                ).into(),
+                                vec![target],
+                            ).into()
+                        ).into()
                     }
-                    _ => Err(anyhow!("field lookup on invalid type: {field}"))?,
                 }
             }
             Expr::Fun(arg_names, body) => {
@@ -451,27 +459,27 @@ impl Interpreter {
                 }
             }
 
-            Expr::BuiltinFn(builtin_fn) => {
-                match builtin_fn {
-                    BuiltinFn::Fn0(f) =>
-                        f(self, ctx)?,
-                    BuiltinFn::Fn1(f) => {
-                        let arg0 = ctx.get_binding("0").ok_or(anyhow!("builtin fn arg0 not found"))?;
-                        f(self, ctx, &arg0)?
-                    }
-                    BuiltinFn::Fn2(f) => {
-                        let arg0 = ctx.get_binding("0").ok_or(anyhow!("builtin fn arg0 not found"))?;
-                        let arg1 = ctx.get_binding("1").ok_or(anyhow!("builtin fn arg1 not found"))?;
-                        f(self, ctx, &arg0, &arg1)?
-                    }
-                    BuiltinFn::Fn3(f) => {
-                        let arg0 = ctx.get_binding("0").ok_or(anyhow!("builtin fn arg0 not found"))?;
-                        let arg1 = ctx.get_binding("1").ok_or(anyhow!("builtin fn arg1 not found"))?;
-                        let arg2 = ctx.get_binding("2").ok_or(anyhow!("builtin fn arg2 not found"))?;
-                        f(self, ctx, &arg0, &arg1, &arg2)?
-                    }
-                }
-            }
+            // Expr::BuiltinFn(builtin_fn) => {
+            //     match builtin_fn {
+            //         BuiltinFn::Fn0(f) =>
+            //             f(self, ctx)?,
+            //         BuiltinFn::Fn1(f) => {
+            //             let arg0 = ctx.get_binding("0").ok_or(anyhow!("builtin fn arg0 not found"))?;
+            //             f(self, ctx, &arg0)?
+            //         }
+            //         BuiltinFn::Fn2(f) => {
+            //             let arg0 = ctx.get_binding("0").ok_or(anyhow!("builtin fn arg0 not found"))?;
+            //             let arg1 = ctx.get_binding("1").ok_or(anyhow!("builtin fn arg1 not found"))?;
+            //             f(self, ctx, &arg0, &arg1)?
+            //         }
+            //         BuiltinFn::Fn3(f) => {
+            //             let arg0 = ctx.get_binding("0").ok_or(anyhow!("builtin fn arg0 not found"))?;
+            //             let arg1 = ctx.get_binding("1").ok_or(anyhow!("builtin fn arg1 not found"))?;
+            //             let arg2 = ctx.get_binding("2").ok_or(anyhow!("builtin fn arg2 not found"))?;
+            //             f(self, ctx, &arg0, &arg1, &arg2)?
+            //         }
+            //     }
+            // }
 
             Expr::Use(opt_source, members) => {
                 if let Some(source) = opt_source {
@@ -643,21 +651,22 @@ impl Interpreter {
             "os" => Some(Ok(expression::string(std::env::consts::OS.to_owned()))),
             "test_pass_count" => Some(Ok(expression::integer(*self.test_pass_count.borrow() as i64))),
             "test_fail_count" => Some(Ok(expression::integer(*self.test_fail_count.borrow() as i64))),
-            _ => {
-                LUT.iter()
-                    .find(|(s,_)| { *s == name })
-                    .map(|(_,f)| Ok({
-                        let args = (0..(f.arity())).map(|i| format!{"{i}"}).collect();
-                        Expr::Dyn(false, args, Expr::BuiltinFn(f.to_owned()).into()).into()
-                    }))
-            }
+            // _ => {
+            //     LUT.iter()
+            //         .find(|(s,_)| { *s == name })
+            //         .map(|(_,f)| Ok({
+            //             let args = (0..(f.arity())).map(|i| format!{"{i}"}).collect();
+            //             Expr::Dyn(false, args, Expr::BuiltinFn(f.to_owned()).into()).into()
+            //         }))
+            // }
+            _ => None,
         }
     }
     
     pub fn builtin_fn(&self, ctx: &Context, name: &str, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
         match (name, args) {
-            // ("pragma", [id, val]) => { builtin::pragma(self, ctx, id, val) },
-            // ("call", [callable, args]) => { builtin::call(self, ctx, callable, args) },
+            ("pragma", [id, val]) => { builtin::pragma(self, ctx, id, val) },
+            ("call", [callable, args]) => { builtin::call(self, ctx, callable, args) },
             ("println", args) => { builtin::println(self, ctx, args) },
             ("print", args) => { builtin::print(self, ctx, args) },
             ("debugln", args) => { builtin::debugln(ctx, args) },
@@ -668,7 +677,7 @@ impl Interpreter {
             ("include", [file_expr]) => builtin::include(self, ctx, file_expr),
             ("readfile", [file_expr]) => builtin::read_file(ctx, file_expr),
             ("pow", [lhs, rhs]) => builtin::pow(ctx, lhs, rhs),
-            // ("exp", [val]) => builtin::exp(self, ctx, val),
+            ("exp", [val]) => builtin::exp(self, ctx, val),
             ("log", [val]) => builtin::log(ctx, val),
             ("add", [lhs, rhs]) => builtin::add(ctx, lhs, rhs),
             ("sub", [lhs, rhs]) => builtin::sub(ctx, lhs, rhs),
@@ -681,10 +690,10 @@ impl Interpreter {
             ("len", [val]) => builtin::len(ctx, val),
             ("is_error", [expr]) => builtin::is_error(self, ctx, expr),
             ("is_ref", [expr]) => builtin::is_ref(self, ctx, expr),
-            ("integer", [val]) => builtin::integer(self, ctx, val),
-            ("float", [val]) => builtin::float(self, ctx, val),
-            ("string", [val]) => builtin::string(self, ctx, val),
-            ("type", [val]) => builtin::type_of(ctx, val),
+            ("to_integer", [val]) => builtin::to_integer(self, ctx, val),
+            ("to_float", [val]) => builtin::to_float(self, ctx, val),
+            ("to_string", [val]) => builtin::to_string(self, ctx, val),
+            ("type", [val]) => builtin::type_of(self, ctx, val),
             ("and_eager", [lhs, rhs]) => builtin::and(ctx, lhs, rhs),
             ("or_eager", [lhs, rhs]) => builtin::or(ctx, lhs, rhs),
             ("gt", [lhs, rhs]) => builtin::gt(ctx, lhs, rhs),
@@ -694,7 +703,7 @@ impl Interpreter {
             ("ge", [lhs, rhs]) => builtin::ge(ctx, lhs, rhs),
             ("le", [lhs, rhs]) => builtin::le(ctx, lhs, rhs),
             ("make_array", [size, init]) => builtin::make_array(self, ctx, size, init),
-            ("array", [init]) => builtin::to_array(self, ctx, init),
+            ("to_array", [init]) => builtin::to_array(self, ctx, init),
             ("slice", [container, start, end]) => builtin::slice(ctx, container, start, end),
             ("copy", [container]) => builtin::shallow_copy(ctx, container),
             ("clone", [container]) => builtin::deep_copy(ctx, container),
@@ -703,7 +712,7 @@ impl Interpreter {
             ("readline", []) => builtin::read_line(ctx),
             ("get", [container, key]) => builtin::get(self, ctx, container, key),
             ("set", [container, key, value]) => builtin::set(self, ctx, container, key, value),
-            // ("insert", [container, key, value]) => builtin::insert(self, ctx, container, key, value),
+            ("insert", [container, key, value]) => builtin::insert(self, ctx, container, key, value),
             ("remove", [container, key]) => builtin::remove(self, ctx, container, key),
             ("bind", [container, key, value]) => builtin::insert(self, ctx, container, key, value),
             ("extend_dict", [parent]) => builtin::extend_dict(ctx, parent),
@@ -713,28 +722,28 @@ impl Interpreter {
             ("sleep", [seconds]) => builtin::sleep(ctx, seconds),
             ("flatten_self", []) => Ok(expression::context(ctx.flatten_ref())), // returns a flattened version of @self
             ("split", [source, pattern]) => builtin::split(self, ctx, source, pattern),
-            // ("trim", [source]) => builtin::trim(self, ctx, source),
+            ("trim", [source]) => builtin::trim(self, ctx, source),
             ("matches", [source, regex]) => builtin::matches(self, ctx, source, regex),
             ("command", cmd_args) if cmd_args.len() > 1 => { 
                 builtin::command(self, ctx, &cmd_args[0], &cmd_args[1..]) 
             },
             ("sort", [target]) => builtin::sort(self, ctx, target, None),
             ("sort_by", [compare, target]) => builtin::sort(self, ctx, target, Some(compare)),
-            // ("randint", [min, max]) => builtin::randint(self, ctx, min, max),
-            // ("random", []) => builtin::randfloat(self, ctx),
+            ("randint", [min, max]) => builtin::randint(self, ctx, min, max),
+            ("random", []) => builtin::randfloat(self, ctx),
             _ => Err(anyhow!("builtin {name}")),
         }
     }
 
 }
 
-pub const LUT : &[(&str,BuiltinFn)] = &[
-    ("exp",BuiltinFn::Fn1(builtin::exp)),
-    ("insert",BuiltinFn::Fn3(builtin::insert)),
-    ("call",BuiltinFn::Fn2(builtin::call)),
-    ("pragma",BuiltinFn::Fn2(builtin::pragma)),
-    ("random",BuiltinFn::Fn0(builtin::randfloat)),
-    ("randint",BuiltinFn::Fn2(builtin::randint)),
-    ("trim",BuiltinFn::Fn1(builtin::trim)),
-];
+// pub const LUT : &[(&str,BuiltinFn)] = &[
+//     ("exp",BuiltinFn::Fn1(builtin::exp)),
+//     ("insert",BuiltinFn::Fn3(builtin::insert)),
+//     ("call",BuiltinFn::Fn2(builtin::call)),
+//     ("pragma",BuiltinFn::Fn2(builtin::pragma)),
+//     ("random",BuiltinFn::Fn0(builtin::randfloat)),
+//     ("randint",BuiltinFn::Fn2(builtin::randint)),
+//     ("trim",BuiltinFn::Fn1(builtin::trim)),
+// ];
 
