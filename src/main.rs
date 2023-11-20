@@ -30,7 +30,7 @@ fn main() -> Result<()> {
         // REPL
         let stdin = stdin();
         loop {
-            print!("MFEL> "); stdout().flush()?;
+            print!("MAFL> "); stdout().flush()?;
             let next_line = stdin.lock().lines().next();
             if let Some(line_result) = next_line {
                 match interpreter.run(&line_result?) {
