@@ -486,7 +486,7 @@ test c1.to_string() expect "1:2";
 #   - an array is copied (with deep copy)
 #   - a string is converted to an array of characters
 #   - an object is converted to an array of [key,ref] pairs where key is a string and ref is a reference
-# @slice(seq, start, end): returns a slice of the same type from start to end (ex: @slice("123",1,3) returns "23")
+# @slice(seq, start, end): returns a slice of the same type from start to end (ex: @slice("12345",1,3) returns "234")
 # @copy(any): shallow copy of something
 # @clone(any): deep copy of something
 # @append(array, array2): mutably appends array2 to array
@@ -527,7 +527,7 @@ test @to_array("hello") expect ['h','e','l','l','o'];
 
 test @lines("line1\nline2") expect ["line1","line2"];
 
-test @slice([1,2,3,4,5,6],2,4) expect [3,4];
+test @slice([1,2,3,4,5,6],2,4) expect [3,4,5];
 
 let arr = [4,6,7,3,2];
 @sort_by(\a,b{a>b},arr);
@@ -663,9 +663,9 @@ test r expect 720;
 
 # the standard library contains functions that work on iterators
 from @std.iter use range collect;
-test collect(range(3,7)) expect [3,4,5,6];
+test collect(range(3,6)) expect [3,4,5,6];
 # map was already imported above from @std.array but that is simply an alias to @std.iter.map
-test map(\x{x*10},range(0,10)) expect [0,10,20,30,40,50,60,70,80,90];
+test map(\x{x*10},range(0,9)) expect [0,10,20,30,40,50,60,70,80,90];
 
 # because objects and functions are the same in our language, we can't
 # directly iterate on the key/value binding pairs of an object
@@ -1146,8 +1146,8 @@ test [m.v1,m.v2,m.v3,m.v4] expect [1,2,3,4];
 let list = closed {
     @std.prelude(); # this puts a bunch of functions from @std into scope
     # flip, sub, map and range are imported by the prelude
-    map(flip(sub, 5), range(3,10))
-    # this applies \x{x-5} to each number of the range from 3 to 10 (excluded)
+    map(flip(sub, 5), range(3,9))
+    # this applies \x{x-5} to each number of the range from 3 to 9
 };
 test list expect [-2, -1, 0, 1, 2, 3, 4];
 

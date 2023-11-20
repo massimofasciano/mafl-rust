@@ -101,7 +101,7 @@ let time = module {
 let iter = module {
     let range = fun start end {
         fun {
-            if start < end {
+            if start <= end {
                 let count = start;
                 start += 1;
                 count            

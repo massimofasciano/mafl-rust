@@ -1,3 +1,4 @@
+use std::cmp::{max, min};
 use std::io::{self, BufRead, stdout, Write};
 use std::fmt::Write as _;
 use std::process::Command;
@@ -350,13 +351,17 @@ pub fn slice(_ctx: &Context, container: &Ptr<Expr>, start: &Ptr<Expr>, end: &Ptr
             Expr::Integer(end)) => {
                 let a1 = &a0.borrow();
                 let a2 = a1.as_slice();
-                let arr = a2[*start as usize .. *end as usize].to_vec();
+                let start = max(0,*start) as usize;
+                let end = min((*end + 1) as usize,a2.len());
+                let arr = a2[start..end].to_vec();
                 expression::array(arr)
         }
         (Expr::String(s),
             Expr::Integer(start), 
             Expr::Integer(end)) => {
-                Expr::String(s[*start as usize .. *end as usize].to_owned()).into()
+                let start = max(0,*start) as usize;
+                let end = min((*end + 1) as usize,s.len());
+                Expr::String(s[start..end].to_owned()).into()
         }
         _ => Err(anyhow!("slice {container:?} {start:?} {end:?}"))?,
     })
