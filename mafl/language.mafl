@@ -924,7 +924,7 @@ test o.to_string() expect "(3,2)";
 ###
 ### the explicit reference (&) exists because it is an actual object value that can be passed around (to functions)
 ###
-### forget x       removes the binding x from the current context
+### forget x       removes the binding x from the current context (can forget multiple bindings: forget x y z)
 ###
 
 @println("*** LET REF AND FORGET ***");
