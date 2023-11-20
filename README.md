@@ -185,7 +185,7 @@ MAFL>
 ## Embedding
 
 The examples folder shows how to embed the MFAL interpreter into a Rust program. It's possible to 
-add custom builtin variables and functions to the bound interpreter. Communication is done
+add custom builtin variables and functions to an interpreter instance. Communication is done
 through variable bindings and a returned Value type.
 
 In [examples/embed.rs](examples/embed.rs), we pass variable bindings (data) and a custom builtin function (Rust code) to the MAFL program.
