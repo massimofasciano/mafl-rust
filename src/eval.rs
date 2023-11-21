@@ -643,6 +643,7 @@ impl Interpreter {
     
     pub fn builtin_fn(&self, ctx: &Context, name: &str, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
         match (name, args) {
+            ("getenv", [id]) => { builtin::getenv(self, ctx, id) },
             ("pragma", [id, val]) => { builtin::pragma(self, ctx, id, val) },
             ("call", [callable, args]) => { builtin::call(self, ctx, callable, args) },
             ("println", args) => { builtin::println(self, ctx, args) },

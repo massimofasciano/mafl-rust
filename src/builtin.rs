@@ -833,3 +833,16 @@ pub fn pragma(interpreter: &Interpreter, _ctx: &Context, id: &Ptr<Expr>, val: &P
     })
 }
 
+pub fn getenv(_interpreter: &Interpreter, _ctx: &Context, id: &Ptr<Expr>) -> Result<Ptr<Expr>> {
+    Ok(match id.as_ref() {
+        Expr::String(name) => {
+            if let Ok(s) = std::env::var(name) {
+                expression::string(s)
+            } else {
+                expression::nil()
+            }
+        }
+        _ => Err(anyhow!("getenv on non-string"))?,
+    })
+}
+

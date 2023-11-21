@@ -460,6 +460,7 @@ test c1.to_string() expect "1:2";
 # @test_pass_count: number of passed tests
 # @test_fail_count: number of failed tests
 
+# @getenv(str): gets the value of an environment variable from the os (as a string, or nil if not found)
 # @pragma(str,str): set internal interpreter options
 # @call(f,[arg1, ..., argn]): call a function taking arguments from an array
 # @print(...): display arguments separated by spaces (will call .to_string() on objects if defined)
