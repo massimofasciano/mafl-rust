@@ -9,10 +9,10 @@
 ### not inside a closure (fun/cons/module).
 ### usage: @std.prelude();
 let prelude = dynmut {
-    from @std.utils use flip;
+    from @std.utils use flip min max;
     from @std.math use add sub mul div exp log pow;
     from @std.time use elapsed;
-    from @std.iter use range map fold sum prod filter;
+    from @std.iter use range map fold sum prod filter to_iter zip;
     from @std.array use reduce reverse;
     from @std.builtin use len to_string sort sort_by to_integer to_float to_array;
     from @std.builtin use type_of;
@@ -24,6 +24,20 @@ let utils = module {
     let flip = fun f { fun x y { f(y,x) } };
     let rotr2 = flip;
     let rotr3 = fun f { fun m a1 a2 { f(a1,a2,m) } };
+    let min = fun x y {
+        if x < y {
+            x
+        } else {
+            y
+        }
+    };
+    let max = fun x y {
+        if x > y {
+            x
+        } else {
+            y
+        }
+    };
 };
 
 ## builtin functions (proper fun versions)
@@ -138,6 +152,40 @@ let iter = module {
     let foreach = fun f a {
         for e in a { f(e) }
     };
+    let to_iter = fun it {
+        from @std.types use is_array is_function;
+        if is_array(it) {
+            let start = 0;
+            let end = @len(it)-1;
+            return fun {
+                if start <= end {
+                    let res = it[start];
+                    start += 1;
+                    res
+                } else {
+                    nil
+                }
+            };
+        }
+        if is_function(it) {
+            return it;
+        }
+        @error("not an iterator");
+    };
+    let zip = fun xs ys {
+        let xi = to_iter(xs);
+        let yi = to_iter(ys);
+        let result = @make_array(0,nil);
+        loop {
+            let x = xi();
+            let y = yi();
+            if x == nil or y == nil {
+                break;
+            }
+            @append(result,[x,y]);
+        }
+        result
+    };
 };
 
 ## array functions
@@ -169,7 +217,29 @@ let array = module {
         }
         arr
     };
-
+    let zip = fun xs ys {
+        from utils use min;
+        let minlen = min(@len(xs),@len(ys));
+        let result = @make_array(minlen,nil);
+        let i = 0;
+        while i < minlen {
+            result[i] = [xs[i],ys[i]];
+            i += 1;
+        }
+        result
+    };
+    let unzip = fun pairs {
+        let xs = @make_array(@len(pairs),nil);
+        let ys = @make_array(@len(pairs),nil);
+        let i = 0;
+        for pair in pairs {
+            let [x,y] = pair;
+            xs[i] = x;
+            ys[i] = y;
+            i += 1;
+        }
+        [xs,ys]
+    };
 };
 
 let methods = module {

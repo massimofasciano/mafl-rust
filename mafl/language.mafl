@@ -489,7 +489,7 @@ test c1.to_string() expect "1:2";
 # @slice(seq, start, end): returns a slice of the same type from start to end (ex: @slice("12345",1,3) returns "234")
 # @copy(any): shallow copy of something
 # @clone(any): deep copy of something
-# @append(array, array2): mutably appends array2 to array
+# @append(array, element): mutably adds element at end of array
 # @make_dict(): create an empty closure (to be used as a dict)
 # @extend_dict(parent): creates a new closure with a prent context (linked hashmaps)
 # @flatten_dict(dict): creates a new closure with flat references to dict members
