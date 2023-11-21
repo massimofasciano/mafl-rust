@@ -1,0 +1,30 @@
+if not(@is_valid_subnet(subnet)) {
+    @error("invalid subnet");
+}
+
+let name = {
+    # if the NAME variable exists in the OS environment, use it for the name
+    if (let env_name = @getenv("NAME")) != nil {
+        exit env_name;
+    }
+    # otherwise if FILE exists in the OS environment, use it for the file name
+    let file = "examples/hostnames.txt";
+    if (let env_file = @getenv("FILE")) != nil {
+        file = env_file;
+    }
+    from @std.iter use map filter;
+    # get names from a file (remove extra whitespace and skip empty lines)
+    let names = @lines(@readfile(file)) | map(@trim) | filter(\s{@len(s)>0});
+    # grab a name at random
+    names[@randint(0,@len(names)-1)]
+};
+
+subnet[3] = @randint(100,199);
+
+let port = @randint(port_min, port_max);
+forget port_min port_max;
+
+# we return this object to Rust
+module {
+    use name subnet port;
+}

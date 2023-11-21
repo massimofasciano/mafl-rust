@@ -65,6 +65,11 @@ impl Interpreter {
     pub fn set_bindings(&mut self, values: HashMap<String,Value>) {
         self.ctx = Context::from(values);
     }
+    pub fn get_bindings(&self) -> Result<HashMap<String,Value>> {
+        self.ctx.bindings_cloned().into_iter().map(|(k,v)| -> Result<(String,Value)> {
+            Ok((k, Value::try_from(v.get())?))
+        }).collect()
+    }
     pub fn init_std(&mut self) -> Result<()> {
         let ctx = Context::new();
         #[cfg(feature = "std_internal")]

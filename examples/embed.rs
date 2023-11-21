@@ -5,6 +5,8 @@ use anyhow::{Result, anyhow, Ok};
 
 use mafl::{expression::{Expr,self}, context::Context, Ptr};
 
+const SOURCE_FILE : &str = "examples/embed.mafl";
+
 // must match the signature of Builtin
 fn validate_subnet(_: &Interpreter, _: &Context, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
     // a custom function that takes an array of integers and validates that the 2 first are 192 and 168
@@ -32,29 +34,25 @@ fn main() -> Result<()> {
     ]);
     interpreter.set_bindings(bindings);
     interpreter.add_builtin_fn("is_valid_subnet".to_owned(), validate_subnet);
-    // ideally, this should be in a text file that the user can modify
+    // the MAFL program is read from a file
+    let source = std::fs::read_to_string(SOURCE_FILE)?;
     // the Rust side passes 3 bindings into MAFL
     // plus a custom builtin function @is_valid_subnet
     // and expects a dict in return with subnet and port members
-    let source = r#"
-        if not(@is_valid_subnet(subnet)) {
-            @error("invalid subnet");
-        }
-        subnet[3] = @randint(100,199);
-        let port = @randint(port_min, port_max);
-        forget port_min port_max;
-        module {
-            use subnet port;
-        }
-    "#;
-    let value : Value = interpreter.run(source)?.try_into()?; 
+    let value : Value = interpreter.run(&source)?.try_into()?; 
     // extracting the value into Rust variables (should make this easier with Serde) 
+    // we control what is returned from MAFL (can be a single atomic value or in this case an object)
     let dict : HashMap<String,Value> = value.try_into()?;
     let vals : Vec<Value> = dict.get("subnet").ok_or(anyhow!("no subnet"))?.clone().try_into()?;
     for (i, val) in vals.iter().cloned().enumerate() {
         subnet[i] = val.try_into()?;
     }
     let port : i64 = dict.get("port").ok_or(anyhow!("no port"))?.clone().try_into()?;
-    println!("{}:{port}",subnet.map(|i|i.to_string()).join("."));
+    let name : String = dict.get("name").ok_or(anyhow!("no name"))?.clone().try_into()?;
+    println!("{name}.local/{}:{port}",subnet.map(|i|i.to_string()).join("."));
+    // we could also grab the full context from the interpreter as a HashMap<String,Value>
+    // this grabs every variable that is in scope at the top level of the MAFL program (forget can clean this up)
+    let bindings = interpreter.get_bindings()?;
+    println!("{:?}", bindings);
     Ok(())
 }
