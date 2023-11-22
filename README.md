@@ -33,7 +33,7 @@ use parentheses (makes it easier to call zero-argument functions). Function call
 
 ## Examples
 
-Refer to [mafl/language.mafl](mafl/language.mafl) for a walkthrough of the MFAL language as a long MFAL program.
+Refer to [mafl/language.mafl](mafl/language.mafl) for a walkthrough of the MAFL language as a long MAFL program.
 
 A first functional example. The fun keyword is used to create closures (lambdas). It can be replaced with a more compact form with backslash.
 
@@ -193,7 +193,7 @@ MAFL>
 
 ## Embedding
 
-The examples folder shows how to embed the MFAL interpreter into a Rust program. It's possible to 
+The examples folder shows how to embed the MAFL interpreter into a Rust program. It's possible to 
 add custom builtin variables and functions to an interpreter instance. Communication is done
 through variable bindings and a returned Value type.
 
@@ -269,7 +269,7 @@ The @std.methods module contains bindings that are called on internal types by t
 
 By default, no bindings from @std are imported into the user variable space.
 
-A this time, the MFAL standard library resides in [src/std.mafl](src/std.mafl) and is statically included in uncompressed form
+A this time, the MAFL standard library resides in [src/std.mafl](src/std.mafl) and is statically included in uncompressed form
 inside the Rust binary at compile time. As it grows, this might not be ideal. Comments could be stripped and the text could be compressed.
 It could also be pre-parsed to an AST and dumped in binary form.
 Having it inside the binary image removes an external dependancy but makes it impossible to change it without recompiling.
@@ -278,7 +278,7 @@ It's a tradeoff I decided to make to make things easier (single standalone binar
 If you don't like this, you have 2 options:
 
 1) A cargo compile-time flag named "std_internal" controls this behavior. It's on by default.
-If disabled, src/std.mfal is read at runtime instead and can be modified without recompiling.
+If disabled, src/std.mafl is read at runtime instead and can be modified without recompiling.
 You still refer to @std as usual but it's loaded at runtime instead of compile time.
 
 2) It's still possible to distribute a copy of this file with the interpreter and load it at runtime with @include even if the internal one is present.
@@ -304,14 +304,14 @@ map(add(1),range(0,4))
 
 Here are a few things that I should work on:
 
-- use Serde to serialize/deserialize from Rust structures to MFAL types (for easier embedding)
+- use Serde to serialize/deserialize from Rust structures to MAFL types (for easier embedding)
 - right now, we have 2 types: Value and Expr. Value is used to pass values from Rust and to Rust (it only represents simple data). Expr represents the full range of data that the interpreter works with. It represents atomic values, code, closures, references, etc... It would probably be cleaner to also have a dedicated type for code. A "fun" contruct is code, an "if" construct is code but a closure is not (it contains runtime state + code).
-- Expr uses Gc pointers and interior mutability GcCell almost everywhere. This made it easier to represent potentially-cyclic objects from MFAL. This is not required everywhere, especially in static code (no cycles or multiple references). Sometimes, Box would be enough and sometimes a normal reference with a lifetime.
+- Expr uses Gc pointers and interior mutability GcCell almost everywhere. This made it easier to represent potentially-cyclic objects from MAFL. This is not required everywhere, especially in static code (no cycles or multiple references). Sometimes, Box would be enough and sometimes a normal reference with a lifetime.
 - improve the display and debug traits for Expr
 
 Eventually, it would be interesting to see what performance gains can be obtained by
 - using bytecode and a stack instead of tree-walking
-- transpiling to another language that is closer to MFAL (functional with gc)
+- transpiling to another language that is closer to MAFL (functional with gc)
 - maybe even producing machine code
 
 The design of the language probably makes these optimizations difficult (especially dynamic evaluation) and I don't think I will be writing a JIT.
