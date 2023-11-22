@@ -29,7 +29,7 @@ impl Interpreter {
                 if let Expr::Error(msg) = exception.as_ref() {
                     Err(anyhow!(msg.to_owned()))?
                 } else {
-                    Expr::Throw(e.to_owned()).into()
+                    Expr::Throw(self.eval(ctx, e)?).into()
                 }
             }
             Expr::Continue => Expr::Continue.into(),

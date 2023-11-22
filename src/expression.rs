@@ -76,12 +76,11 @@ pub enum Expr {
     Ref(Ptr<MemCell>),
     Scope(ScopeID,HashMap<String,Ptr<Expr>>),
     ScopeCycle(ScopeID),
-    ClosurePrintable(Ptr<Expr>,Vec<String>,Ptr<Expr>),
-    ArrayPrintable(Vec<Ptr<Expr>>),
-    ExceptionPrintable(Ptr<Expr>),
+    ClosureSafe(Ptr<Expr>,Vec<String>,Ptr<Expr>),
+    ArraySafe(Vec<Ptr<Expr>>),
+    ExceptionSafe(Ptr<Expr>),
     ParsedOperator(Operator),
     ParsedIdentifier(String),
-    // BuiltinFn(BuiltinFn),
 }
 
 impl PartialEq for Expr {
@@ -111,12 +110,14 @@ impl Expr {
 
 fn decycle(e: Ptr<Expr>, env: &mut HashSet<ScopeID>) -> Ptr<Expr> {
     match e.as_ref() {
+        Expr::Exit(rc) =>
+            Expr::ExceptionSafe(decycle(rc.to_owned(),env)).into(),
         Expr::Break(rc) =>
-            Expr::ExceptionPrintable(decycle(rc.to_owned(),env)).into(),
+            Expr::ExceptionSafe(decycle(rc.to_owned(),env)).into(),
         Expr::Return(rc) => 
-            Expr::ExceptionPrintable(decycle(rc.to_owned(),env)).into(),
+            Expr::ExceptionSafe(decycle(rc.to_owned(),env)).into(),
         Expr::Throw(rc) =>
-            Expr::ExceptionPrintable(decycle(rc.to_owned(),env)).into(),
+            Expr::ExceptionSafe(decycle(rc.to_owned(),env)).into(),
         Expr::Array(arr) => {
             let mut safe = vec![];
             for rc in arr.borrow().iter() {
@@ -130,12 +131,12 @@ fn decycle(e: Ptr<Expr>, env: &mut HashSet<ScopeID>) -> Ptr<Expr> {
                     _ => safe.push(rc.to_owned()),
                 }
             }
-            Expr::ArrayPrintable(safe).into()
+            Expr::ArraySafe(safe).into()
         }
         Expr::Closure(ctx, args, body) => {
             let scope_id = ctx.scope_id();
             if env.contains(&scope_id) {
-                Expr::ClosurePrintable(
+                Expr::ClosureSafe(
                     Expr::ScopeCycle(scope_id).into(), 
                     args.to_owned(), body.to_owned()
                 ).into()
@@ -156,7 +157,7 @@ fn decycle(e: Ptr<Expr>, env: &mut HashSet<ScopeID>) -> Ptr<Expr> {
                         }
                     }
                 }
-                Expr::ClosurePrintable(
+                Expr::ClosureSafe(
                     Expr::Scope(scope_id, safe).into(),
                     args.to_owned(),body.to_owned()
                 ).into()
@@ -176,10 +177,10 @@ impl std::fmt::Display for Expr {
             Expr::Character(a) => write!(f,"{a}"),
             Expr::String(a) => write!(f,"{a}"),
             Expr::Error(a) => write!(f,"Error<{a}>"),
-            Expr::ArrayPrintable(v) =>
+            Expr::ArraySafe(v) =>
                 write!(f,"[{}]",v.iter().map(|x|x.to_string()).collect::<Vec<_>>().join(", ")),
             Expr::Ref(mc) => write!(f,"->{}",mc.get()),
-            Expr::ExceptionPrintable(a) => write!(f,"Exception<{a}>"),
+            Expr::ExceptionSafe(a) => write!(f,"Exception<{a}>"),
             Expr::Throw(_) | 
             Expr::Return(_) | 
             Expr::Break(_) | 
@@ -259,26 +260,32 @@ impl std::fmt::Display for Value {
 impl TryFrom<Ptr<Expr>> for Value {
     type Error = anyhow::Error;
     fn try_from(expr: Ptr<Expr>) -> Result<Self> {
-        Ok(match expr.as_ref() {
+        let safe = decycle(expr,&mut HashSet::new());
+        Ok(match safe.as_ref() {
             Expr::Nil => Value::Nil,
             Expr::Integer(i) => Value::Integer(*i),
             Expr::Float(f) => Value::Float(*f),
             Expr::Character(c) => Value::Character(*c),
             Expr::Boolean(b) => Value::Boolean(*b),
             Expr::String(s) => Value::String(s.to_owned()),
-            Expr::Array(rc) => {
-                let v = rc.borrow().iter()
+            Expr::ExceptionSafe(e) => Self::try_from(e.to_owned())?,
+            Expr::ArraySafe(vec) => {
+                let v = vec.iter()
                     .map(|e| { Self::try_from(e.to_owned()) })
                     .collect::<Result<Vec<_>>>()?;
                 Value::Array(v)
             }
-            Expr::Closure(ctx,_,_) => {
-                let d = ctx.bindings_cloned().iter()
-                    .map(|(id, mc)| -> Result<(String,Value)> { 
-                        Ok((id.to_owned(), Self::try_from(mc.get())?)) 
-                    })
-                    .collect::<Result<HashMap<String,Value>>>()?;
-                Value::Dict(d)
+            Expr::ClosureSafe(sc,_,_) => {
+                if let Expr::Scope(_, de) = sc.as_ref() {
+                    let d = de.iter()
+                        .map(|(id, e)| -> Result<(String,Value)> { 
+                            Ok((id.to_owned(), Self::try_from(e.to_owned())?)) 
+                        })
+                        .collect::<Result<HashMap<String,Value>>>()?;
+                    Value::Dict(d)
+                } else {
+                    Value::Dict(HashMap::new())
+                }
             }
             _ => Err(anyhow!("can't convert this expression to a value"))?
         })
