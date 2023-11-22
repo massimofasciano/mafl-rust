@@ -194,13 +194,14 @@ We gather the result into a Value type that we extract into Rust variables to be
 Here is the MAFL script that is used by the Rust program. It's an example of using a MAFL script as a "smart" config file for a Rust program.
 
 ```
- if not(@is_valid_subnet(subnet)) {
+if not(@is_valid_subnet(subnet)) {
     @error("invalid subnet");
 }
 
 let name = {
     # if the NAME variable exists in the OS environment, use it for the name
     if (let env_name = @getenv("NAME")) != nil {
+        # this exits the current block with a env_name as its value
         exit env_name;
     }
     # otherwise if FILE exists in the OS environment, use it for the file name
@@ -208,16 +209,20 @@ let name = {
     if (let env_file = @getenv("FILE")) != nil {
         file = env_file;
     }
+    # import 2 functions from the standard library
     from @std.iter use map filter;
     # get names from a file (remove extra whitespace and skip empty lines)
     let names = @lines(@readfile(file)) | map(@trim) | filter(\s{@len(s)>0});
     # grab a name at random
+    # last expression in the block is the value of the block
     names[@randint(0,@len(names)-1)]
 };
 
 subnet[3] = @randint(100,199);
 
 let port = @randint(port_min, port_max);
+
+# remove 2 variables from the environment
 forget port_min port_max;
 
 # we return this object to Rust
