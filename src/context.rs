@@ -290,7 +290,7 @@ impl Finalize for Scope {
 mod tests {
     use crate::expression::integer;
     use super::Context;
-    use anyhow::{Result, Ok};
+    use anyhow::Result;
 
     #[test]
     fn ref_test() -> Result<()> {

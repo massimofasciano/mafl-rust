@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use mafl::{Interpreter, expression::Value};
-use anyhow::{Result, anyhow, Ok};
+use anyhow::{Result, anyhow};
 
 use mafl::{expression::{Expr,self}, context::Context, Ptr};
 
@@ -37,12 +37,11 @@ fn main() -> Result<()> {
     interpreter.add_builtin_fn("is_valid_subnet".to_owned(), validate_subnet);
     // the MAFL program is read from a file
     let source = std::fs::read_to_string(SOURCE_FILE)?;
-    // the Rust side passes 3 bindings into MAFL
+    // the Rust side passes 3 bindings into MAFL (subnet, port_min, port_max)
     // plus a custom builtin function @is_valid_subnet
-    // and expects a dict in return with subnet and port members
+    // and expects a dict in return with name, subnet and port as keys
     let value : Value = interpreter.run(&source)?.try_into()?; 
-    // extracting the value into Rust variables (should make this easier with Serde) 
-    // we control what is returned from MAFL (can be a single atomic value or in this case an object)
+    // extracting the value into Rust variables...
     let dict : HashMap<String,Value> = value.clone().try_into()?;
     let ip : Vec<i64> = dict.get("subnet").ok_or(anyhow!("no subnet"))?.clone().try_into()?;
     let port : i64 = dict.get("port").ok_or(anyhow!("no port"))?.clone().try_into()?;
