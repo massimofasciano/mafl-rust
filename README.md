@@ -177,7 +177,7 @@ true
 182 passed. 0 failed.
 ```
 
-If no arguments are provided, The interpreter enters into a read-eval-print loop. 
+If no file name is provided for the program, the interpreter enters into a read-eval-print loop. 
 Expressions have to fit on a single line and no editing of previous expressions is possible. 
 
 ```
