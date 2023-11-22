@@ -15,7 +15,7 @@ block_comment = @{
 }
 
 reserved = _{ 
-    "if" | "else" | "while" | "unless" | "do" | 
+    "if" | "else" | "while" | "do" | 
     "for" ~ !"get" | "forget" |
     "let" | "rec" | "ref" | 
     "in" | "use" | "from" | 
@@ -79,11 +79,7 @@ closed = {
 }
 
 if = {
-    "if" ~ expr ~ if_block ~ ("else" ~ if_block)?
-}
-
-unless = {
-    "unless" ~ expr ~ if_block
+    "if" ~ expr ~ if_block ~ ("else" ~ "if" ~ expr ~ if_block)* ~ ("else" ~ if_block)?
 }
 
 while = {
@@ -219,7 +215,7 @@ expr_prefix = { (not|neg|deref)* ~ expr_base }
 expr_base = _{
     "(" ~ expr ~ ")" | nil_literal | 
     array | block | if | 
-    while | unless | do_while | loop | for | try_catch |
+    while | do_while | loop | for | try_catch |
     fun | assign | use | closed |
     continue | 
     boolean | float | integer | string_literal | char_literal | 
@@ -227,7 +223,7 @@ expr_base = _{
 }
 
 // expressions that behave like blocks
-expr_block = _{ block | if | while | unless | loop | for | try_catch | closed }
+expr_block = _{ block | if | while | loop | for | try_catch | closed }
 
 semicolons = _{ ";" ~ semicolons | ";" }
 nil_implicit = { "" }

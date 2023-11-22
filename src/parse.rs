@@ -159,22 +159,27 @@ impl Interpreter {
                         .map(|x|x.as_str().to_owned()).collect::<Vec<_>>();
                     Expr::Use(opt_source, vars).into()
                 } 
-                Rule::r#if | Rule::unless => {
-                    assert!(inner.len() == 2 || inner.len() == 3);
-                    let expr = self.parse_rule(inner[0].clone())?;
-                    let cond = if rule == Rule::unless {
-                        Expr::UnaryOpCall(Operator::Not,expr).into()
+                Rule::r#if => {
+                    assert!(inner.len() >= 2);
+                    let mut result;
+                    let mut i = inner.len()-1;
+                    if inner.len() % 2 == 1 {
+                        assert!(inner[i].as_rule() == Rule::if_block);
+                        result = self.parse_rule(inner[i].clone())?;
+                        i -= 1;
                     } else {
-                        expr
+                        result = Expr::Nil.into();
                     };
-                    assert!(inner[1].as_rule() == Rule::if_block);
-                    let then = self.parse_rule(inner[1].clone())?;
-                    let r#else = if inner.len() < 3 {
-                        Expr::Nil.into()
-                    } else {
-                        self.parse_rule(inner[2].clone())?
-                    };
-                    Expr::If(cond, then, r#else).into()
+                    i -= 1;
+                    loop {
+                        let cond = self.parse_rule(inner[i].clone())?;
+                        assert!(inner[i+1].as_rule() == Rule::if_block);
+                        let then = self.parse_rule(inner[i+1].clone())?;
+                        result = Expr::If(cond, then, result).into();
+                        if i < 2 { break; }
+                        i -= 2;
+                    }
+                    result
                 } 
                 Rule::forget => {
                     assert!(!inner.is_empty());
@@ -437,7 +442,7 @@ impl Interpreter {
             Rule::expr_mul | Rule::expr_apply_or_access | Rule::expr_post | 
             Rule::expr_prefix | Rule::expr_exp | Rule::expr_ref |
             Rule::r#use | Rule::forget |
-            Rule::r#if | Rule::r#while | Rule::unless | Rule::do_while | Rule::array |
+            Rule::r#if | Rule::r#while | Rule::do_while | Rule::array |
             Rule::assign | Rule::fun | Rule::closed |
             Rule::r#let | Rule::r#loop | Rule::r#for | Rule::try_catch |
             Rule::exit | Rule::r#break | Rule::throw | Rule::test |

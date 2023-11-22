@@ -275,7 +275,7 @@ pub fn command(_: &Interpreter, _: &Context, cmd: &Ptr<Expr>, args: &[Ptr<Expr>]
 pub fn debug(_: &Interpreter, _: &Context, args: &[Ptr<Expr>]) -> Result<Ptr<Expr>> {
     let mut args = args.iter().peekable();
     while let Some(arg) = args.next() {
-        print!("{arg:?}"); 
+        print!("{arg:#?}"); 
         if args.peek().is_some() {
             print!(" ");
         }

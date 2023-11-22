@@ -593,7 +593,7 @@ test map(flip(split,":"), ["1:2:3","4:5:6"]) expect [["1","2","3"],["4","5","6"]
 
 @println("*** BASIC CONTROL ***");
 
-# if with optional else
+# if with else
 let rec f = fun x {
     if x < 2 { 
         x 
@@ -602,7 +602,27 @@ let rec f = fun x {
     }
 };
 test f(5) expect 16;
-# unless is if with the test inverted and no else block
+
+# if without else
+let f = fun x {
+    if x < 2 { 
+        x 
+    }
+};
+test f(1) expect 1;
+test f(5) expect nil;
+
+# if .. else if .. else
+let f = fun x {
+    if x < 2 { x } 
+    else if x < 4 { x + 1 } 
+    else if x < 8 { x + 2 } 
+    else { 10 }
+};
+test f(1) expect 1;
+test f(3) expect 4;
+test f(7) expect 9;
+test f(15) expect 10;
 
 # while
 let r = 10;
