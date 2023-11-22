@@ -59,7 +59,7 @@ impl Interpreter {
         interpreter.init_std()?;
         Ok(interpreter)
     }
-    pub fn set_env(&mut self, env: Vec<String>) {
+    pub fn set_args(&mut self, env: Vec<String>) {
         self.args = expression::array(env.into_iter().map(expression::string).collect());
     }
     pub fn set_bindings(&mut self, values: HashMap<String,Value>) {

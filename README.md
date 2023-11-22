@@ -146,11 +146,20 @@ State(15,4,8)
 ## The interpreter
 
 
-The interpreter takes a single argument: the name of the program to run. It runs it and shows the result as a value.
+The interpreter takes the following command line arguments:
+1) an optional argument: -p (print result with @println) or -r (show result as value). 
+The last expression in a program or any exception value that is not caught will be the return value of the program.
+-p will give more detailed output of the result in internal MAFL format. 
+-r will show it as the Value type that Rust uses to transfer data to and from MAFL.
+If none is specified, it will not print the result at the end and any needed output should be performed via @print statements.
+2) the name of the program to run. 
+If the name is "-", it will read the whole program from standard input. 
+If it is omitted completely, the interpreter enters REPL mode (see next section).
+
 When unit tests are performed, it produces a summary of pass/fail counts.
 
 ```bash
-$ mafl mafl/language.mafl
+$ mafl -r mafl/language.mafl
 *** UNIT TESTING ***
 # test passed 2 + 3: result 5
 # test passed 2 + 3 < 2 * 3
