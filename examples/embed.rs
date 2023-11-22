@@ -25,12 +25,13 @@ fn validate_subnet(_: &Interpreter, _: &Context, args: &[Ptr<Expr>]) -> Result<P
 
 fn main() -> Result<()> {
     let mut interpreter = Interpreter::new()?;
-    let mut subnet = [192,168,1,0];
-    let port_min_max = [8100,8199];
+    let subnet = vec![192,168,1,0];
+    let port_min = 8100;
+    let port_max = 8199;
     let bindings = HashMap::from([
-        ("subnet".to_owned(), Value::Array(subnet.map(Value::Integer).to_vec())),
-        ("port_min".to_owned(), Value::Integer(port_min_max[0])),
-        ("port_max".to_owned(), Value::Integer(port_min_max[1])),
+        ("subnet".to_owned(), subnet.into()),
+        ("port_min".to_owned(), port_min.into()),
+        ("port_max".to_owned(), port_max.into()),
     ]);
     interpreter.set_bindings(bindings);
     interpreter.add_builtin_fn("is_valid_subnet".to_owned(), validate_subnet);
@@ -42,17 +43,14 @@ fn main() -> Result<()> {
     let value : Value = interpreter.run(&source)?.try_into()?; 
     // extracting the value into Rust variables (should make this easier with Serde) 
     // we control what is returned from MAFL (can be a single atomic value or in this case an object)
-    let dict : HashMap<String,Value> = value.try_into()?;
-    let vals : Vec<Value> = dict.get("subnet").ok_or(anyhow!("no subnet"))?.clone().try_into()?;
-    for (i, val) in vals.iter().cloned().enumerate() {
-        subnet[i] = val.try_into()?;
-    }
+    let dict : HashMap<String,Value> = value.clone().try_into()?;
+    let ip : Vec<i64> = dict.get("subnet").ok_or(anyhow!("no subnet"))?.clone().try_into()?;
     let port : i64 = dict.get("port").ok_or(anyhow!("no port"))?.clone().try_into()?;
     let name : String = dict.get("name").ok_or(anyhow!("no name"))?.clone().try_into()?;
-    println!("{name}.local/{}:{port}",subnet.map(|i|i.to_string()).join("."));
+    println!("{name}.local/{}:{port}",ip.iter().map(|i|i.to_string()).collect::<Vec<_>>().join("."));
     // we could also grab the full context from the interpreter as a HashMap<String,Value>
     // this grabs every variable that is in scope at the top level of the MAFL program (forget can clean this up)
-    let bindings = interpreter.get_bindings()?;
-    println!("{:?}", bindings);
+    // let bindings = interpreter.get_bindings()?;
+    // println!("{:?}", bindings);
     Ok(())
 }

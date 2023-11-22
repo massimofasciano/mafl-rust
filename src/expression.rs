@@ -6,6 +6,9 @@ use crate::{context::{Context, MemCell, ScopeID}, PtrCell, Ptr, Interpreter};
 #[cfg(feature = "gc")]
 use gc::{Finalize, Trace};
 
+#[cfg(feature = "serde")]
+use serde::{Serialize, Deserialize};
+
 #[derive(Parser)]
 #[grammar = "mafl.pest"]
 pub struct MaflParser;
@@ -118,6 +121,8 @@ fn decycle(e: Ptr<Expr>, env: &mut HashSet<ScopeID>) -> Ptr<Expr> {
             Expr::ExceptionSafe(decycle(rc.to_owned(),env)).into(),
         Expr::Throw(rc) =>
             Expr::ExceptionSafe(decycle(rc.to_owned(),env)).into(),
+        Expr::Ref(mc) =>
+            decycle(mc.get(),env).into(),
         Expr::Array(arr) => {
             let mut safe = vec![];
             for rc in arr.borrow().iter() {
@@ -179,7 +184,7 @@ impl std::fmt::Display for Expr {
             Expr::Error(a) => write!(f,"Error<{a}>"),
             Expr::ArraySafe(v) =>
                 write!(f,"[{}]",v.iter().map(|x|x.to_string()).collect::<Vec<_>>().join(", ")),
-            Expr::Ref(mc) => write!(f,"->{}",mc.get()),
+            Expr::Ref(mc) => write!(f,"->{}",decycle(mc.get(),&mut HashSet::new())),
             Expr::ExceptionSafe(a) => write!(f,"Exception<{a}>"),
             Expr::Throw(_) | 
             Expr::Return(_) | 
@@ -229,6 +234,8 @@ pub fn array(vals: Vec<Ptr<Expr>>) -> Ptr<Expr> {
 }
 
 #[derive(Debug,Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(untagged))]
 pub enum Value {
     Nil,
     Integer(i64),
@@ -253,6 +260,70 @@ impl std::fmt::Display for Value {
                 write!(f,"[{}]",v.iter().map(Self::to_string).collect::<Vec<_>>().join(", ")),
             Value::Dict(d) => 
                 write!(f,"{{{}}}",d.iter().map(|(k,v)| { format!("{k}: {v}") }).collect::<Vec<_>>().join(", ")),
+        }
+    }
+}
+
+impl<T: Into<Value>> From<HashMap<String,T>> for Value {
+    fn from(value: HashMap<String,T>) -> Self {
+        Value::Dict(value.into_iter().map(|(k,v)| { (k,v.into()) }).collect())
+    }
+}
+
+impl<T: Into<Value>> From<Vec<T>> for Value {
+    fn from(value: Vec<T>) -> Self {
+        Value::Array(value.into_iter().map(Into::into).collect())       
+    }
+}
+
+impl<T: Into<Value> + Clone> From<&[T]> for Value {
+    fn from(value: &[T]) -> Self {
+        Value::Array(value.iter().cloned().map(Into::into).collect())       
+    }
+}
+
+impl From<i64> for Value {
+    fn from(value: i64) -> Self {
+        Value::Integer(value)       
+    }
+}
+
+impl From<f64> for Value {
+    fn from(value: f64) -> Self {
+        Value::Float(value)       
+    }
+}
+
+impl From<bool> for Value {
+    fn from(value: bool) -> Self {
+        Value::Boolean(value)       
+    }
+}
+
+impl From<char> for Value {
+    fn from(value: char) -> Self {
+        Value::Character(value)       
+    }
+}
+
+impl From<String> for Value {
+    fn from(value: String) -> Self {
+        Value::String(value)       
+    }
+}
+
+impl From<&str> for Value {
+    fn from(value: &str) -> Self {
+        Value::String(value.to_string())       
+    }
+}
+
+impl<T: Into<Value>> From<Option<T>> for Value {
+    fn from(opt_value: Option<T>) -> Self {
+        if let Some(value) = opt_value {
+            value.into()
+        } else {
+            Value::Nil
         }
     }
 }
@@ -371,6 +442,16 @@ impl TryFrom<Value> for Vec<Value> {
     }
 }
 
+impl TryFrom<Value> for Vec<i64> {
+    type Error = anyhow::Error;
+    fn try_from(value: Value) -> Result<Self> {
+        match value {
+            Value::Array(v) => Ok(v.into_iter().map(|x|x.try_into()).collect::<Result<Vec<_>>>()?),
+            _ => Err(anyhow!("can't convert this value to a Vec<i64>"))
+        }
+    }
+}
+
 impl TryFrom<Value> for HashMap<String,Value> {
     type Error = anyhow::Error;
     fn try_from(value: Value) -> Result<Self> {
@@ -381,4 +462,14 @@ impl TryFrom<Value> for HashMap<String,Value> {
     }
 }
 
+impl Value {
+    #[cfg(feature = "ron")]
+    pub fn try_to_ron(&self) -> Result<String> {
+        Ok(ron::to_string(self)?)
+    }
+    #[cfg(feature = "ron")]
+    pub fn try_from_ron(ron_str: &str) -> Result<Self> {
+        Ok(ron::from_str(ron_str)?)
+    }
+}
 

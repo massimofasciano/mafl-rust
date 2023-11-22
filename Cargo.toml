@@ -1,6 +1,6 @@
 [package]
 name = "mafl"
-version = "0.9.7"
+version = "0.9.8"
 edition = "2021"
 
 [dependencies]
@@ -13,7 +13,12 @@ rand = "0.8.5"
 regex = "1.10.2"
 unescape = "0.1.0"
 gc = { version = "0.5", features = ["derive"], optional = true }
+serde = { version = "1.0.193", features = ["derive"], optional = true }
+ron = { version = "0.8.1", optional = true }
 
 [features]
 default = ["gc","std_internal"]
 std_internal = []
+gc = ["dep:gc"]
+ron = ["dep:ron"]
+serde = ["dep:serde"]

@@ -19,7 +19,8 @@ fn main() -> Result<()> {
         // interpreter.println(result.to_owned())?;
         println!();
         println!("*** Program result as a value:");
-        println!("{}", Value::try_from(result)?);        
+        let value = Value::try_from(result)?;
+        println!("{value}");
         let (pass_count, fail_count) = interpreter.test_report();
         if pass_count > 0 || fail_count > 0 {
             println!();
