@@ -190,7 +190,6 @@ through variable bindings and a returned Value type.
 
 In [examples/embed.rs](examples/embed.rs), we pass variable bindings (data) and a custom builtin function (Rust code) to the MAFL program.
 We gather the result into a Value type that we extract into Rust variables to be further processed.
-We should probably use Serde to make this easier at the Rust/MAFL boundary.
 
 Here is the MAFL script that is used by the Rust program. It's an example of using a MAFL script as a "smart" config file for a Rust program.
 
@@ -225,6 +224,17 @@ forget port_min port_max;
 module {
     use name subnet port;
 }
+```
+
+each time the Rust program (embed) is run, it produces different results because our smart config file produces random values:
+
+```
+apple.local/192.168.1.190:8115
+tomato.local/192.168.1.175:8183
+apple.local/192.168.1.142:8192
+tomato.local/192.168.1.172:8178
+cherry.local/192.168.1.146:8128
+tomato.local/192.168.1.134:8113
 ```
 
 ## The standard library vs builtin functions and variables
