@@ -257,6 +257,45 @@ The parser outputs a parse tree of type ``Syntax``. This syntax is then converte
 
 In [examples/mafl-parse.rs](examples/mafl-parse.rs), we take the output of the parser on a source file and dump it to JSON. This makes it possible to experiment with intepreters or compilers written in other languages without having to rewrite the parser.
 
+for example, this program
+
+```
+let f = fun x y {
+    x + y * 10
+};
+
+@println(@version);
+```
+
+would output the following JSON representation:
+
+```json
+{ "syntax": "Block", "value": [ { "block_type": "Sequence"}, [ 
+    { "syntax": "Let", "value": [ "f",
+        { "syntax": "Fun", "value": [ ["x","y" ],
+            { "syntax": "Block", "value": [ { "block_type": "Function" }, [ 
+                { "syntax": "BinOpCall", "value": [ { "operator": "Add" },
+                    { "syntax": "Variable", "value": "x" },
+                    { "syntax": "BinOpCall", "value": [ { "operator": "Mul" }, 
+                        { "syntax": "Variable", "value": "y" }, 
+                        { "syntax": "Integer", "value": 10 } 
+                    ]}
+                ]}
+            ]]}
+        ]}
+    ]},
+    { "syntax": "FunctionCall", "value": [
+        { "syntax": "Builtin", "value": "println" }, 
+        [ 
+            { "syntax": "Builtin", "value": "version" } 
+        ]
+    ]},
+    { "syntax": "Nil" }
+]]}
+```
+
+as you can see in the JSON output, the parser annotates each syntax ``Block`` with a tag. The possible values are ``Sequence``, ``Function``, ``Block`` and ``If``. They behave differently regarding scope and exceptions (including break, return, continue). Operators also have a special type. The final ``Nil`` is the return value of the program: normally it's the value of the last expression but this program ends on a statement (with semicolon) so it's implicitly ``Nil``.
+
 ## The standard library vs builtin functions and variables
 
 The language provides a series of builtin functions and variables. Their names start with @ (ex: @println). 

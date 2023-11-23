@@ -10,6 +10,7 @@ use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(tag = "operator", content = "value"))]
 #[cfg_attr(feature = "gc", derive(Finalize))]
 pub enum Operator {
     Add, Mul, Sub, Div, IntDiv, Exp, Mod,
@@ -21,6 +22,7 @@ pub enum Operator {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(tag = "block_type", content = "value"))]
 #[cfg_attr(feature = "gc", derive(Finalize))]
 pub enum BlockType {
     Sequence,
@@ -472,7 +474,7 @@ impl Value {
 
 #[derive(Debug,Clone,PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(tag = "type", content = "inner"))]
+#[cfg_attr(feature = "serde", serde(tag = "syntax", content = "value"))]
 pub enum Syntax {
     ArrayLiteral(Vec<Syntax>),
     ArrayAccess(Box<Syntax>,Box<Syntax>),
