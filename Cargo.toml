@@ -1,6 +1,6 @@
 [package]
 name = "mafl"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 
 [dependencies]
@@ -15,10 +15,12 @@ unescape = "0.1.0"
 gc = { version = "0.5", features = ["derive"], optional = true }
 serde = { version = "1.0.193", features = ["derive"], optional = true }
 ron = { version = "0.8.1", optional = true }
+serde_json = { version = "1.0.108", optional = true }
 
 [features]
-default = ["gc","std_internal"]
+default = ["gc","std_internal","serde","ron","json"]
 std_internal = []
 gc = ["dep:gc"]
 ron = ["dep:ron"]
 serde = ["dep:serde"]
+json = ["dep:serde_json"]

@@ -1,13 +1,18 @@
 use std::{cell::RefCell, collections::HashMap};
 use context::Context;
 use expression::{Expr, Builtin, Value};
-use pest::Parser;
-use crate::expression::{MaflParser, Rule};
+use pest::Parser as _;
+use pest_derive::Parser;
+
 use anyhow::{anyhow, Result};
 #[cfg(feature = "gc")]
 use gc::{Gc, GcCell};
 #[cfg(not(feature = "gc"))]
 use std::rc::Rc;
+
+#[derive(Parser)]
+#[grammar = "mafl.pest"]
+pub struct MaflParser;
 
 pub mod eval;
 pub mod expression;
@@ -97,7 +102,10 @@ impl Interpreter {
         let parsed = MaflParser::parse(Rule::file, source)?
             .next().ok_or(anyhow!("parse error"))?; 
         // println!("{:#?}",parsed);
-        self.parse_rule(parsed)
+        let syntax = self.parse_rule(parsed)?;
+        // println!("{:#?}",syntax);
+        let expr = Expr::from(syntax);
+        Ok(expr.into())
     }
     pub fn test_report(&self) -> (usize, usize) {
         let pass_count = *self.test_pass_count.borrow();

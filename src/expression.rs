@@ -1,6 +1,5 @@
 use std::{ops::Deref, collections::{HashSet, HashMap}};
 use anyhow::{anyhow, Result};
-use pest_derive::Parser;
 use crate::{context::{Context, MemCell, ScopeID}, PtrCell, Ptr, Interpreter};
 
 #[cfg(feature = "gc")]
@@ -9,12 +8,9 @@ use gc::{Finalize, Trace};
 #[cfg(feature = "serde")]
 use serde::{Serialize, Deserialize};
 
-#[derive(Parser)]
-#[grammar = "mafl.pest"]
-pub struct MaflParser;
-
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "gc", derive(Trace, Finalize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "gc", derive(Finalize))]
 pub enum Operator {
     Add, Mul, Sub, Div, IntDiv, Exp, Mod,
     Not, And, Or, Pipe,
@@ -24,7 +20,8 @@ pub enum Operator {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "gc", derive(Trace, Finalize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "gc", derive(Finalize))]
 pub enum BlockType {
     Sequence,
     Block,
@@ -122,7 +119,7 @@ fn decycle(e: Ptr<Expr>, env: &mut HashSet<ScopeID>) -> Ptr<Expr> {
         Expr::Throw(rc) =>
             Expr::ExceptionSafe(decycle(rc.to_owned(),env)).into(),
         Expr::Ref(mc) =>
-            decycle(mc.get(),env).into(),
+            decycle(mc.get(),env),
         Expr::Array(arr) => {
             let mut safe = vec![];
             for rc in arr.borrow().iter() {
@@ -471,5 +468,195 @@ impl Value {
     pub fn try_from_ron(ron_str: &str) -> Result<Self> {
         Ok(ron::from_str(ron_str)?)
     }
+}
+
+#[derive(Debug,Clone,PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(tag = "tag", content = "content"))]
+pub enum Syntax {
+    ArrayLiteral(Vec<Syntax>),
+    ArrayAccess(Box<Syntax>,Box<Syntax>),
+    AssignToDeRefExpression(Box<Syntax>,Box<Syntax>),
+    AssignToExpression(Box<Syntax>,Box<Syntax>),
+    BinOpCall(Operator,Box<Syntax>,Box<Syntax>),
+    Block{r#type: BlockType, body: Vec<Syntax>},
+    Boolean(bool),
+    Break(Box<Syntax>),
+    Builtin(String),
+    Character(char),
+    Closed(Vec<String>,Box<Syntax>),
+    Continue,
+    Dyn(bool,Vec<String>,Box<Syntax>),
+    Exit(Box<Syntax>),
+    Field(Box<Syntax>,String),
+    Float(f64),
+    Forget(Vec<String>),
+    Fun(Vec<String>,Box<Syntax>),
+    FunctionCall(Box<Syntax>,Vec<Syntax>),
+    Identifier(String),
+    If(Box<Syntax>,Box<Syntax>,Box<Syntax>),
+    Integer(i64),
+    Iterate(String,Box<Syntax>,Box<Syntax>),
+    Let(String,Box<Syntax>),
+    LetArray(Vec<String>,Box<Syntax>),
+    LetRef(String,Box<Syntax>),
+    Loop(Box<Syntax>),
+    Nil,
+    OpAssignToExpression(Operator,Box<Syntax>,Box<Syntax>),
+    Operator(Operator),
+    Return(Box<Syntax>),
+    String(String),
+    Test(String,Box<Syntax>,Box<Syntax>),
+    Throw(Box<Syntax>),
+    TryCatch(Box<Syntax>,String,Box<Syntax>),
+    UnaryOpCall(Operator,Box<Syntax>), 
+    Use(Option<Box<Syntax>>,Vec<String>),
+    Variable(String),
+}
+
+impl TryFrom<Syntax> for Value {
+    type Error = anyhow::Error;
+    fn try_from(syntax: Syntax) -> Result<Self> {
+        Ok(match syntax {
+            Syntax::Nil => Value::Nil,
+            Syntax::Integer(i) => Value::Integer(i),
+            Syntax::Float(f) => Value::Float(f),
+            Syntax::Character(c) => Value::Character(c),
+            Syntax::Boolean(b) => Value::Boolean(b),
+            Syntax::String(s) => Value::String(s),
+            Syntax::ArrayLiteral(vec) => {
+                let v = vec.iter()
+                    .map(|e| { Self::try_from(e.to_owned()) })
+                    .collect::<Result<Vec<_>>>()?;
+                Value::Array(v)
+            }
+            _ => Err(anyhow!("can't convert this syntax to a value"))?
+        })
+    }
+}
+
+impl TryFrom<Value> for Syntax {
+    type Error = anyhow::Error;
+    fn try_from(value: Value) -> Result<Self> {
+        Ok(match value {
+            Value::Nil => Syntax::Nil,
+            Value::Integer(i) => Syntax::Integer(i),
+            Value::Float(f) => Syntax::Float(f),
+            Value::Character(c) => Syntax::Character(c),
+            Value::Boolean(b) => Syntax::Boolean(b),
+            Value::String(s) => Syntax::String(s),
+            Value::Array(v) => 
+                Syntax::ArrayLiteral(v.into_iter().map(Self::try_from).collect::<Result<_>>()?),
+            Value::Dict(_) => Err(anyhow!("can't convert this dict value to syntax"))?
+        })
+    }
+}
+
+impl std::fmt::Display for Syntax {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Syntax::Nil => write!(f,"nil"),
+            Syntax::Boolean(a) => write!(f,"{a}"),
+            Syntax::Float(a) => write!(f,"{a}"),
+            Syntax::Integer(a) => write!(f,"{a}"),
+            Syntax::Character(a) => write!(f,"{a}"),
+            Syntax::String(a) => write!(f,"{a}"),
+            Syntax::ArrayLiteral(v) =>
+                write!(f,"[{}]",v.iter().map(|x|x.to_string()).collect::<Vec<_>>().join(", ")),
+            _ => write!(f,"{:#?}",self),
+        }
+    }
+}
+
+impl Syntax {
+    #[cfg(feature = "ron")]
+    pub fn try_to_ron(&self) -> Result<String> {
+        Ok(ron::to_string(self)?)
+    }
+    #[cfg(feature = "ron")]
+    pub fn try_from_ron(ron_str: &str) -> Result<Self> {
+        Ok(ron::from_str(ron_str)?)
+    }
+    #[cfg(feature = "json")]
+    pub fn try_to_json(&self) -> Result<String> {
+        Ok(serde_json::to_string_pretty(self)?)
+    }
+    #[cfg(feature = "json")]
+    pub fn try_from_json(ron_str: &str) -> Result<Self> {
+        Ok(serde_json::from_str(ron_str)?)
+    }
+}
+
+#[cfg(feature = "gc")]
+unsafe impl Trace for Syntax {
+    gc::unsafe_empty_trace!();
+}
+#[cfg(feature = "gc")]
+impl Finalize for Syntax {
+    fn finalize(&self) {}
+}
+#[cfg(feature = "gc")]
+unsafe impl Trace for Operator {
+    gc::unsafe_empty_trace!();
+}
+#[cfg(feature = "gc")]
+unsafe impl Trace for BlockType {
+    gc::unsafe_empty_trace!();
+}
+
+impl From<Box<Syntax>> for Ptr<Expr> {
+    fn from(value: Box<Syntax>) -> Self {
+        let val = *value;
+        let expr = Expr::from(val);
+        expr.into()
+    }
+}
+
+impl From<Syntax> for Expr {
+    fn from(syntax: Syntax) -> Self {
+        match syntax {
+            Syntax::Integer(i) => Expr::Integer(i),
+            Syntax::ArrayAccess(a, b) => Expr::ArrayAccess(a.into(), b.into()),
+            Syntax::ArrayLiteral(v) => Expr::Array(PtrCell::new(v.into_iter().map(|x|Expr::from(x).into()).collect())),
+            Syntax::AssignToDeRefExpression(a,b) => Expr::AssignToDeRefExpression(a.into(),b.into()),
+            Syntax::AssignToExpression(b1,b2) => Expr::AssignToExpression(b1.into(),b2.into()),
+            Syntax::BinOpCall(op,b1,b2) => Expr::BinOpCall(op,b1.into(),b2.into()),
+            Syntax::Block{r#type, body: v} => 
+                Expr::Block{r#type, body: v.into_iter().map(|x|Expr::from(x).into()).collect()},
+            Syntax::Boolean(b) => Expr::Boolean(b),
+            Syntax::Break(b) => Expr::Break(b.into()),
+            Syntax::Builtin(s) => Expr::BuiltinVariable(s),
+            Syntax::Character(c) => Expr::Character(c),
+            Syntax::Closed(vstr,b) => Expr::Closed(vstr, b.into()),
+            Syntax::Continue => Expr::Continue,
+            Syntax::Dyn(b,vstr,b1) => Expr::Dyn(b,vstr,b1.into()),
+            Syntax::Exit(b) => Expr::Exit(b.into()),
+            Syntax::Field(b,s) => Expr::Field(b.into(), s),
+            Syntax::Float(f) => Expr::Float(f),
+            Syntax::Forget(vstr) => Expr::Forget(vstr),
+            Syntax::Fun(vstr,b) => Expr::Fun(vstr,b.into()),
+            Syntax::FunctionCall(b,v) => 
+                Expr::FunctionCall(b.into(), v.into_iter().map(|x|Expr::from(x).into()).collect()),
+            Syntax::Identifier(s) => Expr::ParsedIdentifier(s),
+            Syntax::If(b1,b2,b3) => Expr::If(b1.into(),b2.into(),b3.into()),
+            Syntax::Iterate(s,b1,b2) => Expr::Iterate(s, b1.into(), b2.into()),
+            Syntax::Let(s,b) => Expr::Let(s,b.into()),
+            Syntax::LetArray(vstr,b) => Expr::LetArray(vstr, b.into()),
+            Syntax::LetRef(s,b) => Expr::LetRef(s, b.into()),
+            Syntax::Loop(b) => Expr::Loop(b.into()),
+            Syntax::Nil => Expr::Nil,
+            Syntax::OpAssignToExpression(op,b1,b2) => Expr::OpAssignToExpression(op, b1.into(), b2.into()),
+            Syntax::Operator(op) => Expr::ParsedOperator(op),
+            Syntax::Return(b) => Expr::Return(b.into()),
+            Syntax::String(s) => Expr::String(s),
+            Syntax::Test(s,b1,b2) => Expr::Test(s,b1.into(),b2.into()),
+            Syntax::Throw(b) => Expr::Throw(b.into()),
+            Syntax::TryCatch(b1,s,b2) => Expr::TryCatch(b1.into(), s, b2.into()),
+            Syntax::UnaryOpCall(op,b) => Expr::UnaryOpCall(op, b.into()),
+            Syntax::Use(opt_b,vstr) => Expr::Use(opt_b.map(Into::into),vstr),
+            Syntax::Variable(s) => Expr::Variable(s),
+            // _ => unimplemented!("can't convert this syntax element to an expression"),
+        }
+    }    
 }
 
