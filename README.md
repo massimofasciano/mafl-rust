@@ -356,7 +356,7 @@ Here are a few things that I should work on:
 ``Expr`` uses ``Gc`` pointers and interior mutability ``GcCell`` almost everywhere. This made it easier to represent potentially-cyclic objects from MAFL. 
 Right now, I use ``Box`` for Syntax but convert everything to ``Ptr<Expr>`` (with ``Ptr`` aliased to ``Gc``) for runtime. 
 This is certainly overkill but makes everything easier inside the evaluator. 
-It would be better to use ``Box`` where ``Gc` is not necessary.
+It would be better to use ``Box`` where ``Gc`` is not necessary.
 - improve the display and debug traits for ``Expr``.
 
 Eventually, it would be interesting to see what performance gains can be obtained by
