@@ -1,4 +1,7 @@
 #! /usr/bin/env mafl
 
+let f = fun x y {
+    x + y * 10
+};
+
 @println(@version);
-[1+2*3+@exp(3)][1+1]
