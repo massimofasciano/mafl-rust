@@ -113,7 +113,7 @@ impl Interpreter {
                         let new_body_vec = match body {
                             Syntax::Block{r#type: BlockType::Function, body} => {
                                 let mut new = body.clone();
-                                new.push(Syntax::Builtin("self".to_owned()));
+                                new.push(Syntax::BuiltinVariable("self".to_owned()));
                                 new
                             }
                             _ => Err(anyhow!("not a function body"))?
@@ -146,7 +146,7 @@ impl Interpreter {
                     Syntax::Closed(vars,body.into())
                 }
                 Rule::array => {
-                    Syntax::ArrayLiteral(
+                    Syntax::Array(
                         inner.iter().map(|e| self.parse_rule(e.to_owned())).collect::<Result<Vec<_>>>()?
                     )
                 } 
@@ -399,7 +399,7 @@ impl Interpreter {
             },
             Rule::variable => { 
                 if parsed.as_str().starts_with('@') {
-                    Syntax::Builtin(parsed.as_str().strip_prefix('@').unwrap().to_owned()) 
+                    Syntax::BuiltinVariable(parsed.as_str().strip_prefix('@').unwrap().to_owned()) 
                 } else {
                     Syntax::Variable(parsed.as_str().to_owned()) 
                 }

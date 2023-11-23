@@ -104,8 +104,7 @@ impl Interpreter {
         // println!("{:#?}",parsed);
         let syntax = self.parse_rule(parsed)?;
         // println!("{:#?}",syntax);
-        let expr = Expr::from(syntax);
-        Ok(expr.into())
+        Ok(syntax.into())
     }
     pub fn test_report(&self) -> (usize, usize) {
         let pass_count = *self.test_pass_count.borrow();
