@@ -349,14 +349,19 @@ map(add(1),range(0,4))
 
 Here are a few things that I should work on:
 
-- use ``Serde`` to serialize/deserialize from Rust structures to MAFL types (for easier embedding)
-- right now, we have 3 types: ``Syntax``, ``Value`` and ``Expr``. ``Value`` is used to pass values from Rust and to Rust (it only represents simple data). ``Expr`` represents the full range of data that the interpreter works with. It represents atomic values, code, closures, references, etc... 
-- ``Expr`` uses ``Gc`` pointers and interior mutability ``GcCell`` almost everywhere. This made it easier to represent potentially-cyclic objects from MAFL. Right now, we use ``Box`` for Syntax but convert everything to ``Ptr<Expr>`` (with ``Ptr`` aliased to ``Gc``) for runtime. This is certainly overkill but makes everything easier.
-- improve the display and debug traits for ``Expr``
+- use ``Serde`` to serialize/deserialize from Rust structures to MAFL types (for easier embedding).
+- right now, we have 3 types: ``Syntax``, ``Value`` and ``Expr``. 
+``Value`` is used to pass values from Rust and to Rust (it only represents simple data). 
+``Expr`` represents the full range of data that the interpreter works with. It represents atomic values, code, closures, references, etc... 
+``Expr`` uses ``Gc`` pointers and interior mutability ``GcCell`` almost everywhere. This made it easier to represent potentially-cyclic objects from MAFL. 
+Right now, I use ``Box`` for Syntax but convert everything to ``Ptr<Expr>`` (with ``Ptr`` aliased to ``Gc``) for runtime. 
+This is certainly overkill but makes everything easier inside the evaluator. 
+It would be better to use ``Box`` where ``Gc` is not necessary.
+- improve the display and debug traits for ``Expr``.
 
 Eventually, it would be interesting to see what performance gains can be obtained by
-- using bytecode and a stack instead of tree-walking
-- transpiling to another language that is closer to MAFL (functional with gc)
-- maybe even producing machine code
+- using bytecode and a stack instead of tree-walking.
+- transpiling to another language that is closer to MAFL (functional with gc).
+- maybe even producing machine code.
 
 The design of the language probably makes these optimizations difficult (especially dynamic evaluation) and I don't think I will be writing a JIT.
