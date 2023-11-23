@@ -1,3 +1,4 @@
 #! /usr/bin/env mafl
 
 @println(@version);
+[1+2*3+@exp(3)][1+1]

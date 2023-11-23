@@ -59,7 +59,7 @@ pub enum Expr {
     AssignToDeRefExpression(Ptr<Expr>,Ptr<Expr>),
     OpAssignToExpression(Operator,Ptr<Expr>,Ptr<Expr>),
     ArrayAccess(Ptr<Expr>,Ptr<Expr>),
-    Block{r#type: BlockType, body: Vec<Ptr<Expr>>},
+    Block(BlockType,Vec<Ptr<Expr>>),
     Loop(Ptr<Expr>),
     Fun(Vec<String>,Ptr<Expr>),
     Dyn(bool,Vec<String>,Ptr<Expr>),
@@ -472,17 +472,17 @@ impl Value {
 
 #[derive(Debug,Clone,PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(tag = "tag", content = "content"))]
+#[cfg_attr(feature = "serde", serde(tag = "type", content = "inner"))]
 pub enum Syntax {
-    Array(Vec<Syntax>),
+    ArrayLiteral(Vec<Syntax>),
     ArrayAccess(Box<Syntax>,Box<Syntax>),
     AssignToDeRefExpression(Box<Syntax>,Box<Syntax>),
     AssignToExpression(Box<Syntax>,Box<Syntax>),
     BinOpCall(Operator,Box<Syntax>,Box<Syntax>),
-    Block{r#type: BlockType, body: Vec<Syntax>},
+    Block(BlockType,Vec<Syntax>),
     Boolean(bool),
     Break(Box<Syntax>),
-    BuiltinVariable(String),
+    Builtin(String),
     Character(char),
     Closed(Vec<String>,Box<Syntax>),
     Continue,
@@ -524,7 +524,7 @@ impl TryFrom<Syntax> for Value {
             Syntax::Character(c) => Value::Character(c),
             Syntax::Boolean(b) => Value::Boolean(b),
             Syntax::String(s) => Value::String(s),
-            Syntax::Array(vec) => {
+            Syntax::ArrayLiteral(vec) => {
                 let v = vec.iter()
                     .map(|e| { Self::try_from(e.to_owned()) })
                     .collect::<Result<Vec<_>>>()?;
@@ -546,7 +546,7 @@ impl TryFrom<Value> for Syntax {
             Value::Boolean(b) => Syntax::Boolean(b),
             Value::String(s) => Syntax::String(s),
             Value::Array(v) => 
-                Syntax::Array(v.into_iter().map(Self::try_from).collect::<Result<_>>()?),
+                Syntax::ArrayLiteral(v.into_iter().map(Self::try_from).collect::<Result<_>>()?),
             Value::Dict(_) => Err(anyhow!("can't convert this dict value to syntax"))?
         })
     }
@@ -561,7 +561,7 @@ impl std::fmt::Display for Syntax {
             Syntax::Integer(a) => write!(f,"{a}"),
             Syntax::Character(a) => write!(f,"{a}"),
             Syntax::String(a) => write!(f,"{a}"),
-            Syntax::Array(v) =>
+            Syntax::ArrayLiteral(v) =>
                 write!(f,"[{}]",v.iter().map(|x|x.to_string()).collect::<Vec<_>>().join(", ")),
             _ => write!(f,"{:#?}",self),
         }
@@ -624,15 +624,15 @@ impl From<Syntax> for Expr {
         match syntax {
             Syntax::Integer(i) => Expr::Integer(i),
             Syntax::ArrayAccess(a, b) => Expr::ArrayAccess(a.into(), b.into()),
-            Syntax::Array(v) => Expr::Array(PtrCell::new(v.into_iter().map(Into::into).collect())),
+            Syntax::ArrayLiteral(v) => Expr::Array(PtrCell::new(v.into_iter().map(Into::into).collect())),
             Syntax::AssignToDeRefExpression(a,b) => Expr::AssignToDeRefExpression(a.into(),b.into()),
             Syntax::AssignToExpression(b1,b2) => Expr::AssignToExpression(b1.into(),b2.into()),
             Syntax::BinOpCall(op,b1,b2) => Expr::BinOpCall(op,b1.into(),b2.into()),
-            Syntax::Block{r#type, body: v} => 
-                Expr::Block{r#type, body: v.into_iter().map(Into::into).collect()},
+            Syntax::Block(btyp, v) => 
+                Expr::Block(btyp, v.into_iter().map(Into::into).collect()),
             Syntax::Boolean(b) => Expr::Boolean(b),
             Syntax::Break(b) => Expr::Break(b.into()),
-            Syntax::BuiltinVariable(s) => Expr::BuiltinVariable(s),
+            Syntax::Builtin(s) => Expr::BuiltinVariable(s),
             Syntax::Character(c) => Expr::Character(c),
             Syntax::Closed(vstr,b) => Expr::Closed(vstr, b.into()),
             Syntax::Continue => Expr::Continue,

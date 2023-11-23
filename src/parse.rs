@@ -22,11 +22,11 @@ impl Interpreter {
         Ok(match sequence.len() {
             0 => Syntax::Nil,
             _ => match rule { 
-                Rule::block => Syntax::Block{r#type: BlockType::Block, body: sequence},
-                Rule::function_block => Syntax::Block{r#type: BlockType::Function, body: sequence},
-                Rule::if_block => Syntax::Block{r#type: BlockType::If, body: sequence},
-                Rule::block_syntax => Syntax::Block{r#type: BlockType::Sequence, body: sequence},
-                Rule::file => Syntax::Block{r#type: BlockType::Sequence, body: sequence},
+                Rule::block => Syntax::Block(BlockType::Block, sequence),
+                Rule::function_block => Syntax::Block(BlockType::Function, sequence),
+                Rule::if_block => Syntax::Block(BlockType::If, sequence),
+                Rule::block_syntax => Syntax::Block(BlockType::Sequence, sequence),
+                Rule::file => Syntax::Block(BlockType::Sequence, sequence),
                 _ => Err(anyhow!("parse error block type: {rule:?}"))?,
             },
         })
@@ -111,14 +111,14 @@ impl Interpreter {
                     if fun_type == "cons" || fun_type == "module" {
                         // @self injected at end of function body
                         let new_body_vec = match body {
-                            Syntax::Block{r#type: BlockType::Function, body} => {
+                            Syntax::Block(BlockType::Function, body) => {
                                 let mut new = body.clone();
-                                new.push(Syntax::BuiltinVariable("self".to_owned()));
+                                new.push(Syntax::Builtin("self".to_owned()));
                                 new
                             }
                             _ => Err(anyhow!("not a function body"))?
                         };
-                        body = Syntax::Block{r#type: BlockType::Function, body: new_body_vec};
+                        body = Syntax::Block(BlockType::Function, new_body_vec);
                     }
                     if fun_type == "module" {
                         if !args.is_empty() {
@@ -146,7 +146,7 @@ impl Interpreter {
                     Syntax::Closed(vars,body.into())
                 }
                 Rule::array => {
-                    Syntax::Array(
+                    Syntax::ArrayLiteral(
                         inner.iter().map(|e| self.parse_rule(e.to_owned())).collect::<Result<Vec<_>>>()?
                     )
                 } 
@@ -202,12 +202,12 @@ impl Interpreter {
                             match opt_type {
                                 Some("rec") => {
                                 // let f; f = ... (recursive binding)
-                                Syntax::Block{r#type: BlockType::Sequence, body: vec![
+                                Syntax::Block(BlockType::Sequence, vec![
                                     Syntax::Let(var.to_owned(), Syntax::Nil.into()), 
                                     Syntax::AssignToExpression(
                                         Syntax::Variable(var.to_owned()).into(), val.into()
                                     )    
-                                ]}
+                                ])
                                 }
                                 Some("ref") => {
                                     // bind (let by reference)
@@ -292,7 +292,7 @@ impl Interpreter {
                         ),
                         body,
                     ];
-                    let block_seq = Syntax::Block{ r#type: BlockType::Sequence, body: code };
+                    let block_seq = Syntax::Block(BlockType::Sequence, code);
                     Syntax::Loop(block_seq.into())
                 } 
                 Rule::do_while => {
@@ -307,7 +307,7 @@ impl Interpreter {
                             Syntax::Break(Syntax::Nil.into()).into()
                         ),
                     ];
-                    let block_seq = Syntax::Block{ r#type: BlockType::Sequence, body: code };
+                    let block_seq = Syntax::Block(BlockType::Sequence, code);
                     Syntax::Loop(block_seq.into())
                 } 
                 Rule::r#loop => {
@@ -399,7 +399,7 @@ impl Interpreter {
             },
             Rule::variable => { 
                 if parsed.as_str().starts_with('@') {
-                    Syntax::BuiltinVariable(parsed.as_str().strip_prefix('@').unwrap().to_owned()) 
+                    Syntax::Builtin(parsed.as_str().strip_prefix('@').unwrap().to_owned()) 
                 } else {
                     Syntax::Variable(parsed.as_str().to_owned()) 
                 }

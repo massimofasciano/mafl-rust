@@ -34,7 +34,7 @@ impl Interpreter {
             }
             Expr::Continue => Expr::Continue.into(),
 
-            Expr::Block{r#type: block_type, body: exprs} => {
+            Expr::Block(block_type, exprs) => {
                 let block_ctx = match block_type {
                     BlockType::Sequence | BlockType::Function => ctx.to_owned(),
                     BlockType::Block | BlockType::If =>

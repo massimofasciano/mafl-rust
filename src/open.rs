@@ -75,7 +75,7 @@ impl Interpreter {
                 open
             }
 
-            Expr::Block{r#type: block_type, body: exprs} => {
+            Expr::Block(block_type, exprs) => {
                 let mut open = HashSet::new();
                 let block_ctx = match block_type {
                     BlockType::Sequence => ctx.to_owned(),
