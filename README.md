@@ -255,7 +255,7 @@ tomato.local/192.168.1.134:8113
 
 The parser outputs a parse tree of type ``Syntax``. This syntax is then converted to a runtime expression that can be evaluated. The type used by the evaluator is ``Ptr<Expr>``. ``Ptr`` is an alias for the ``Gc`` smart pointer and ``Expr`` contains ``Ptr<Expr>`` so cycles are possible (that's how recursive functions are represented). After evaluation, we get a simplified ``Value`` type.
 
-In [examples/mafl-parse.rs](examples/mafl-parse.rs), we take the output of the parser on a source file and dump it to JSON. This makes it possible to experiment with intepreters or compilers written in other languages without having to rewrite the parser.
+In [examples/mafl-parse.rs](examples/mafl-parse.rs), we take the output of the parser on a source file and dump it to JSON. This makes it possible to experiment with interpreters or compilers written in other languages without having to rewrite the parser.
 
 for example, this program
 
