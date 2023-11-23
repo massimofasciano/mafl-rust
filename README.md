@@ -251,6 +251,12 @@ cherry.local/192.168.1.146:8128
 tomato.local/192.168.1.134:8113
 ```
 
+## The parser and types
+
+The parser outputs a parse tree of type ``Syntax``. This syntax is then converted to a runtime expression that can be evaluated. The type used by the evaluator is ``Ptr<Expr>``. ``Ptr`` is an alias for the ``Gc`` smart pointer and ``Expr`` contains ``Ptr<Expr>`` so cycles are possible (that's how recursive functions are represented). After evaluation, we get a simplified ``Value`` type.
+
+In [examples/mafl-parse.rs](examples/mafl-parse.rs), we take the output of the parser on a source file and dump it to JSON. This makes it possible to experiment with intepreters or compilers written in other languages without having to rewrite the parser.
+
 ## The standard library vs builtin functions and variables
 
 The language provides a series of builtin functions and variables. Their names start with @ (ex: @println). 
@@ -304,10 +310,10 @@ map(add(1),range(0,4))
 
 Here are a few things that I should work on:
 
-- use Serde to serialize/deserialize from Rust structures to MAFL types (for easier embedding)
-- right now, we have 2 types: Value and Expr. Value is used to pass values from Rust and to Rust (it only represents simple data). Expr represents the full range of data that the interpreter works with. It represents atomic values, code, closures, references, etc... It would probably be cleaner to also have a dedicated type for code. A "fun" contruct is code, an "if" construct is code but a closure is not (it contains runtime state + code).
-- Expr uses Gc pointers and interior mutability GcCell almost everywhere. This made it easier to represent potentially-cyclic objects from MAFL. This is not required everywhere, especially in static code (no cycles or multiple references). Sometimes, Box would be enough and sometimes a normal reference with a lifetime.
-- improve the display and debug traits for Expr
+- use ``Serde`` to serialize/deserialize from Rust structures to MAFL types (for easier embedding)
+- right now, we have 3 types: ``Syntax``, ``Value`` and ``Expr``. ``Value`` is used to pass values from Rust and to Rust (it only represents simple data). ``Expr`` represents the full range of data that the interpreter works with. It represents atomic values, code, closures, references, etc... 
+- ``Expr`` uses ``Gc`` pointers and interior mutability ``GcCell`` almost everywhere. This made it easier to represent potentially-cyclic objects from MAFL. Right now, we use ``Box`` for Syntax but convert everything to ``Ptr<Expr>`` (with ``Ptr`` aliased to ``Gc``) for runtime. This is certainly overkill but makes everything easier.
+- improve the display and debug traits for ``Expr``
 
 Eventually, it would be interesting to see what performance gains can be obtained by
 - using bytecode and a stack instead of tree-walking
