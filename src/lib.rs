@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::HashMap};
 use context::Context;
-use expression::{Expr, Builtin, Value};
+use expression::{Expr, Builtin, Value, Syntax};
 use pest::Parser as _;
 use pest_derive::Parser;
 
@@ -98,13 +98,16 @@ impl Interpreter {
     pub fn println(&self, e: Ptr<Expr>) -> Result<Ptr<Expr>> {
         self.builtin_fn(&self.ctx, "println", &[e])
     }
-    pub fn parse_source(&self, source: &str) -> Result<Ptr<Expr>> {
+    pub fn parse_source_syntax(&self, source: &str) -> Result<Syntax> {
         let parsed = MaflParser::parse(Rule::file, source)?
             .next().ok_or(anyhow!("parse error"))?; 
         // println!("{:#?}",parsed);
         let syntax = self.parse_rule(parsed)?;
         // println!("{:#?}",syntax);
-        Ok(syntax.into())
+        Ok(syntax)
+    }
+    pub fn parse_source(&self, source: &str) -> Result<Ptr<Expr>> {
+        self.parse_source_syntax(source).map(Into::into)
     }
     pub fn test_report(&self) -> (usize, usize) {
         let pass_count = *self.test_pass_count.borrow();
