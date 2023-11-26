@@ -51,7 +51,8 @@ That's obviously not good practice, especially coming from Rust that forbids mul
 Currying is fully supported. That was very important to me. The language uses a declaration style without parentheses but function calls
 use parentheses (makes it easier to call zero-argument functions). Function calls can be chained and the language re-arranges the arguments as they need to be consumed.
 
-I enjoy writing code in this language because it's sometimes very challeging given some of the design choices. Once again, fun was a very important part of this project, much more than making something useful.
+I enjoy writing code in this language because it's sometimes very challenging given some of the design choices. Once again, fun was a very important part of this project, much more than making something practical. 
+If I need to write good code for work with a scripting component, I would almost certainly use something like ``Rhai`` and not MAFL unless I need garbage collected cyclic data.
 
 ## Examples
 
