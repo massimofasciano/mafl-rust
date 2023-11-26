@@ -85,12 +85,6 @@ impl Interpreter {
                 for expr in exprs {
                     open.extend(self.open(&block_ctx,expr)?);
                 }
-                // remove from open vars if it now has a binding...
-                for open_var in open.clone() {
-                    if block_ctx.get_binding(&open_var).is_some() {
-                        open.remove(&open_var);
-                    }
-                }
                 open
             }
 
@@ -134,16 +128,10 @@ impl Interpreter {
             }
 
             Expr::Fun(closed,expr) => {
-                let ctx = Context::new();
                 for closed_var in closed {
                     ctx.add_binding(closed_var.to_owned(), expression::nil()); 
                 }
-                let mut open = self.open(&ctx, expr)?;
-                // remove the function arguments from open vars...
-                for closed_var in closed {
-                    open.remove(closed_var);
-                }
-                open                
+                self.open(ctx, expr)?
             }
 
             Expr::Use(opt_source,members) => {

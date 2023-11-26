@@ -380,7 +380,7 @@ impl Interpreter {
                 }
             }
             Expr::Fun(arg_names, body) => {
-                let open_vars = self.open(&ctx.capture(), ast)?;
+                let open_vars = self.open(&Context::new(), ast)?;
                 let captured = Context::new();
                 for open_var in open_vars {
                     debug!("*** fun capturing {}",open_var);
