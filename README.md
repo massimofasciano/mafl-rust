@@ -337,7 +337,7 @@ The @std.methods module contains bindings that are called on internal types by t
 
 By default, no bindings from @std are imported into the user variable space.
 
-A this time, the MAFL standard library resides in [src/std.mafl](src/std.mafl) and is statically included in uncompressed form
+At this time, the MAFL standard library resides in [src/std.mafl](src/std.mafl) and is statically included in uncompressed form
 inside the Rust binary at compile time. As it grows, this might not be ideal. Comments could be stripped and the text could be compressed.
 It could also be pre-parsed to an AST and dumped in binary form.
 Having it inside the binary image removes an external dependancy but makes it impossible to change it without recompiling.
