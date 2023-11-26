@@ -1,35 +1,55 @@
 # Rust parser and interpreter for the MAFL language
 
-## Objectives
+## Why you should not use this language
 
-When I created the MAFL language, I had 2 main objectives:
-1) Creating a useful embeddable functional scripting tool. This can be used to write "smart" config files
-for a compiled Rust program or short user-editable scripts that call back to the Rust code via custom functions.
-2) Having fun and learning about parsing and interpreting a language and also using Rust smart pointers and garbage collection. 
-Keeping the language as functional (but not pure) as possible because I like functional languages. 
-Mutability and aliasing are ok because they create the opportunity of working with more complex data structures in Rust.
+This project is not meant for production. It's not even meant for any type of productive work. I made it because I wanted to experiment with some Rust crates and needed a good project to motivate me. A scripting language was a good motivator.
 
-Objective 2 was more important to me. This means that the design of the MAFL programming language is far from perfect.
-Performance is not very good: i'm using a tree-walking interpreter, the language creates cyclic structures and I'm using the Gc crate
-to perform garbage collection (Rc does not like cycles).
+There are many much better scripting languages for Rust. Some of them are very solid production-level projects. Use those instead unless you want to play with something a bit weird and different. I recommend ``Lua`` if you want something that is used outside of the Rust world or ``Rhai`` and ``Rune`` if you want a better Rust integration. They have different objectives but they are all much much better than my language.
 
-I tried to keep the language as functional as possible. Functions are the main compound type in MAFL. 
-They are used to run code but also as objects and modules. The only exception to this is arrays. At first,
-I tried using functions for arrays but decided to have a dedicated type instead.
+## Pest and Nom
+
+I started this project because I wanted to experiment with a ``pest`` grammar after working with ``nom`` for a while. Having the grammar as a separate entity is nice but I also like the ``nom`` approach of combining the grammar with the parsing logic. With ``pest``, changing the grammar often means also having to change your parser code. With ``nom`` they are integrated so you make a single change. When it's possible to change the ``pest`` grammar without having to change the parser code, that's when the separation is interesting (ex: changing the separators in an if then else statement). In general, a ``pest`` grammar file is easier to read and modify.
+
+## Garbage collector
+
+I wanted to test the ``Gc`` crate for Rust. I usually don't need a garbage collector when working in Rust. ``Rc`` and ``Arc`` are more than enough for my needs most of the time when the borrow checker prevents me from using certain data structures. So I deliberately introduced circular references in my language and made them necessary for certain things by design (it has recursive closures). The garbage collector became essential and I learned a lot by using ``Gc``. My performance took a significant hit so I left it as a cargo feature that is enabled by default. The language can fall back to using ``Rc`` but it will leak memory if you use circular structures.
+Dealing with circular references was also very interesting when it came to printing and traversal in general.
+
+## Embeddable functional scripting tool
+
+MAFL can be used to write "smart" config files or scripts for a compiled Rust program. The scripts can call back to the Rust code via custom functions.
+Rust can send data into the script and recover a result value or even the full execution context.
+As I said before, there are better tools for this, but I wanted my little experiment to support this functionality.
+
+## Having fun
+
+I wanted to have some fun while learning about parsing and interpreting a language and also using Rust smart pointers and garbage collection. 
+Keeping the language as functional as possible without being purely functional was an important objective because I like the functional aspects of Rust.
+Mutability and aliasing are part of MAFL so it's not a pure language and it's certainly not as safe as Rust.
+
+Having fun was more important to me than making a useful language. This means that the design of the MAFL programming language is far from perfect.
+
+Performance is not very good: i'm using a tree-walking interpreter and although I experimented with some performance-enhancing optimizations, that was not my main goal. At some point, I had a caching layer to speed up variable name lookups in one of my experimental branches but it was never integrated fully.
+
+Functions are the main compound type in MAFL. 
+They are used to run code but also as objects and modules (via closures). 
+The only exception to this is arrays. 
+At first, I tried using functions for arrays but decided to have a dedicated type instead.
 
 By default, lexical binding is used. Closures are the main element in the language but the language also supports
 special dynamic functions that expand at the call site. It has an @eval builtin that allows the execution
 of a string as a program in the current context.
 
 It would probably have been simpler and more efficient to use custom structured types (struct, class, object, etc...) than
-to use the function paradigm for everything. I went for a model that was more fun to work with (objective 2).
+to use the closure paradigm for everything. I went for a model that was more fun to work with for me.
 
 In a lot of places in the language, storage cells can be multiply aliased, either by captured environments inside closures or by explicit reference objects.
-That's obviously not good practice, especially coming from Rust, but it was fun to play with (again objective 2).
+That's obviously not good practice, especially coming from Rust that forbids multiple mutable borrows, but it was fun to play with and forced the use of runtime smart pointers (``Rc``) and later full gargage collected smart pointers (``Gc``) when cycles were introduced.
 
 Currying is fully supported. That was very important to me. The language uses a declaration style without parentheses but function calls
 use parentheses (makes it easier to call zero-argument functions). Function calls can be chained and the language re-arranges the arguments as they need to be consumed.
 
+I enjoy writing code in this language because it's sometimes very challeging given some of the design choices. Once again, fun was a very important part of this project, much more than making something useful.
 
 ## Examples
 
