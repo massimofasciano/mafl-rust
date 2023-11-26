@@ -7,7 +7,7 @@ let list = module {
     # private function: list object builder.
     # a list object has 
     # - 3 fields: is_empty, head, tail
-    # - 2 methods: to_string, to_iter (returns an iterator for this object)
+    # - some methods: to_string, to_iter, ...
     let rec _make_list = cons is_empty head tail {
         from @std.iter use fold;
         let self = @self;

@@ -165,6 +165,13 @@ State(15,1,2)
 State(15,4,8)
 ```
 
+
+A more advanced script example: [mafl/list.mafl](mafl/list.mafl). This one contains a module that implements linked lists using our only object datatype: closures. It really shows how MAFL is different. List nodes (objects) are built out of function closures. A few useful methods are implemented on the returned objects. This example is interesting because it shows how to dynamically construct objects in MAFL with data and methods. It also shows how to use ``forget`` to make functions private.
+
+
+[mafl/xor_nn.mafl](mafl/xor_nn.mafl) shows how to train a very small neural network. It's probably the last thing you should be doing with a slow language like MAFL. It makes interpreted Python look fast. Some of my experimental branches had optimisations that made this example up to 5x faster. Variable name lookups are very slow in MAFL when not optimized or cached. Since my goal was not high speed for tight loops with math operations, I abandoned the experimental branches. 
+
+
 ## The interpreter
 
 
