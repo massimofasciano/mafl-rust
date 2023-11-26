@@ -329,7 +329,7 @@ Individual symbols can be imported into scope (ex: from @std.iter use range map)
 A special prelude function can also be used to import a common set of symbols: @std.prelude()
 
 In general, I chose to write the standard library functions in MAFL when it was possible and fun to do so. 
-Sometimes, it was necessary to use the host language (Rust) for thigs like io, random, time.
+Sometimes, it was necessary to use the host language (Rust) for things like io, random, time.
 The @std.builtin module contains MAFL bindings of Rust-based functions (ex: let len = fun x { @len(x) }).
 This can be useful when currying is desired.
 The @std.methods module contains bindings that are called on internal types by the interpreter when method calls are used (ex: 2.exp()).
