@@ -20,6 +20,8 @@ Dealing with circular references was also very interesting when it came to print
 MAFL can be used to write "smart" config files or scripts for a compiled Rust program. The scripts can call back to the Rust code via custom functions.
 Rust can send data into the script and recover a result value or even the full execution context.
 As I said before, there are better tools for this, but I wanted my little experiment to support this functionality.
+There is still a lot of work to be done at the boundary layer to make passing data to and from Rust more transparent. 
+Same with registering custom functions. ``Rhai`` does this very elegantly. In MAFL it's still very clumsy but it works.
 
 ## Having fun
 
