@@ -8,7 +8,7 @@ There are many much better scripting languages for Rust. Some of them are very s
 
 ## Pest and Nom
 
-I started this project because I wanted to experiment with a ``pest`` grammar after working with ``nom`` for a while. Having the grammar as a separate entity is nice but I also like the ``nom`` approach of combining the grammar with the parsing logic. With ``pest``, changing the grammar often means also having to change your parser code. With ``nom`` they are integrated so you make a single change. When it's possible to change the ``pest`` grammar without having to change the parser code, that's when the separation is interesting (ex: changing the separators in an if then else statement). In general, a ``pest`` grammar file is easier to read and modify.
+I started this project because I wanted to experiment with a ``pest`` grammar after working with ``nom`` for a while. Having the grammar as a separate entity is nice but I also like the ``nom`` approach of combining the grammar with the parsing logic. With ``pest``, changing the grammar often means also having to change your parser code. With ``nom`` they are integrated so you make a single change. When it's possible to change the ``pest`` grammar without having to change the parser code, that's when the separation is interesting (ex: changing the separators in an ``if then else`` statement). In general, a ``pest`` grammar file is easier to read and modify.
 
 ## Garbage collector
 
