@@ -58,7 +58,7 @@ If I need to write good code for work with a scripting component, I would almost
 
 Refer to [mafl/language.mafl](mafl/language.mafl) for a walkthrough of the MAFL language as a long MAFL program.
 
-A first functional example. The fun keyword is used to create closures (lambdas). It can be replaced with a more compact form with backslash.
+A first functional example: the fun keyword is used to create closures (lambdas). It can be replaced with a more compact form with backslash.
 
 ```
 let arr = [1,2,3,4];
@@ -80,8 +80,7 @@ produces the following output:
 31.25
 ```
 
-Functions as objects. 
-cons is a fun that returns its captured state as an object (object factory). 
+Functions (closures) as objects: cons is a fun that returns its captured state as an object (object factory). 
 module is like a zero-arg cons that is called immediately (instance creator).
 
 ```
