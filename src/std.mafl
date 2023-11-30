@@ -4,21 +4,6 @@
 ### it is visible through the @std module (ex: @std.array.map)
 ###
 
-### prelude that loads essentials when called.
-### use at top level or in dynamic context, 
-### not inside a closure (fun/cons/module).
-### usage: @std.prelude();
-let prelude = dynmut {
-    from @std.utils use flip min max;
-    from @std.math use add sub mul div exp log pow;
-    from @std.time use elapsed;
-    from @std.iter use range map fold sum prod filter to_iter zip;
-    from @std.array use reduce reverse;
-    from @std.builtin use len to_string sort sort_by to_integer to_float to_array;
-    from @std.builtin use type_of;
-    from @std.types use is_error is_ref is_array is_number is_boolean is_object;
-};
-
 ## utility functions
 let utils = module {
     let flip = fun f { fun x y { f(y,x) } };
@@ -273,9 +258,7 @@ let methods = module {
 
 };
 
-### prelude that loads essentials.
-### use at top level or in dynamic context, 
-### not inside a closure (fun/cons/module).
+### prelude that contains essential functions.
 let prelude = module {
     from utils use flip min max;
     from math use add sub mul div exp log pow;

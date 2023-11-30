@@ -1156,12 +1156,13 @@ test [m.v1,m.v2,m.v3,m.v4] expect [1,2,3,4];
 ### the standard library prelude
 ###
 
-@println("*** @std.prelude ***");
+@println("*** @std.prelude and from ... use * ***");
 
 # @std.prelude is a module that contains a selection of useful functions.
 # you can load all symbols from this module with this statement:
 # from @std.prelude use *;
-# the * wildcard does not work inside a lexcical closure
+# the wildcard syntax works for any other module too but
+# can't be used inside a lexical closure (fun/cons/module).
 
 # here we create a closed environment and load the prelude...
 let list = closed {
