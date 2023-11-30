@@ -1,5 +1,12 @@
 # Rust parser and interpreter for the MAFL language
 
+## This unstable branch
+
+Working on:
+
+- from @std.prelude use * (imports all symbols from a module, not usable in a closure at the moment)
+- detect use of dynamic or eval in closures ? emit warning.
+
 ## Why you should not use this language
 
 This project is not meant for production. It's not even meant for any type of productive work. I made it because I wanted to experiment with some Rust crates and needed a good project to motivate me. A scripting language was a good motivator.

@@ -462,22 +462,28 @@ impl Interpreter {
                 }
             }
 
-            Expr::Use(opt_source, members) => {
+            Expr::Use(opt_source, opt_members) => {
                 if let Some(source) = opt_source {
                     let source = self.eval(ctx, source)?;
                     match source.as_ref() {
                         Expr::Closure(cctx,_,_) => {
-                            for var in members {
-                                if let Some(rc) = cctx.get_binding_ref(var) {
-                                    ctx.add_binding_ref(var.to_owned(), rc.to_owned());
-                                } else {
-                                    Err(anyhow!("use member not found: {var}"))?
+                            if let Some(members) = opt_members {
+                                for var in members {
+                                    if let Some(rc) = cctx.get_binding_ref(var) {
+                                        ctx.add_binding_ref(var.to_owned(), rc.to_owned());
+                                    } else {
+                                        Err(anyhow!("use member not found: {var}"))?
+                                    }
+                                }
+                            } else {
+                                for (var, rc) in cctx.bindings_ref() {
+                                    ctx.add_binding_ref(var.to_owned(), rc.to_owned());    
                                 }
                             }
                         }
                         _ => Err(anyhow!("use source is not a closure"))?
                     }                        
-                } else {
+                } else if let Some(members) = opt_members {
                     for var in members {
                         if let Some(rc) = ctx.get_binding_ref(var) {
                             ctx.add_binding_ref(var.to_owned(), rc.to_owned());
@@ -485,6 +491,8 @@ impl Interpreter {
                             Err(anyhow!("use member not found: {var}"))?
                         }
                     }
+                } else {
+                    Err(anyhow!("invalid use statement"))?
                 }
                 expression::nil()
             }

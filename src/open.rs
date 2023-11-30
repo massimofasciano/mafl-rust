@@ -134,17 +134,23 @@ impl Interpreter {
                 self.open(ctx, expr)?
             }
 
-            Expr::Use(opt_source,members) => {
+            Expr::Use(opt_source,opt_members) => {
                 let mut open = HashSet::new();
                 if let Some(source) = opt_source {
                     open.extend(self.open(ctx, source)?);
-                    for var in members {
-                        ctx.add_binding(var.to_owned(), expression::nil()); 
+                    if let Some(members) = opt_members {
+                        for var in members {
+                            ctx.add_binding(var.to_owned(), expression::nil()); 
+                        }
+                    } else {
+                        Err(anyhow!("wildcard use statement in closure"))?;
                     }
-                } else {
+                } else if let Some(members) = opt_members {
                     for var in members {
                         open.insert(var.to_owned()); 
                     }
+                } else {
+                    Err(anyhow!("invalid use statement"))?;
                 }
                 open
             }

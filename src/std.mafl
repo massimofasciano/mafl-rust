@@ -272,3 +272,17 @@ let methods = module {
     };
 
 };
+
+### prelude that loads essentials.
+### use at top level or in dynamic context, 
+### not inside a closure (fun/cons/module).
+let prelude = module {
+    from utils use flip min max;
+    from math use add sub mul div exp log pow;
+    from time use elapsed;
+    from iter use range map fold sum prod filter to_iter zip;
+    from array use reduce reverse;
+    from builtin use len to_string sort sort_by to_integer to_float to_array;
+    from builtin use type_of;
+    from types use is_error is_ref is_array is_number is_boolean is_object;
+};

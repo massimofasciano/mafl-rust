@@ -1156,16 +1156,16 @@ test [m.v1,m.v2,m.v3,m.v4] expect [1,2,3,4];
 ### the standard library prelude
 ###
 
-@println("*** @std.prelude() ***");
+@println("*** @std.prelude ***");
 
-# @std.prelude() is a dynmut function that modifies the caller's environment.
-# it adds a selection of useful functions.
-# it's not safe to use inside a lexcical closure unless you
-# insert "use" statements for each binding you use.
+# @std.prelude is a module that contains a selection of useful functions.
+# you can load all symbols from this module with this statement:
+# from @std.prelude use *;
+# the * wildcard does not work inside a lexcical closure
 
 # here we create a closed environment and load the prelude...
 let list = closed {
-    @std.prelude(); # this puts a bunch of functions from @std into scope
+    from @std.prelude use *; # this puts a bunch of functions from @std into scope
     # flip, sub, map and range are imported by the prelude
     map(flip(sub, 5), range(3,9))
     # this applies \x{x-5} to each number of the range from 3 to 9

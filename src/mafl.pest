@@ -99,7 +99,7 @@ for = {
 }
 
 use = {
-    ("from" ~ (#source = expr))? ~ "use" ~ (#var = identifier)* 
+    ("from" ~ (#source = expr))? ~ "use" ~ ((#var = identifier)+ | "*") 
 }
 
 try_catch = {

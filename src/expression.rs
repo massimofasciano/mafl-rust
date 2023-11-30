@@ -66,7 +66,7 @@ pub enum Expr {
     Fun(Vec<String>,Ptr<Expr>),
     Dyn(bool,Vec<String>,Ptr<Expr>),
     Closed(Vec<String>,Ptr<Expr>),
-    Use(Option<Ptr<Expr>>,Vec<String>),
+    Use(Option<Ptr<Expr>>,Option<Vec<String>>),
     Closure(Context,Vec<String>,Ptr<Expr>),
     Array(PtrCell<Vec<Ptr<Expr>>>),
     Return(Ptr<Expr>),
@@ -512,7 +512,7 @@ pub enum Syntax {
     Throw(Box<Syntax>),
     TryCatch(Box<Syntax>,String,Box<Syntax>),
     UnaryOpCall(Operator,Box<Syntax>), 
-    Use(Option<Box<Syntax>>,Vec<String>),
+    Use(Option<Box<Syntax>>,Option<Vec<String>>),
     Variable(String),
 }
 

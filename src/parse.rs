@@ -157,7 +157,8 @@ impl Interpreter {
                         .map_or(Ok(None), |v| v.map(Some))?;
                     let vars = Self::find_tag("var", &inner)
                         .map(|x|x.as_str().to_owned()).collect::<Vec<_>>();
-                    Syntax::Use(opt_source.map(Into::into), vars)
+                    let opt_vars = if vars.is_empty() { None } else { Some(vars) };
+                    Syntax::Use(opt_source.map(Into::into), opt_vars)
                 } 
                 Rule::r#if => {
                     assert!(inner.len() >= 2);
