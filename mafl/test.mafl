@@ -1,3 +1,5 @@
 #! /usr/bin/env mafl
 
 @println(@version);
+
+@println(@args);

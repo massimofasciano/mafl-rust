@@ -87,6 +87,11 @@ impl Interpreter {
         self.std = expression::closure(ctx, vec![], expression::nil());
         Ok(())
     }
+    pub fn prelude(&mut self) -> Result<()> {
+        let s = "from @std.prelude use *";
+        builtin::include_str(self, &self.ctx, s)?;
+        Ok(())
+    }
     pub fn run(&self, source: &str) -> Result<Ptr<Expr>> {
         let expr = self.parse_source(source)?;
         // println!("{expr:#?}");

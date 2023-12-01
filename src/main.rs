@@ -1,45 +1,64 @@
-use std::io::{stdin, BufRead, stdout, Write};
+use std::{io::{stdin, BufRead, stdout, Write}, path::PathBuf};
 use mafl::{Interpreter, expression::Value};
-use anyhow::{Result, anyhow};
+use anyhow::Result;
+
+use clap::Parser;
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// File name of the MAFL program to run (- for stdin).
+    /// if absent, fall into a REPL
+    pub program: Option<PathBuf>,
+
+    /// Command line arguments that are passed to the MAFL program via @args
+    pub args: Vec<String>,
+
+    /// Show the result of the program as a Value
+    #[arg(short, long, conflicts_with="println")]
+    result: bool,
+
+    /// Show the result of the program using @println
+    #[arg(short, long, conflicts_with="result")]
+    println: bool,
+
+    /// Print summary of unit tests if any were performed
+    #[arg(short, long)]
+    tests: bool,
+
+    /// Don't include default prelude in initial environment
+    #[arg(long)]
+    no_prelude: bool,
+}
 
 fn main() -> Result<()> {
     env_logger::init();
-    let mut args = std::env::args();
-    if args.next().is_none() {
-        return Err(anyhow!("no arg 0"));
-    }
+    let args = Args::parse();
     let mut interpreter = Interpreter::new()?;
-    let mut opt_file : Option<String> = None;
-    let mut show_result = false;
-    let mut print_result = false;
-    match args.next().as_deref() {
-        Some("-r") => { show_result = true; }
-        Some("-p") => { print_result = true; }
-        Some(name) => { opt_file = Some(name.to_owned()); }
-        None => {}
+    if !args.no_prelude {
+        interpreter.prelude()?;
     }
-    if opt_file.is_none() { opt_file = args.next(); }
-    if let Some(file) = opt_file {
+    if let Some(file) = args.program {
         // run the program
-        let source = if file == "-" {
+        let source = if file == PathBuf::from("-") {
             std::io::read_to_string(stdin())?          
         } else {
             std::fs::read_to_string(file)?
         };
-        interpreter.set_args(args.map(|x|x.to_string()).collect());
+        interpreter.set_args(args.args);
         let result = interpreter.run(&source)?;
-        if print_result {
+        if args.println {
             println!();
             println!("*** Program result via @println:");
             interpreter.println(result.to_owned())?;
         }
-        if show_result {
+        if args.result {
             println!();
             println!("*** Program result as a value:");
             println!("{}", Value::try_from(result)?);
         }
         let (pass_count, fail_count) = interpreter.test_report();
-        if pass_count > 0 || fail_count > 0 {
+        if args.tests && (pass_count > 0 || fail_count > 0) {
             println!();
             println!("*** UNIT TEST SUMMARY: ");
             println!("{pass_count} passed. {fail_count} failed.");
