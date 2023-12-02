@@ -176,21 +176,26 @@ A more advanced script example: [mafl/list.mafl](mafl/list.mafl). This one conta
 
 ## The interpreter
 
-
-The interpreter takes the following command line arguments:
-1) an optional argument: -p (print result with @println) or -r (show result as value). 
-The last expression in a program or any exception value that is not caught will be the return value of the program.
--p will give more detailed output of the result in internal MAFL format. 
--r will show it as the Value type that Rust uses to transfer data to and from MAFL.
-If none is specified, it will not print the result at the end and any needed output should be performed via @print statements.
-2) the name of the program to run. 
-If the name is "-", it will read the whole program from standard input. 
-If it is omitted completely, the interpreter enters REPL mode (see next section).
-
-When unit tests are performed, it produces a summary of pass/fail counts.
+Here is a summary of the interpreter command line options (taken from --help output):
 
 ```bash
-$ mafl -r mafl/language.mafl
+Usage: mafl [OPTIONS] [PROGRAM] [ARGS]...
+
+Arguments:
+  [PROGRAM]  File name of the MAFL program to run (- for stdin). if absent, fall into a REPL
+  [ARGS]...  Command line arguments that are passed to the MAFL program via @args
+
+Options:
+  -r, --result      Show the result of the program as a Value
+  -p, --println     Show the result of the program using @println
+  -t, --tests       Print summary of unit tests if any were performed
+      --no-prelude  Don't include default prelude in initial environment
+  -h, --help        Print help
+  -V, --version     Print version
+```
+
+```bash
+$ mafl -r -t mafl/language.mafl
 *** UNIT TESTING ***
 # test passed 2 + 3: result 5
 # test passed 2 + 3 < 2 * 3
@@ -335,7 +340,8 @@ More of these builtins can be added to an interpreter instance from Rust to cust
 
 The language also has a standard library written in MAFL. It is visible as a module named @std.
 Individual symbols can be imported into scope (ex: from @std.iter use range map).
-A special prelude function can also be used to import a common set of symbols: @std.prelude()
+A special prelude module contains a common set of symbols and is loaded into the starting context
+by the interpreter.
 
 In general, I chose to write the standard library functions in MAFL when it was possible and fun to do so. 
 Sometimes, it was necessary to use the host language (Rust) for things like io, random, time.
@@ -343,8 +349,6 @@ The @std.builtin module contains MAFL bindings of Rust-based functions (ex: ``le
 This can be useful when currying is desired. 
 @std.math provides function versions of most internal operators (ex: ``let add = fun x y { x + y }``) which makes currying possible (we don't have a special syntax to allow direct currying of internal operators).
 The @std.methods module contains bindings that are called on internal types by the interpreter when method calls are used (ex: ``2.exp()``).
-
-By default, no bindings from @std are imported into the user variable space.
 
 At this time, the MAFL standard library resides in [src/std.mafl](src/std.mafl) and is statically included in uncompressed form
 inside the Rust binary at compile time. As it grows, this might not be ideal. Comments could be stripped and the text could be compressed.
