@@ -573,7 +573,7 @@ test abc expect 11;
 # built into the interpreter but using native language
 # constructs instead of interpreter (Rust) code.
 
-from @std.array use map fold;
+#from @std.array use map fold; # already loaded by default prelude
 test map(\x{1/x},[1,2,3,4,5]) expect [1,1/2,1/3,1/4,1/5];
 test fold(\a,x{a+x},0,[1,2,3,4,5]) expect 15;
 
@@ -583,7 +583,7 @@ test fold(\a,x{a+x},0,[1,2,3,4,5]) expect 15;
 # this allows the use of builtins as parameters to other functions
 # with full support for currying (but without overloading and varargs)
 
-from @std.utils use flip;
+#from @std.utils use flip; # already loaded by default prelude
 from @std.builtin use split;
 test map(flip(split,":"), ["1:2:3","4:5:6"]) expect [["1","2","3"],["4","5","6"]];
 
@@ -683,9 +683,8 @@ for a in [1,2,3,4,5,6] {
 test r expect 720;
 
 # the standard library contains functions that work on iterators
-from @std.iter use range collect;
+#from @std.iter use range collect map;  # already loaded by default prelude
 test collect(range(3,6)) expect [3,4,5,6];
-# map was already imported above from @std.array but that is simply an alias to @std.iter.map
 test map(\x{x*10},range(0,9)) expect [0,10,20,30,40,50,60,70,80,90];
 
 # because objects and functions are the same in our language, we can't
@@ -740,8 +739,8 @@ test r expect 3;
 # is equivalent to
 # f4(f3(f2(f1(x))))
 
-from @std.utils use flip;
-from @std.math use pow add mul;
+#from @std.utils use flip; # already loaded by default prelude
+#from @std.math use pow add mul; # already loaded by default prelude
 
 test 2 | flip(pow,2) | add(1) | mul(10) expect 50;
 
@@ -902,7 +901,7 @@ test [v,c,$r] expect [310,202,310];
 # a function that tests if it has a reference and increments through it
 # if it's not a ref, the increment is only local
 let reftest = fun r {
-    from @std.types use is_ref;
+    #from @std.types use is_ref; # already loaded by default prelude
     if is_ref(r) {
         r <- $r + 1;
     } else {
@@ -965,7 +964,7 @@ test [v,w,$r,c] expect [11,11,11,10];
 # the combination of let ref and forget can be used when creating objects that capture
 # by reference from outside but want to change the name of the bindings
 
-from @std.types use is_error;
+#from @std.types use is_error;  # already loaded by default prelude
 
 let p = module {
     let ref z = v;
@@ -1153,20 +1152,25 @@ test [m.v1,m.v2,m.v3,m.v4] expect [1,2,3,4];
 # when dealing with the 3 types of dynamic calls, they must be declared.
 
 ###
-### the standard library prelude
+### from ... use * and the standard library prelude
 ###
 
-@println("*** @std.prelude and from ... use * ***");
+@println("*** from ... use * and @std.prelude ***");
+
+# the "from m use *" wildcard variant can be used to 
+# load all symbols from "m" into the current context.
+# it can't be used inside a lexical closure (fun/cons/module). 
 
 # @std.prelude is a module that contains a selection of useful functions.
-# you can load all symbols from this module with this statement:
-# from @std.prelude use *;
-# the wildcard syntax works for any other module too but
-# can't be used inside a lexical closure (fun/cons/module).
+# by default it is loaded into the default context of all programs
+# (can be disabled via cmdline flag).
 
-# here we create a closed environment and load the prelude...
+# other modules in @std are iter, math, array, builtin, utils,
+# logic, methods, types, time.
+
+# here we create a closed (empty) environment and load the prelude...
 let list = closed {
-    from @std.prelude use *; # this puts a bunch of functions from @std into scope
+    from @std.prelude use *;
     # flip, sub, map and range are imported by the prelude
     map(flip(sub, 5), range(3,9))
     # this applies \x{x-5} to each number of the range from 3 to 9
