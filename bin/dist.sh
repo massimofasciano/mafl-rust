@@ -1,5 +1,5 @@
 #!/bin/sh
-VER=1.1.3
+VER=1.1.4
 cp ../target/release/mafl mafl
 strip mafl
 cp ../target/release/mafl.exe mafl.exe 
