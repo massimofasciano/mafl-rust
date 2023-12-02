@@ -88,7 +88,7 @@ impl Interpreter {
         Ok(())
     }
     pub fn prelude(&mut self) -> Result<()> {
-        let s = "from @std.prelude use *";
+        let s = "(from @std.prelude use *)!";
         builtin::include_str(self, &self.ctx, s)?;
         Ok(())
     }
