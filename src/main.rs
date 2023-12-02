@@ -10,31 +10,35 @@ struct Args {
     /// File name of the MAFL program to run (- for stdin).
     /// if absent, fall into a REPL
     pub program: Option<PathBuf>,
-
     /// Command line arguments that are passed to the MAFL program via @args
     pub args: Vec<String>,
-
     /// Show the result of the program as a Value
     #[arg(short, long, conflicts_with="println")]
     result: bool,
-
     /// Show the result of the program using @println
     #[arg(short, long, conflicts_with="result")]
     println: bool,
-
     /// Print summary of unit tests if any were performed
     #[arg(short, long)]
     tests: bool,
-
     /// Don't include default prelude in initial environment
     #[arg(long)]
     no_prelude: bool,
+    /// Initialize @std from this external file instead of embedded version
+    #[arg(short, long, value_name = "FILE")]
+    std: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
     env_logger::init();
     let args = Args::parse();
     let mut interpreter = Interpreter::new()?;
+    if let Some(ext_std) = args.std {
+        interpreter.init_ext_std(ext_std)?;
+    } else {
+        #[cfg(not(feature = "std_internal"))]
+        Err(anyhow::anyhow!("must provide external std library when internal std is disabled"))?;
+    }
     if !args.no_prelude {
         interpreter.prelude()?;
     }

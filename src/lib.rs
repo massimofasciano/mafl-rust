@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap};
+use std::{cell::RefCell, collections::HashMap, path::PathBuf};
 use context::Context;
 use expression::{Expr, Builtin, Value, Syntax};
 use pest::Parser as _;
@@ -53,8 +53,6 @@ pub enum PragmaLevel {
     Error,
 }
 
-#[cfg(not(feature = "std_internal"))]
-const STD_MAFL : &str = "src/std.mafl";
 #[cfg(feature = "std_internal")]
 static _STD_STR : &str = include_str!("std.mafl");
 
@@ -79,11 +77,13 @@ impl Interpreter {
         let ctx = Context::new();
         #[cfg(feature = "std_internal")]
         builtin::include_str(self, &ctx, _STD_STR)?;
-        #[cfg(not(feature = "std_internal"))]
-        {
-            let std_str = std::fs::read_to_string(STD_MAFL)?;
-            builtin::include_str(self, &ctx, &std_str)?;
-        }
+        self.std = expression::closure(ctx, vec![], expression::nil());
+        Ok(())
+    }
+    pub fn init_ext_std(&mut self, ext_std: PathBuf) -> Result<()> {
+        let ctx = Context::new();
+        let std_str = std::fs::read_to_string(ext_std)?;
+        builtin::include_str(self, &ctx, &std_str)?;
         self.std = expression::closure(ctx, vec![], expression::nil());
         Ok(())
     }

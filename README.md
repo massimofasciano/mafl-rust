@@ -190,6 +190,7 @@ Options:
   -p, --println     Show the result of the program using @println
   -t, --tests       Print summary of unit tests if any were performed
       --no-prelude  Don't include default prelude in initial environment
+  -s, --std <FILE>  Initialize @std from this external file instead of embedded version
   -h, --help        Print help
   -V, --version     Print version
 ```
@@ -356,14 +357,16 @@ It could also be pre-parsed to an AST and dumped in binary form.
 Having it inside the binary image removes an external dependancy but makes it impossible to change it without recompiling.
 It's a tradeoff I decided to make to make things easier (single standalone binary)
 
-If you don't like this, you have 2 options:
+If you don't like this, you have some options:
 
 1) A cargo compile-time flag named "std_internal" controls this behavior. It's on by default.
-If disabled, src/std.mafl is read at runtime instead and can be modified without recompiling.
+If disabled, you must provide the standard library at runtime via the --std command line option.
 You still refer to @std as usual but it's loaded at runtime instead of compile time.
 
-2) It's still possible to distribute a copy of this file with the interpreter and load it at runtime with @include even if the internal one is present.
-Simply load it into another module and use it when you don't want the internal version. 
+2) You may still use the --std option even when the internal one is present (it will replace it).
+
+3) You may load your own alternate "standard library" at runtime with @include.
+Simply load it into another module and use it when you don't want the @std version. 
 You can even mix and match when testing new versions of standard library functions.
 
 ```
