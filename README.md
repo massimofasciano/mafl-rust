@@ -195,6 +195,8 @@ Options:
   -V, --version     Print version
 ```
 
+Running a program with a summary of unit tests and result printed (the result of a program is the last expression in the program):
+
 ```bash
 $ mafl -r -t mafl/language.mafl
 *** UNIT TESTING ***
