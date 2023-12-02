@@ -186,13 +186,14 @@ Arguments:
   [ARGS]...  Command line arguments that are passed to the MAFL program via @args
 
 Options:
-  -r, --result      Show the result of the program as a Value
-  -p, --println     Show the result of the program using @println
-  -t, --tests       Print summary of unit tests if any were performed
-      --no-prelude  Don't include default prelude in initial environment
-  -s, --std <FILE>  Initialize @std from this external file instead of embedded version
-  -h, --help        Print help
-  -V, --version     Print version
+  -r, --result       Show the result of the program as a Value
+  -p, --println      Show the result of the program using @println
+  -t, --tests        Print summary of unit tests if any were performed
+      --no-prelude   Don't include default prelude in initial environment
+  -s, --std <FILE>   Initialize @std from this external file instead of embedded version
+  -l, --load <FILE>  Load this program before the main program (can be repeated)
+  -h, --help         Print help
+  -V, --version      Print version
 ```
 
 Running a program with a summary of unit tests and result printed (the result of a program is the last expression in the program):
@@ -228,6 +229,22 @@ nil
 MAFL> f(x)+5
 105
 MAFL>
+```
+
+The --load interpreter option makes it easy to bring in multiple programs into the REPL environment and test them.
+For example, if the following code is stored in ``lib.mafl``:
+
+```
+let __version__ = @version;
+```
+
+I can make the ``__version__`` variable available inside the REPL by pre-loading ``lib.mafl``:
+
+```
+$ mafl --load lib.mafl
+loading "lib.mafl"...
+MAFL> __version__
+1.1.4
 ```
 
 ## Embedding

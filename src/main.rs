@@ -27,6 +27,9 @@ struct Args {
     /// Initialize @std from this external file instead of embedded version
     #[arg(short, long, value_name = "FILE")]
     std: Option<PathBuf>,
+    /// Load this program before the main program (can be repeated)
+    #[arg(short, long, value_name = "FILE")]
+    load: Vec<PathBuf>,
 }
 
 fn main() -> Result<()> {
@@ -41,6 +44,10 @@ fn main() -> Result<()> {
     }
     if !args.no_prelude {
         interpreter.prelude()?;
+    }
+    for file in args.load {
+        println!("loading {:?}...",file);
+        interpreter.run(&std::fs::read_to_string(file)?)?;
     }
     if let Some(file) = args.program {
         // run the program
