@@ -6,7 +6,7 @@ This project is not meant for production. It's not even meant for any type of pr
 
 There are many much better scripting languages for Rust. Some of them are very solid production-level projects. Use those instead unless you want to play with something a bit weird and different. I recommend ``Lua`` if you want something that is used outside of the Rust world or ``Rhai`` and ``Rune`` if you want a better Rust integration. They have different objectives but they are all much much better than my language.
 
-Note that the current implementation of MAFL is really small: on X86_64, the release binary is less than 3MB stripped with uncompressed standard library embedded and garbage collector enabled. It might be useful in a non-production project if something very small is needed, although I'm pretty sure you can make ``Rhai`` very small too by disabling a lot of features.
+Note that the current implementation of MAFL is really small: on X86_64, the release binary is around 3MB stripped with uncompressed standard library embedded and garbage collector enabled. It might be useful in a non-production project if something very small is needed, although I'm pretty sure you can make ``Rhai`` very small too by disabling a lot of features.
 
 ## Pest and Nom
 
