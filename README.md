@@ -178,7 +178,7 @@ A more advanced script example: [mafl/list.mafl](mafl/list.mafl). This one conta
 
 Here is a summary of the interpreter command line options (taken from --help output):
 
-```bash
+```b
 Usage: mafl [OPTIONS] [PROGRAM] [ARGS]...
 
 Arguments:
